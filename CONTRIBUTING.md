@@ -113,16 +113,17 @@ git cherry-pick <commit-sha>
 
 Option B (you commited on main by mistake):
 ```bash
-# save work on temp branch
-git switch -c temp/save
+# Create a feature branch at your current commit
+git switch -c correct-branch
+
+# Restore local main to match the remote
 git switch main
 git fetch origin
 git reset --hard origin/main
-git switch correct-branch
 
-# cherry-pick specific SHAs from temp/save:
-git log --oneline temp/save
-git cherry-pick <sha1> [<sha2> ...]
+# Go back to your feature branch and publish it
+git switch correct-branch
+git push -u origin docs/contribution
 ```
 
 ### 4) Accidental secret committed
