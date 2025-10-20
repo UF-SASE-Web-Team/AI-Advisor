@@ -44,7 +44,7 @@ docker compose up --build
 |   planner   |   8082   |    Python    |
 |     auth    |   8083   |      Go      |
 
-### Stop & Clea
+### Stop & Clean
 ```bash
 docker compose down
 docker compose down -v   #if you want to remove all data volumes
