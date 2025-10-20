@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+
+  rag:
+    build: ./services/rag
+    container_name: rag
+    ports:
+      - "8081:8081"
+
+  planner:
+    build: ./services/planner
+    container_name: planner
+    ports:
+      - "8082:8082"
+
+  auth:
+    build: ./services/auth
+    container_name: auth
+    ports:
+      - "8083:8083"
