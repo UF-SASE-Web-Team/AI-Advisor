@@ -1,1 +1,67 @@
+# --- Top-level env/secrets
 .env
+.env.*
+!.env.example
+
+# --- OS cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Editors / IDEs
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.code-workspace
+
+# --- Logs & runtime
+*.log
+logs/
+tmp/
+.cache/
+coverage/
+coverage.*.xml
+
+# --- Go
+**/bin/
+**/build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+
+# --- Python
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.tox/
+
+# virtual envs
+**/.venv/
+**/venv/
+pip-wheel-metadata/
+
+# --- Node 
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# --- Containers / Compose
+docker-compose.override.yml
+**/.docker-env
+
+# --- Migrations
+migrations/*.tmp
+migrations/*.bak
+
