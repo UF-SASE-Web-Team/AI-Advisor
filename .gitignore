@@ -65,3 +65,5 @@ docker-compose.override.yml
 migrations/*.tmp
 migrations/*.bak
 
+# --- Script outputs
+backend/scripts/*.json
