@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  --color-saved-title: rgb(106 138 131);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
@@ -12,4 +13,8 @@ body {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+}
+
+@utility font-figmaHand {
+  font-family: "Patrick Hand", cursive;
 }
