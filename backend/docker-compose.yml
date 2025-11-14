@@ -1,24 +1,44 @@
+version: "3.9"
+
 services:
   api-gateway:
-    build: ./services/api-gateway
+    build:
+      context: ./services/api-gateway
     container_name: api-gateway
     ports:
       - "8080:8080"
+    depends_on:
+      - rag
+      - planner
+      - auth
+    restart: unless-stopped
 
   rag:
-    build: ./services/rag
+    build:
+      context: ./services/rag
+      dockerfile: Dockerfile
     container_name: rag
+    env_file:
+      - ./services/rag/.env         # <-- HF + Supabase vars live here
     ports:
       - "8081:8081"
+    # For live editing, uncomment the next two lines:
+    # volumes:
+    #   - ./services/rag:/app
+    restart: unless-stopped
 
   planner:
-    build: ./services/planner
+    build:
+      context: ./services/planner
     container_name: planner
     ports:
       - "8082:8082"
+    restart: unless-stopped
 
   auth:
-    build: ./services/auth
+    build:
+      context: ./services/auth
     container_name: auth
     ports:
       - "8083:8083"
+    restart: unless-stopped
