@@ -108,6 +108,7 @@ def _get_request(base_url, params_dict):
     return res.json()
 
 def parse_classes(raw):
+    COURSE = r"[A-Z]{3}[0-9]{4}[CL]"
     # replace weird space with normal space
     raw = raw.replace('\xa0', ' ')
     # assumes periods are useless
@@ -117,24 +118,22 @@ def parse_classes(raw):
     # removes the space between, for example, "COP 3530"
     raw = re.sub(r"([A-Z]{3}) (\d{4}[CL]?)", r"\1\2", raw)
     # they forgot the C
-    raw = re.sub(r'(^|[^A-Z0-9])(COP3502|COP3503|COP3504)(?!C)(?![A-Z0-9])', r'\1\2C', raw)
+    raw = re.sub(r'(COP3502|COP3503|COP3504)(?!C)', r'\1C', raw)
     # doubles
     raw = raw.replace('and and', 'and')
     raw = raw.replace('or or', 'or')
-    # gpt
-    # collapse ", and/or" into explicit conjunctions (and/or are lowercase)
-    raw = re.sub(', *and *', ' and ', raw)
-    raw = re.sub(', *or *',  ' or ',  raw)
     # handle "taken XYZ"
     raw = re.sub(r'taken [A-Z]{3} ?\d{4}[CL]?', '', raw)
-
-    conj = 'or' if ' or ' in raw else 'and'
-    # replace remaining commas
-    raw = re.sub(' *, *', f' {conj} ', raw)
+    #start gpt
+    # use the final conjunction in the list:
+    raw = re.sub(rf'({COURSE}) *, *(?=(?:{COURSE} *, *)*or *{COURSE})',  r'\1 or ',  raw)
+    raw = re.sub(rf'({COURSE}) *, *(?=(?:{COURSE} *, *)*and *{COURSE})', r'\1 and ', raw)
+    # any remaining commas default to "and"
+    raw = re.sub(rf'({COURSE}) *, *', r'\1 and ', raw)
     #end gpt
     
     # extract relevant parts
-    prereqs = re.findall(r"(?:[A-Z]{3}[0-9]{4}[CL]?|and|or|taken|\(|\))", raw)
+    prereqs = re.findall(rf"(?:{COURSE}?|and|or|taken|\(|\))", raw)
     for i in range(len(prereqs) - 1, -1, -1):
         if prereqs[i] == ')' and prereqs[i-1] in ("and", "or"):
             prereqs.pop(i-1)
