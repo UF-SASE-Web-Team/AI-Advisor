@@ -72,9 +72,9 @@ def get_courses(sem, dept):
             prereqs = parse_classes(raw)
 
         if prereqs:
-            course["prereqsParsed"] = prereqs
+            course["prereqsParsed"] = ' '.join(prereqs)
         if coreqs:
-            course["coreqsParsed"] = coreqs
+            course["coreqsParsed"] = ' '.join(coreqs)
         
         """
         if prereqs or coreqs:
