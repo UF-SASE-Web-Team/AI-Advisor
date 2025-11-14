@@ -128,9 +128,6 @@ def parse_classes(raw):
     # any remaining commas default to "and"
     raw = re.sub(rf'({COURSE}) *, *', r'\1 and ', raw)
     #end gpt
-    # doubles
-    raw = raw.replace('and and', 'and')
-    raw = raw.replace('or or', 'or')
     
     # extract relevant parts
     prereqs = re.findall(rf"(?:{COURSE}?|and|or|taken|\(|\))", raw)
@@ -161,6 +158,20 @@ def parse_classes(raw):
                     break
         if closes_at_end:
             prereqs = prereqs[1:-1]
+
+    #gpt
+    # collapse adjacent conjunctions in the token list
+    i = 1
+    while i < len(prereqs):
+        if prereqs[i] in ('and','or') and prereqs[i-1] in ('and','or'):
+            prereqs[i-1] = prereqs[i]  # keep the later one
+            prereqs.pop(i)
+        else:
+            i += 1
+    # trim leading/trailing conjunctions
+    if prereqs and prereqs[0] in ('and','or'): prereqs.pop(0)
+    if prereqs and prereqs[-1] in ('and','or'): prereqs.pop()
+    #end gpt
             
     return prereqs
 
