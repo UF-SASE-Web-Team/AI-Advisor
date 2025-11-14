@@ -11,7 +11,7 @@ def get_all_courses_data():
             "name": str,
             "credits": int,
             "type": "major" | "minor" | "elective",
-            "prereqs": [str],
+            "prereqs": [[str], [str]], # List of course codes
             "coreqs": [str],
             "sections": [
                 {
@@ -61,7 +61,7 @@ def get_all_courses_data():
             "name": "Engineering Statistics",
             "credits": 3,
             "type": "minor",
-            "prereqs": ["MAC2312"],
+            "prereqs": [["MAC2312"], ['STA2023']],
             "coreqs": [],
             "sections": [
                 {"section_id": "12350", "slots": [('T', 1), ('T', 2), ('R', 1), ('R', 2)]},
@@ -142,13 +142,25 @@ def filter_eligible_data(all_courses, completed_set, blacklist_set):
     eligible_sections = {} # {section_id: {data...}}
         
     for code, course in all_courses.items():
+        prereq_groups = course['prereqs']
+        prereqs_met = False
+
+        if not prereq_groups:
+            prereqs_met = True
+        else:
+            for group in prereq_groups:
+                if not group:  # Empty group means no prereqs
+                    prereqs_met = True
+                    break
+
+                prereq_set = set(group)
+                if prereq_set.issubset(completed_set):
+                    prereqs_met = True
+                    break
         
-        # 1. Check Prerequisites
-        prereqs = set(course['prereqs'])
-        if not prereqs.issubset(completed_set):
+        if not prereqs_met:
             continue
-            
-        # 2. Filter Sections based on time blacklist    
+
         valid_sections = []
         for section in course['sections']:
             section_id = section['section_id']
@@ -164,10 +176,9 @@ def filter_eligible_data(all_courses, completed_set, blacklist_set):
                 "slots": section['slots']
             }
 
-        # 3. If any valid sections remain, add course to eligible list
         if valid_sections:
-            eligible_courses[code] = course.copy()
-            eligible_courses[code]['sections'] = valid_sections
+            eligible_sections[code] = course.copy()
+            eligible_sections[code]['sections'] = valid_sections
             
     return eligible_courses, eligible_sections
 
