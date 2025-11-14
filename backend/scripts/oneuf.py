@@ -119,9 +119,6 @@ def parse_classes(raw):
     raw = re.sub(r"([A-Z]{3}) (\d{4}[CL]?)", r"\1\2", raw)
     # they forgot the C
     raw = re.sub(r'(COP3502|COP3503|COP3504)(?!C)', r'\1C', raw)
-    # doubles
-    raw = raw.replace('and and', 'and')
-    raw = raw.replace('or or', 'or')
     # handle "taken XYZ"
     raw = re.sub(r'taken [A-Z]{3} ?\d{4}[CL]?', '', raw)
     #start gpt
@@ -131,6 +128,9 @@ def parse_classes(raw):
     # any remaining commas default to "and"
     raw = re.sub(rf'({COURSE}) *, *', r'\1 and ', raw)
     #end gpt
+    # doubles
+    raw = raw.replace('and and', 'and')
+    raw = raw.replace('or or', 'or')
     
     # extract relevant parts
     prereqs = re.findall(rf"(?:{COURSE}?|and|or|taken|\(|\))", raw)
