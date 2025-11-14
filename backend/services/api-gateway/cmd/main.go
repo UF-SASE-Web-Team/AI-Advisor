@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"encoding/json"
@@ -27,6 +29,8 @@ type UserPreference struct {
 // MOVE ON REFACTOR
 var savedPref UserPreference
 
+const ORTOOLURL = "http://localhost:8000/solve"
+
 func main() {
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
@@ -46,7 +50,7 @@ func main() {
 
 		var currPref UserPreference
 
-		err := json.NewDecoder(r.Body).Decode(&pref)
+		err := json.NewDecoder(r.Body).Decode(&currPref)
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -57,6 +61,53 @@ func main() {
 		savedPref = currPref
 
 		log.Printf("Received user preference: %+v\n", pref)
+	}
+
+	http.HandleFunc("/api/solve/", func(w http.ResponseWriter, r *http.Request) {
+		// post request only
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Put the saved user preference into JSON
+		jsonData, err := json.Marshal(savedPref)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, "failed to marshal user preference")
+			return
+		}
+
+		// Create a new HTTP POST request to the OR-Tools solver service
+		resp, err := http.Post(ORTOOLURL, "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, "failed to contact solver service")
+			return
+		}
+
+		req.header.set("Content-Type", "application/json")
+
+		// Forward the request to the solver service
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, "failed to contact solver service")
+			return
+		}
+		defer resp.Body.Close()
+
+		// Read and forward the response from the solver service
+		log.Printf("Received response from solver service: %s\n", resp.Status)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, "failed to read response from solver service")
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		w.Write(body)
 	}
 
 	log.Println("api-gateway :8080")
