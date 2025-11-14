@@ -1,6 +1,7 @@
-import DegreeAudit from "./audit/DegreeAudit";
-import PlanPage from "./plans/PlanPage";
-import CurrentSchedule from "./schedule/CurrentSchedule";
+import {DegreeAudit} from "./audit/DegreeAudit";
+import {ScheduleCalendar} from "./calendar/ScheduleCalendar";
+import {PlanPage} from "./plans/PlanPage";
+import {CurrentSchedule} from "./schedule/CurrentSchedule";
 
 export default function Dashboard() {
     return (
@@ -8,6 +9,7 @@ export default function Dashboard() {
             <PlanPage />
             <CurrentSchedule />
             <DegreeAudit />
+            <ScheduleCalendar />
         </div>
     );
 }

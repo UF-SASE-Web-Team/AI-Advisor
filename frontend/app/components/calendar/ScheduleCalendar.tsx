@@ -1,7 +1,7 @@
-export function CurrentSchedule() {
+export function ScheduleCalendar() {
     return (
         <div>
-            
+
         </div>
     );
 }

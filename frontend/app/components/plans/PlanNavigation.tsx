@@ -1,4 +1,4 @@
-export default function PlanNavigation() {
+export function PlanNavigation() {
     return (
         <div>
             
