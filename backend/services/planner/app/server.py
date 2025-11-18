@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+import uvicorn
 
 class UserPreference(BaseModel):
     x: int
@@ -26,3 +27,6 @@ async def solve(preference: UserPreference):
             "total_credits": 0
         }
     }
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
