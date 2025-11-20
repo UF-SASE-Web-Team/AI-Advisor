@@ -51,6 +51,7 @@ def parseCatalog(url: str):
       processed_reqs.pop(key)
   return processed_reqs
 
-# Computer Science
-result = parseCatalog("https://catalog.ufl.edu/UGRD/colleges-schools/UGENG/CPS_BSCS/#text")
-pprint(result)
+if __name__ == "__main__":
+  # Computer Science Reqs
+  result = parseCatalog("https://catalog.ufl.edu/UGRD/colleges-schools/UGENG/CPS_BSCS/#text")
+  pprint(result)
