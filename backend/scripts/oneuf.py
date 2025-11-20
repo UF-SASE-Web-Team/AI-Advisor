@@ -2,17 +2,18 @@
 
 import requests
 import json
+import asyncio
 
 COURSES_BASE_URL = "https://one.ufl.edu/apix/soc/schedule/"
 semester = "s26"
 
-def main():
-    res = get_courses(semester)
+async def main():
+    res = await get_courses(semester)
     with open(f"{semester}.json", 'w') as f:
         json.dump(res, f, indent=4)
 
 
-def get_courses(sem):
+async def get_courses(sem):
     sems = {
         "s26": "2261",
         "f25": "2258",
@@ -28,7 +29,7 @@ def get_courses(sem):
             "last-control-number": last_control_number
         }
         
-        data = _get_request(COURSES_BASE_URL, params) 
+        data = await _get_request(COURSES_BASE_URL, params) 
         courses = data[0]["COURSES"]
         if courses[0]["code"] == "0000":
             break
@@ -48,7 +49,7 @@ def get_courses(sem):
     print("Unique courses: ", len(unique_courses))
     return unique_courses
 
-def _get_request(base_url, params_dict):
+async def _get_request(base_url, params_dict):
     url = base_url + '?'
     for key, val in params_dict.items():
         url += f"{key}={val}&"
@@ -60,4 +61,4 @@ def _get_request(base_url, params_dict):
     return res.json()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
