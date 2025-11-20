@@ -2,16 +2,20 @@ import requests
 from bs4 import BeautifulSoup
 from pprint import pprint
 
-def parseCatalog():
+def parseCatalog(url: str):
 
   # Parses catalog to get course codes and titles
-  catalog = requests.get("https://catalog.ufl.edu/UGRD/colleges-schools/UGENG/CPS_BSCS/#text")
+  catalog = requests.get(url)
   soup = BeautifulSoup(catalog.text, 'html.parser')
   content = soup.find_all()
   parsed_content = []
   end_found = False
   start_found = False
+  or_initiated = False
   for item in content:
+    if or_initiated:
+      or_initiated = False
+      continue
     if (item.name == "h2") and (item.text == "Required Courses"):
       start_found = True
     elif (item.name == "h3") and (item.text == "Interdisciplinary Electives | Select one option"):
@@ -21,6 +25,7 @@ def parseCatalog():
         split = item.text.split("or\xa0")
         if split[0] == "":
           parsed_content[-1][1].append("".join(split[1].split()))
+          or_initiated = True
       elif (item.name == "a") and ("/search/?P=" in str(item.get('href'))):
         parsed_content.append(
           (True, ["".join(item.get_attribute_list("href")[0][11:].split("%20"))]))
@@ -44,6 +49,8 @@ def parseCatalog():
   for key in processed_keys:
     if len(processed_reqs[key]) == 0:
       processed_reqs.pop(key)
+  return processed_reqs
 
-  pprint(processed_reqs)
-
+# Computer Science
+result = parseCatalog("https://catalog.ufl.edu/UGRD/colleges-schools/UGENG/CPS_BSCS/#text")
+pprint(result)
