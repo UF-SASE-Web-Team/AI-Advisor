@@ -61,6 +61,18 @@ pnpm-lock.yaml
 docker-compose.override.yml
 **/.docker-env
 
+# --- Generated Proto files (Go)
+**/*_grpc.pb.go
+**/*.pb.go
+
+# --- Generated Proto files (Python)
+**/*_pb2.py
+**/*_pb2_grpc.py
+
+# --- ChromaDB / Vector stores (if local)
+**/chroma/
+**/*.chroma
+
 # --- Migrations
 migrations/*.tmp
 migrations/*.bak

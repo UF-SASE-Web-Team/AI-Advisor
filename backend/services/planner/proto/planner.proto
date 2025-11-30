@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package planner;
+
+option go_package = "github.com/UF-SASE-Web-Team/AI-Advisor/backend/services/api-gateway/proto/planner";
+
+service PlannerService {
+  rpc Solve(SolveRequest) returns (SolveResponse);
+
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+// User scheduling preferences
+message UserPreference {
+  int32 x = 1; // # of major courses
+  int32 y = 2; // # of minor courses
+  int32 z = 3; // # of elective coureses
+  int32 min_credits = 4; // Min credits
+  int32 max_credits = 5; // Max credits
+  map<string, BlacklistedPeriods> blacklisted_periods = 6;  // Day -> periods to avoid
+}
+
+// which periods to avoid
+message BlacklistedPeriods {
+  repeated int32 periods = 1;
+}
+
+message SolveRequest {
+  UserPreference preference = 1;
+}
+
+message ScheduledCourse {
+  string course_id = 1;
+  string course_name = 2;
+  int32 credits = 3;
+  string day = 4; // 1 = M, 5 = F
+  int32 period = 5; // Period
+  string course_type = 6; // Major, Minor, Elective
+}
+
+message SolveResponse {
+  string status = 1; // Sucess or error
+  repeated ScheduledCourse scheduled_courses = 2;
+  int32 total_credits = 3;
+  string error_message = 4; // error message
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+}
