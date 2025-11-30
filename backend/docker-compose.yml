@@ -4,21 +4,60 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
+    environment:
+      - PLANNER_GRPC_ADDR=planner:50051
+      - RAG_GRPC_ADDR=rag:50052
+    depends_on:
+      - planner
+      - rag
 
   rag:
     build: ./services/rag
     container_name: rag
     ports:
-      - "8081:8081"
+      - "50052:50052"
+    environment:
+      - GRPC_PORT=50052
+      - OLLAMA_HOST=http://ollama:11434
+      - EMBEDDING_MODEL=nomic-embed-text
+      - CHAT_MODEL=llama3.2
+      - COURSE_DATA_PATH=/app/data/courses.json
+      - CHROMA_PATH=/app/data/chroma
+    volumes:
+      - ./data/courses.json:/app/data/courses.json:ro
+      - rag-chroma-data:/app/data/chroma
+    depends_on:
+      ollama:
+        condition: service_healthy
 
   planner:
     build: ./services/planner
     container_name: planner
     ports:
-      - "8082:8082"
+      - "50051:50051"
+    environment:
+      - GRPC_PORT=50051
 
   auth:
     build: ./services/auth
     container_name: auth
     ports:
       - "8083:8083"
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  ollama-data:
+  rag-chroma-data:
