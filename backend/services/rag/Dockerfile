@@ -1,20 +1,25 @@
 # syntax=docker/dockerfile:1
 FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
 WORKDIR /app
 
-# 1) install deps first for better caching
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-# 2) copy the entire service (both app/ and rag/)
-COPY . /app
+# Install dependencies first (for caching)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# 3) make /app importable as a package root
-ENV PYTHONPATH=/app
+# Copy proto files and generate stubs
+COPY proto ./proto
+COPY generate_proto.py .
+RUN python generate_proto.py
 
-EXPOSE 8081
-CMD ["uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "8081"]
+# Copy application code
+COPY app ./app
+
+# Create data directory for ChromaDB persistence
+RUN mkdir -p /app/data/chroma
+
+EXPOSE 50052
+
+CMD ["python", "-m", "app.server"]

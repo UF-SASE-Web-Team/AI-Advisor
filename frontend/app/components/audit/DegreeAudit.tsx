@@ -1,4 +1,4 @@
-export default function DegreeAudit() {
+export function DegreeAudit() {
     return (
         <div>
             

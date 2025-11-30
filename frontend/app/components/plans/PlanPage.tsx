@@ -1,6 +1,6 @@
-import PlanNavigation from "./PlanNavigation";
+import {PlanNavigation} from "./PlanNavigation";
 
-export default function PlanPage() {
+export  function PlanPage() {
   return (
     <div className="min-h-screen w-full bg-[#E1EABB] flex flex-col items-start px-8 py-6">
       <PlanNavigation />

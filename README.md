@@ -70,5 +70,3 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.server:app --reload --port <service-port>
 ```
-
-This is some change

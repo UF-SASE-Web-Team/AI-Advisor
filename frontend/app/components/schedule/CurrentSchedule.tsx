@@ -1,4 +1,4 @@
-export default function CurrentSchedule() {
+export function CurrentSchedule() {
     return (
         <div>
             

@@ -113,3 +113,14 @@ def recommend(profile: ProfileReq):
         "recommended": [{"code":x["code"],"title":x["title"],"credits":x["credits"],"score":round(x["_score"],3)} for x in pick],
         "explanation": rationale
     }
+import os
+from app.grpc_server import serve
+
+
+def main():
+    port = int(os.environ.get("GRPC_PORT", "50052"))
+    serve(port=port)
+
+
+if __name__ == "__main__":
+    main()
