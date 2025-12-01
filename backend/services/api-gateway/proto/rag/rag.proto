@@ -10,6 +10,9 @@ service RAGService {
   rpc Health(HealthRequest) returns (HealthResponse);
 
   rpc GetCourseInfo(CourseInfoRequest) returns (CourseInfoResponse);
+
+  // Recommend courses based on student profile
+  rpc Recommend(RecommendRequest) returns (RecommendResponse);
 }
 
 message QueryRequest {
@@ -59,4 +62,29 @@ message HealthRequest {}
 
 message HealthResponse {
   string status = 1;
+}
+
+// Recommend request with student profile
+message RecommendRequest {
+  repeated string completed_courses = 1;  // Courses already taken (e.g., ["COP3503", "COT3100"])
+  repeated string interests = 2; // Interest keywords (e.g., ["machine learning", "databases"])
+  int32 max_credits = 3; // Maximum credits to recommend (default: 15)
+  string term = 4; // Target term (e.g., "fall", "spring")
+  string level = 5; // Student level ("undergrad" or "grad")
+}
+
+message RecommendResponse {
+  repeated RecommendedCourse courses = 1;
+  int32 total_credits = 2;
+  string explanation = 3; // LLM-generated explanation of recommendations
+  string error_message = 4;
+}
+
+message RecommendedCourse {
+  string course_code = 1;
+  string course_name = 2;
+  int32 credits = 3;
+  string description = 4;
+  float score = 5; // Recommendation score
+  string prerequisites = 6;
 }
