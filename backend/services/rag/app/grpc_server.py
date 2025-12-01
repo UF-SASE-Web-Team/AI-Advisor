@@ -93,6 +93,46 @@ class RAGServicer(rag_pb2_grpc.RAGServiceServicer):
                 error_message=str(e),
             )
 
+    def Recommend(self, request, context):
+        completed_courses = list(request.completed_courses)
+        interests = list(request.interests)
+        max_credits = request.max_credits or 15
+        term = request.term or ""
+        level = request.level or "undergrad"
+
+        logger.info(f"Recommend request - completed: {completed_courses}, interests: {interests}, max_credits: {max_credits}")
+
+        try:
+            result = self.rag_engine.recommend(
+                completed_courses=completed_courses,
+                interests=interests,
+                max_credits=max_credits,
+                term=term,
+                level=level,
+            )
+
+            courses = []
+            for course in result.get("courses", []):
+                courses.append(rag_pb2.RecommendedCourse(
+                    course_code=course.get("code", ""),
+                    course_name=course.get("name", "") or course.get("title", ""),
+                    credits=course.get("credits", 3),
+                    description=course.get("description", "")[:500],
+                    score=course.get("_score", 0.0),
+                    prerequisites=course.get("prerequisites", ""),
+                ))
+
+            return rag_pb2.RecommendResponse(
+                courses=courses,
+                total_credits=result.get("total_credits", 0),
+                explanation=result.get("explanation", ""),
+            )
+        except Exception as e:
+            logger.error(f"Error generating recommendations: {e}")
+            return rag_pb2.RecommendResponse(
+                error_message=str(e),
+            )
+
 
 def serve(port: int = 50052):
     # Get configuration from environment
