@@ -1,9 +1,6 @@
-version: "3.9"
-
 services:
   api-gateway:
-    build:
-      context: ./services/api-gateway
+    build: ./services/api-gateway
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -15,12 +12,8 @@ services:
       - rag
 
   rag:
-    build:
-      context: ./services/rag
-      dockerfile: Dockerfile
+    build: ./services/rag
     container_name: rag
-    env_file:
-      - ./services/rag/.env         # <-- HF + Supabase vars live here
     ports:
       - "50052:50052"
     environment:
@@ -38,8 +31,7 @@ services:
         condition: service_healthy
 
   planner:
-    build:
-      context: ./services/planner
+    build: ./services/planner
     container_name: planner
     ports:
       - "50051:50051"
@@ -47,8 +39,7 @@ services:
       - GRPC_PORT=50051
 
   auth:
-    build:
-      context: ./services/auth
+    build: ./services/auth
     container_name: auth
     ports:
       - "8083:8083"

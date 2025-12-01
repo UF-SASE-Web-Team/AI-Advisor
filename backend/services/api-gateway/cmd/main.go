@@ -86,6 +86,31 @@ type MeetingTime struct {
 	Room      string   `json:"room"`
 }
 
+// Recommend types
+type RecommendRequest struct {
+	CompletedCourses []string `json:"completed_courses"`
+	Interests        []string `json:"interests"`
+	MaxCredits       int      `json:"max_credits,omitempty"`
+	Term             string   `json:"term,omitempty"`
+	Level            string   `json:"level,omitempty"`
+}
+
+type RecommendResponse struct {
+	Courses      []RecommendedCourse `json:"courses"`
+	TotalCredits int                 `json:"total_credits"`
+	Explanation  string              `json:"explanation"`
+	ErrorMessage string              `json:"error_message,omitempty"`
+}
+
+type RecommendedCourse struct {
+	CourseCode    string  `json:"course_code"`
+	CourseName    string  `json:"course_name"`
+	Credits       int     `json:"credits"`
+	Description   string  `json:"description"`
+	Score         float32 `json:"score"`
+	Prerequisites string  `json:"prerequisites"`
+}
+
 var (
 	savedPref     UserPreference
 	plannerClient plannerpb.PlannerServiceClient
@@ -375,6 +400,73 @@ func main() {
 			Instructors:   resp.Instructors,
 			MeetingTimes:  meetingTimes,
 			ErrorMessage:  resp.ErrorMessage,
+		})
+	}))
+
+	// Recommend endpoint
+	http.HandleFunc("/api/rag/recommend/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		var reqBody RecommendRequest
+		err := json.NewDecoder(r.Body).Decode(&reqBody)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintln(w, "invalid request body")
+			return
+		}
+
+		maxCredits := int32(15)
+		if reqBody.MaxCredits > 0 {
+			maxCredits = int32(reqBody.MaxCredits)
+		}
+
+		level := reqBody.Level
+		if level == "" {
+			level = "undergrad"
+		}
+
+		log.Printf("Recommend request - interests: %v, completed: %v", reqBody.Interests, reqBody.CompletedCourses)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		resp, err := ragClient.Recommend(ctx, &ragpb.RecommendRequest{
+			CompletedCourses: reqBody.CompletedCourses,
+			Interests:        reqBody.Interests,
+			MaxCredits:       maxCredits,
+			Term:             reqBody.Term,
+			Level:            level,
+		})
+		if err != nil {
+			log.Printf("Failed to call RAG recommend: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(RecommendResponse{
+				ErrorMessage: "failed to contact RAG service",
+			})
+			return
+		}
+
+		courses := make([]RecommendedCourse, len(resp.Courses))
+		for i, c := range resp.Courses {
+			courses[i] = RecommendedCourse{
+				CourseCode:    c.CourseCode,
+				CourseName:    c.CourseName,
+				Credits:       int(c.Credits),
+				Description:   c.Description,
+				Score:         c.Score,
+				Prerequisites: c.Prerequisites,
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(RecommendResponse{
+			Courses:      courses,
+			TotalCredits: int(resp.TotalCredits),
+			Explanation:  resp.Explanation,
+			ErrorMessage: resp.ErrorMessage,
 		})
 	}))
 
