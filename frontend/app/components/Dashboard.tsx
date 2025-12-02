@@ -5,7 +5,7 @@ import {CurrentSchedule} from "./schedule/CurrentSchedule";
 
 export default function Dashboard() {
     return (
-        <div className="flex items-center justify-center border">
+        <div className="flex items-center justify-center">
             <PlanPage />
             <CurrentSchedule />
             <DegreeAudit />
