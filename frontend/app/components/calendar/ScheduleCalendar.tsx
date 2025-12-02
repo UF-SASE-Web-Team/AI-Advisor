@@ -21,7 +21,7 @@ interface ScheduleCourse {
     course_name: string;
     credits: number;
     course_type: string;
-    slots: CourseSlot[]; // Changed from single day/period to list
+    slots: CourseSlot[];
 }
 
 interface StatusMessage {
@@ -113,8 +113,6 @@ export function ScheduleCalendar() {
                 const rawCourses = data.scheduled_courses || [];
                 
                 // --- GROUPING LOGIC ---
-                // The server sends one entry per time slot (e.g., 3 entries for a M/W/F class).
-                // We group them by course_id so they display as one row.
                 const groupedMap = new Map<string, ScheduleCourse>();
 
                 rawCourses.forEach((c: any) => {
@@ -127,7 +125,6 @@ export function ScheduleCalendar() {
                             slots: [] 
                         });
                     }
-                    // Add this specific slot to the course
                     groupedMap.get(c.course_id)!.slots.push({
                         day: c.day,
                         period: c.period
@@ -153,108 +150,158 @@ export function ScheduleCalendar() {
     };
 
     return (
-        <div style={{ padding: "20px", maxWidth: "1000px", margin: "0 auto", fontFamily: "sans-serif" }}>
-            <style>{`
-                .grid-container { display: grid; grid-template-columns: 50px repeat(5, 1fr); gap: 4px; margin-top: 10px; }
-                .grid-header { font-weight: bold; text-align: center; padding: 8px; background: #eee; }
-                .grid-label { font-weight: bold; display: flex; align-items: center; justify-content: center; color: #555; }
-                .grid-cell { border: 1px solid #ddd; height: 35px; cursor: pointer; background-color: white; transition: 0.2s; }
-                .grid-cell:hover { background-color: #f0f8ff; }
-                .grid-cell.blacklisted { background-color: #ffcccc; border-color: #ff9999; }
-                
-                .input-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
-                .input-item { display: flex; flex-direction: column; }
-                .input-item input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; width: 80px; }
-                
-                .btn { padding: 10px 20px; margin-right: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; color: white; }
-                .btn-save { background-color: #00529b; }
-                .btn-gen { background-color: #f37021; }
-                .btn:disabled { background-color: #ccc; cursor: not-allowed; }
-                
-                .status { margin-top: 15px; padding: 10px; border-radius: 4px; }
-                .status.success { background: #d4edda; color: #155724; }
-                .status.error { background: #f8d7da; color: #721c24; }
-                .status.warning { background: #fff3cd; color: #856404; }
-
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-                th { background: #00529b; color: white; padding: 12px; text-align: left; }
-                td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
-                tr:last-child td { border-bottom: none; }
-                .slot-tag { display: inline-block; background: #eef; padding: 2px 6px; border-radius: 4px; margin: 2px; font-size: 0.9em; border: 1px solid #dde; }
-            `}</style>
-
-            <h2>Schedule Configuration</h2>
+        <div className="min-h-screen w-full bg-[#E1EABB] flex flex-col items-start px-8 py-6 font-sans">
             
-            <div className="input-group">
-                <div className="input-item"><label>Major (X)</label><input type="number" name="x" value={formData.x} onChange={handleInputChange} min={0} /></div>
-                <div className="input-item"><label>Minor (Y)</label><input type="number" name="y" value={formData.y} onChange={handleInputChange} min={0} /></div>
-                <div className="input-item"><label>Elective (Z)</label><input type="number" name="z" value={formData.z} onChange={handleInputChange} min={0} /></div>
-                <div className="input-item"><label>Min Credits</label><input type="number" name="min_credits" value={formData.min_credits} onChange={handleInputChange} min={1} /></div>
-                <div className="input-item"><label>Max Credits</label><input type="number" name="max_credits" value={formData.max_credits} onChange={handleInputChange} min={1} /></div>
-            </div>
-
-            <h3>Blacklist Times (Click to Block)</h3>
-            <div className="grid-container">
-                <div></div> 
-                {DAYS.map(d => <div key={d} className="grid-header">{d}</div>)}
-                {PERIODS.map(p => (
-                    <Fragment key={p}>
-                        <div key={`label-${p}`} className="grid-label">P{p}</div>
-                        {DAYS.map(d => (
-                            <div 
-                                key={`${d}-${p}`} 
-                                className={`grid-cell ${blacklist[d]?.includes(p) ? 'blacklisted' : ''}`}
-                                onClick={() => togglePeriod(d, p)}
-                                title={`Toggle ${d} Period ${p}`}
-                            />
+            {/* Header */}
+            <h1 className="text-[rgba(106,138,131,1)] text-4xl font-bold font-figmaHand mb-6">
+                Schedule Configuration
+            </h1>
+            
+            <div className="w-full max-w-5xl flex flex-col gap-8">
+                
+                {/* Inputs Card */}
+                <div className="bg-[#6A8A83] rounded-3xl px-8 py-6 shadow-sm">
+                    <h3 className="text-white text-xl font-bold mb-4 font-mono tracking-widest uppercase">Parameters</h3>
+                    <div className="flex gap-6 flex-wrap">
+                        {[
+                            { label: "Major (X)", name: "x" },
+                            { label: "Minor (Y)", name: "y" },
+                            { label: "Elective (Z)", name: "z" },
+                            { label: "Min Credits", name: "min_credits" },
+                            { label: "Max Credits", name: "max_credits" }
+                        ].map((field) => (
+                            <div key={field.name} className="flex flex-col gap-1">
+                                <label className="text-white text-sm opacity-90">{field.label}</label>
+                                <input 
+                                    type="number" 
+                                    name={field.name} 
+                                    value={(formData as any)[field.name]} 
+                                    onChange={handleInputChange} 
+                                    min={0}
+                                    className="p-2 w-24 rounded-xl border-2 border-[#2E3A3A] bg-[#E1EABB] text-[#2E3A3A] font-bold focus:outline-none focus:ring-2 focus:ring-white"
+                                />
+                            </div>
                         ))}
-                    </Fragment>
-                ))}
-            </div>
-            
-            <div style={{ marginTop: "20px" }}>
-                <button onClick={handleSave} className="btn btn-save">Save Preferences</button>
-                <button onClick={handleGenerate} className="btn btn-gen" disabled={loading}>
-                    {loading ? "Solving..." : "Generate Schedule"}
-                </button>
-            </div>
-
-            {status.msg && <div className={`status ${status.type}`}>{status.msg}</div>}
-
-            {schedule.length > 0 && (
-                <div>
-                    <h3>Generated Schedule ({totalCredits} Credits)</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Name</th>
-                                <th>Credits</th>
-                                <th>Type</th>
-                                <th>Meeting Times</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {schedule.map((c, i) => (
-                                <tr key={i}>
-                                    <td><strong>{c.course_id}</strong></td>
-                                    <td>{c.course_name}</td>
-                                    <td>{c.credits}</td>
-                                    <td>{c.course_type}</td>
-                                    <td>
-                                        {/* Display all slots for this course */}
-                                        {c.slots.map((s, idx) => (
-                                            <span key={idx} className="slot-tag">
-                                                {s.day} Period {s.period}
-                                            </span>
-                                        ))}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    </div>
                 </div>
-            )}
+
+                {/* Grid Card */}
+                <div className="bg-white/40 rounded-3xl p-6 shadow-sm border border-[#6A8A83]/20">
+                    <h3 className="text-[#2E3A3A] text-xl font-bold mb-4 font-figmaHand">
+                        Blacklist Times <span className="text-sm font-sans font-normal opacity-70">(Click slots to block)</span>
+                    </h3>
+                    
+                    <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-2">
+                        {/* Header Row */}
+                        <div></div> 
+                        {DAYS.map(d => (
+                            <div key={d} className="text-center font-bold text-[#2E3A3A] py-2 bg-[#6A8A83]/20 rounded-lg">
+                                {d}
+                            </div>
+                        ))}
+
+                        {/* Grid Body */}
+                        {PERIODS.map(p => (
+                            <Fragment key={p}>
+                                <div className="flex items-center justify-center font-bold text-[#6A8A83]">P{p}</div>
+                                {DAYS.map(d => {
+                                    const isBlocked = blacklist[d]?.includes(p);
+                                    return (
+                                        <div 
+                                            key={`${d}-${p}`} 
+                                            onClick={() => togglePeriod(d, p)}
+                                            className={`
+                                                h-10 rounded-lg cursor-pointer transition-all duration-200 border-2
+                                                ${isBlocked 
+                                                    ? 'bg-[#2E3A3A] border-[#2E3A3A]' 
+                                                    : 'bg-white border-transparent hover:border-[#6A8A83] hover:bg-white/80'}
+                                            `}
+                                            title={`Toggle ${d} Period ${p}`}
+                                        />
+                                    );
+                                })}
+                            </Fragment>
+                        ))}
+                    </div>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex gap-4">
+                    <button 
+                        onClick={handleSave} 
+                        className="bg-[#2E3A3A] hover:bg-[#1a2222] text-white px-6 py-3 rounded-full font-bold transition-colors shadow-sm"
+                    >
+                        Save Preferences
+                    </button>
+                    <button 
+                        onClick={handleGenerate} 
+                        disabled={loading}
+                        className={`
+                            px-6 py-3 rounded-full font-bold transition-colors shadow-sm text-white
+                            ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#6A8A83] hover:bg-[#5a7872]'}
+                        `}
+                    >
+                        {loading ? "Solving..." : "Generate Schedule"}
+                    </button>
+                </div>
+
+                {/* Status Message */}
+                {status.msg && (
+                    <div className={`p-4 rounded-xl font-bold border-2 ${
+                        status.type === 'success' ? 'bg-[#d4edda] text-[#155724] border-[#c3e6cb]' :
+                        status.type === 'error' ? 'bg-[#f8d7da] text-[#721c24] border-[#f5c6cb]' :
+                        'bg-[#fff3cd] text-[#856404] border-[#ffeeba]'
+                    }`}>
+                        {status.msg}
+                    </div>
+                )}
+
+                {/* Results Table */}
+                {schedule.length > 0 && (
+                    <div className="bg-white/60 rounded-3xl p-6 shadow-sm overflow-hidden">
+                        <div className="flex justify-between items-end mb-4 border-b-2 border-[#6A8A83] pb-2">
+                            <h3 className="text-[#2E3A3A] text-2xl font-bold font-figmaHand">Generated Schedule</h3>
+                            <span className="text-[#6A8A83] font-bold text-lg">{totalCredits} Credits</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="text-[#2E3A3A]">
+                                        <th className="p-3 font-mono tracking-wider uppercase text-sm">Code</th>
+                                        <th className="p-3 font-mono tracking-wider uppercase text-sm">Name</th>
+                                        <th className="p-3 font-mono tracking-wider uppercase text-sm">Credits</th>
+                                        <th className="p-3 font-mono tracking-wider uppercase text-sm">Type</th>
+                                        <th className="p-3 font-mono tracking-wider uppercase text-sm">Meeting Times</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-gray-700">
+                                    {schedule.map((c, i) => (
+                                        <tr key={i} className="border-b border-gray-200 hover:bg-white/50 transition-colors">
+                                            <td className="p-3 font-bold text-[#6A8A83]">{c.course_id}</td>
+                                            <td className="p-3">{c.course_name}</td>
+                                            <td className="p-3">{c.credits}</td>
+                                            <td className="p-3">
+                                                <span className="bg-[#E1EABB] text-[#2E3A3A] px-2 py-1 rounded text-xs font-bold border border-[#6A8A83]/30">
+                                                    {c.course_type}
+                                                </span>
+                                            </td>
+                                            <td className="p-3">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {c.slots.map((s, idx) => (
+                                                        <span key={idx} className="bg-[#2E3A3A] text-white px-2 py-1 rounded text-xs font-mono">
+                                                            {s.day} P{s.period}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
