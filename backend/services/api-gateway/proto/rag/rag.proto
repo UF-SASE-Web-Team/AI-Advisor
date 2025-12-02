@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 syntax = "proto3";
 
 package rag;
@@ -88,3 +89,67 @@ message RecommendedCourse {
   float score = 5; // Recommendation score
   string prerequisites = 6;
 }
+=======
+syntax = "proto3";
+
+package rag;
+
+option go_package = "github.com/UF-SASE-Web-Team/AI-Advisor/backend/services/api-gateway/proto/rag";
+
+service RAGService {
+  rpc Query(QueryRequest) returns (QueryResponse);
+
+  rpc Health(HealthRequest) returns (HealthResponse);
+
+  rpc GetCourseInfo(CourseInfoRequest) returns (CourseInfoResponse);
+}
+
+message QueryRequest {
+  string question = 1;
+  int32 max_results = 2;  // # of relevant documents to retrieve with default 5
+}
+
+message QueryResponse {
+  string answer = 1;
+  repeated SourceDocument sources = 2;
+  string error_message = 3;
+}
+
+message SourceDocument {
+  string course_code = 1;
+  string course_name = 2;
+  string content = 3;
+  float relevance_score = 4;
+}
+
+message CourseInfoRequest {
+  string course_code = 1;  // like "COP3530"
+}
+
+message CourseInfoResponse {
+  string course_code = 1;
+  string course_name = 2;
+  string description = 3;
+  string prerequisites = 4;
+  int32 credits = 5;
+  string department = 6;
+  repeated string instructors = 7;
+  repeated MeetingTime meeting_times = 8;
+  bool found = 9;
+  string error_message = 10;
+}
+
+message MeetingTime {
+  repeated string days = 1;
+  string time_begin = 2;
+  string time_end = 3;
+  string building = 4;
+  string room = 5;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+}
+>>>>>>> Stashed changes
