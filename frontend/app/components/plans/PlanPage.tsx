@@ -1,12 +1,12 @@
 import { useState } from "react";
-import PlanNavigation from "./PlanNavigation";
+import {PlanNavigation} from "./PlanNavigation";
 
 type Plan = {
   id: number;
   description: string;
 };
 
-export default function PlanPage() {
+export function PlanPage() {
   const [plans, setPlans] = useState<Plan[]>([
     { id: 1, description: "" },
     { id: 2, description: "" },
@@ -30,9 +30,7 @@ export default function PlanPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#E1EABB] px-8 py-6">
-      <PlanNavigation />
-
+    <div className="h-[900px]  bg-[#E1EABB] px-8 py-6">
       <div className="mt-6 flex justify-start">
         <div className="w-full max-w-md pl-8 pr-4 py-4">
           {/* Header */}
@@ -52,13 +50,13 @@ export default function PlanPage() {
             {plans.map((plan, index) => (
               <div
                 key={plan.id}
-                className="relative group flex items-center gap-6 bg-white rounded-3xl px-6 py-5 shadow-sm w-full transition hover:bg-[#6A8A83] hover:scale-[1.01] active:scale-[0.99]"
+                className="relative group flex items-center gap-6 bg-white rounded-3xl px-6 py-5 shadow-sm w-full transition hover:bg-[#6A8A83] hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
               >
                 {/* Delete button */}
                 <button
                   type="button"
                   onClick={() => handleDeletePlan(plan.id)}
-                  className="absolute top-3 right-4 text-lg text-[#6A8A83] opacity-70 hover:opacity-100 hover:text-red-500 transition"
+                  className="absolute top-3 right-4 text-lg text-[#6A8A83] opacity-70 hover:opacity-100 hover:text-red-500 transition cursor-pointer"
                   aria-label="Delete plan"
                 >
                   ×
@@ -90,7 +88,7 @@ export default function PlanPage() {
           <button
             type="button"
             onClick={handleAddPlan}
-            className="mt-8 w-full rounded-3xl bg-[#6A8A83] py-3 text-white text-xl font-figmaHand shadow-sm hover:bg-[#5c7972] transition"
+            className="mt-8 w-full rounded-3xl bg-[#6A8A83] py-3 text-white text-xl font-figmaHand shadow-sm hover:bg-[#5c7972] transition cursor-pointer"
           >
             + New
           </button>
