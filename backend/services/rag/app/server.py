@@ -1,7 +1,11 @@
-from fastapi import FastAPI
+import os
+from app.grpc_server import serve
 
-app = FastAPI()
 
-@app.get("/health")
-def health():
-    return "ok"
+def main():
+    port = int(os.environ.get("GRPC_PORT", "50052"))
+    serve(port=port)
+
+
+if __name__ == "__main__":
+    main()
