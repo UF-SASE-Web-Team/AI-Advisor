@@ -28,7 +28,7 @@ def get_all_courses_data():
             "name": "Operating Systems",
             "credits": 3,
             "type": "major",
-            "prereqs": ["COP3530", "CDA3101"],
+            "prereqs": [["COP3530", "CDA3101"]],
             "coreqs": [],
             "sections": [
                 {"section_id": "12345", "slots": [('M', 2), ('W', 2), ('F', 2)]},
@@ -39,7 +39,7 @@ def get_all_courses_data():
             "name": "Data Structures & Algs",
             "credits": 3,
             "type": "major",
-            "prereqs": ["COP3503", "COT3100"],
+            "prereqs": [["COP3503", "COT3100"]],
             "coreqs": [],
             "sections": [
                 {"section_id": "12347", "slots": [('M', 3), ('W', 3), ('F', 3)]},
@@ -50,7 +50,7 @@ def get_all_courses_data():
             "name": "Intro to Computer Org",
             "credits": 3,
             "type": "major",
-            "prereqs": ["COP3502"],
+            "prereqs": [["COP3502"]],
             "coreqs": [],
             "sections": [
                 {"section_id": "12349", "slots": [('M', 2), ('W', 2), ('F', 2)]},
@@ -71,7 +71,7 @@ def get_all_courses_data():
             "name": "Computational Linear Alg",
             "credits": 3,
             "type": "minor",
-            "prereqs": ["MAC2312"],
+            "prereqs": [["MAC2312"]],
             "coreqs": [], 
             "sections": [
                 {"section_id": "12351", "slots": [('M', 5), ('W', 5)]},
@@ -177,8 +177,8 @@ def filter_eligible_data(all_courses, completed_set, blacklist_set):
             }
 
         if valid_sections:
-            eligible_sections[code] = course.copy()
-            eligible_sections[code]['sections'] = valid_sections
+            eligible_courses[code] = course.copy()
+            eligible_courses[code]['sections'] = valid_sections
             
     return eligible_courses, eligible_sections
 
@@ -267,11 +267,14 @@ def solve_schedule(eligible_courses, eligible_sections, user_prefs, completed_co
         for s_id, var in s_vars.items():
             if solver.Value(var) == 1:
                 final_schedule_sections.append(s_id)
+        final_total_credits = 0
+        for s_id in final_schedule_sections:
+            code = eligible_sections[s_id]['course_code']
+            final_total_credits += eligible_courses[code]['credits']
 
-        print_schedule(final_schedule_sections, eligible_courses, eligible_sections)
+        return final_schedule_sections, final_total_credits
     else:
-        print("Try adjusting your preferences (e.g., X/Y/Z, credit limits) or blacklist.")
-
+        return None, 0
 
 def print_schedule(final_schedule_sections, eligible_courses, eligible_sections):
     print("\n--- Your Schedule ---")
