@@ -1,6 +1,6 @@
-import { useState, Fragment } from "react";
+import { useState, useEffect, Fragment } from "react";
+import { supabase } from "../../../supabase";
 
-// --- Types ---
 interface FormData {
     x: number;
     y: number;
@@ -9,13 +9,11 @@ interface FormData {
     max_credits: number;
 }
 
-// Represents a single time slot for a course
 interface CourseSlot {
     day: string;
     period: number;
 }
 
-// Represents the consolidated course with ALL its slots
 interface ScheduleCourse {
     course_id: string;
     course_name: string;
@@ -33,7 +31,7 @@ const DAYS = ["M", "T", "W", "R", "F"];
 const PERIODS = Array.from({ length: 11 }, (_, i) => i + 1);
 
 export function ScheduleCalendar() {
-    // --- State ---
+    const [user, setUser] = useState<any>(null);
     const [formData, setFormData] = useState<FormData>({
         x: 2,
         y: 1,
@@ -47,10 +45,38 @@ export function ScheduleCalendar() {
     });
 
     const [schedule, setSchedule] = useState<ScheduleCourse[]>([]);
-    const [totalCredits, setTotalCredits] = useState<number>(0);
+    const [totalCredits, setTotalCredits] = useState(0);
     const [status, setStatus] = useState<StatusMessage>({ msg: "", type: "" });
-    const [loading, setLoading] = useState<boolean>(false);
-    const [parameters, setParameters] = useState<boolean>(false);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+        return () => subscription.unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (!user) return;
+        
+        supabase.from("user_preferences").select("*").eq("user_id", user.id).single().then(({ data }) => {
+            if (data) {
+                setFormData({
+                    x: data.major_courses_required,
+                    y: data.minor_courses_required,
+                    z: data.elective_courses_required,
+                    min_credits: data.min_credits,
+                    max_credits: data.max_credits,
+                });
+                const blacklistMap: Record<string, number[]> = { M: [], T: [], W: [], R: [], F: [] };
+                data.blacklist_slots.forEach((slot: any) => {
+                    if (blacklistMap[slot.day]) blacklistMap[slot.day].push(slot.period);
+                });
+                setBlacklist(blacklistMap);
+            }
+        });
+    }, [user]);
 
     // --- Handlers ---
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,24 +103,27 @@ export function ScheduleCalendar() {
     };
 
     const handleSave = async () => {
-        setStatus({ msg: "Saving preferences...", type: "info" });
-        const payload = { ...formData, blacklisted_periods: blacklist };
-
-        try {
-            const res = await fetch("http://localhost:8080/api/userpreference/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            if (res.ok) {
-                setStatus({ msg: "Preferences saved!", type: "success" });
-            } else {
-                setStatus({ msg: "Failed to save preferences.", type: "error" });
-            }
-        } catch (err: any) {
-            setStatus({ msg: `Network Error: ${err.message}`, type: "error" });
+        if (!user) {
+            setStatus({ msg: "Please log in to save preferences.", type: "warning" });
+            return;
         }
+
+        setStatus({ msg: "Saving preferences...", type: "info" });
+        
+        const blacklistSlots = Object.entries(blacklist).flatMap(([day, periods]) =>
+            periods.map(period => ({ day, period }))
+        );
+
+        await supabase.from("user_preferences").update({
+            major_courses_required: formData.x,
+            minor_courses_required: formData.y,
+            elective_courses_required: formData.z,
+            min_credits: formData.min_credits,
+            max_credits: formData.max_credits,
+            blacklist_slots: blacklistSlots,
+        }).eq("user_id", user.id);
+
+        setStatus({ msg: "Preferences saved to your account!", type: "success" });
     };
 
     const handleGenerate = async () => {
@@ -103,6 +132,21 @@ export function ScheduleCalendar() {
         setSchedule([]);
 
         try {
+            // First, save preferences to backend for the solver
+            await fetch("http://localhost:8080/api/userpreference/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    x: formData.x,
+                    y: formData.y,
+                    z: formData.z,
+                    min_credits: formData.min_credits,
+                    max_credits: formData.max_credits,
+                    blacklisted_periods: blacklist,
+                }),
+            });
+
+            // Then call the solver
             const res = await fetch("http://localhost:8080/api/solve/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -151,19 +195,19 @@ export function ScheduleCalendar() {
     };
 
     return (
-        <div className="min-h-screen w-[900px] bg-[#E1EABB] flex flex-col items-center px-8 py-6 font-sans">
+        <div className="min-h-screen w-full bg-[#E1EABB] flex flex-col items-start px-8 py-6 font-sans">
             
             {/* Header */}
             <h1 className="text-[rgba(106,138,131,1)] text-4xl font-bold font-figmaHand mb-6">
-                Weekly Schedule
+                Schedule Configuration
             </h1>
-            <div className="w-full max-w-5xl flex flex-row gap-8">
+            
+            <div className="w-full max-w-5xl flex flex-col gap-8">
                 
                 {/* Inputs Card */}
-                {parameters &&
-                <div className="bg-[#6A8A83] rounded-3xl px-8 py-6 shadow-sm ">
+                <div className="bg-[#6A8A83] rounded-3xl px-8 py-6 shadow-sm">
                     <h3 className="text-white text-xl font-bold mb-4 font-mono tracking-widest uppercase">Parameters</h3>
-                    <div className="flex gap-6 flex-col">
+                    <div className="flex gap-6 flex-wrap">
                         {[
                             { label: "Major (X)", name: "x" },
                             { label: "Minor (Y)", name: "y" },
@@ -179,43 +223,18 @@ export function ScheduleCalendar() {
                                     value={(formData as any)[field.name]} 
                                     onChange={handleInputChange} 
                                     min={0}
-                                    max={18}
                                     className="p-2 w-24 rounded-xl border-2 border-[#2E3A3A] bg-[#E1EABB] text-[#2E3A3A] font-bold focus:outline-none focus:ring-2 focus:ring-white"
                                 />
                             </div>
                         ))}
-                    <button 
-                        onClick={handleSave} 
-                        className="bg-[#2E3A3A] hover:bg-[#1a2222] text-white px-6 py-3 rounded-full font-bold transition-colors shadow-sm"
-                    >
-                        Save Preferences
-                    </button>
-                    <button 
-                        onClick={handleGenerate} 
-                        disabled={loading}
-                        className={`
-                            px-6 py-3 rounded-full font-bold transition-colors shadow-sm text-white
-                            ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#6A8A83] hover:bg-[#5a7872]'}
-                        `}
-                    >
-                        {loading ? "Solving..." : "Generate Schedule"}
-                    </button>
-
                     </div>
-            </div>
-            }
-
+                </div>
 
                 {/* Grid Card */}
-                <div className="bg-white/40 rounded-3xl p-6 shadow-sm border border-[#6A8A83]/20 min-w-[500px] w-full">
-                <div className="flex justify-between">
+                <div className="bg-white/40 rounded-3xl p-6 shadow-sm border border-[#6A8A83]/20">
                     <h3 className="text-[#2E3A3A] text-xl font-bold mb-4 font-figmaHand">
                         Blacklist Times <span className="text-sm font-sans font-normal opacity-70">(Click slots to block)</span>
                     </h3>
-                    <button className="text-[rgba(106,138,131,1)] font-figmaHand text-l" type="button" onClick={() => setParameters(!parameters)}>
-                        {parameters ? "Hide Parameters" : "Show Parameters"}
-                    </button>
-                </div>
                     
                     <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-2">
                         {/* Header Row */}
@@ -237,7 +256,7 @@ export function ScheduleCalendar() {
                                             key={`${d}-${p}`} 
                                             onClick={() => togglePeriod(d, p)}
                                             className={`
-                                                h-8 rounded-lg cursor-pointer transition-all duration-200 border-2
+                                                h-10 rounded-lg cursor-pointer transition-all duration-200 border-2
                                                 ${isBlocked 
                                                     ? 'bg-[#2E3A3A] border-[#2E3A3A]' 
                                                     : 'bg-white border-transparent hover:border-[#6A8A83] hover:bg-white/80'}
@@ -250,8 +269,26 @@ export function ScheduleCalendar() {
                         ))}
                     </div>
                 </div>
-            </div>
              
+                {/* Actions */}
+                <div className="flex gap-4">
+                    <button 
+                        onClick={handleSave} 
+                        className="bg-[#2E3A3A] hover:bg-[#1a2222] text-white px-6 py-3 rounded-full font-bold transition-colors shadow-sm"
+                    >
+                        Save Preferences
+                    </button>
+                    <button 
+                        onClick={handleGenerate} 
+                        disabled={loading}
+                        className={`
+                            px-6 py-3 rounded-full font-bold transition-colors shadow-sm text-white
+                            ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#6A8A83] hover:bg-[#5a7872]'}
+                        `}
+                    >
+                        {loading ? "Solving..." : "Generate Schedule"}
+                    </button>
+                </div>
 
                 {/* Status Message */}
                 {status.msg && (
@@ -266,10 +303,47 @@ export function ScheduleCalendar() {
 
                 {/* Results Table */}
                 {schedule.length > 0 && (
-                    <div className="bg-white/60 rounded-3xl p-6 shadow-sm overflow-hidden mt-4">
-                        <div className="flex justify-between items-end mb-4 border-b-2 border-[#6A8A83] pb-2">
+                    <div className="bg-white/60 rounded-3xl p-6 shadow-sm overflow-hidden">
+                        <div className="flex justify-between items-center mb-4 border-b-2 border-[#6A8A83] pb-2">
                             <h3 className="text-[#2E3A3A] text-2xl font-bold font-figmaHand">Generated Schedule</h3>
-                            <span className="text-[#6A8A83] font-bold text-lg">{totalCredits} Credits</span>
+                            <div className="flex items-center gap-4">
+                                <span className="text-[#6A8A83] font-bold text-lg">{totalCredits} Credits</span>
+                                {user && (
+                                    <button
+                                        onClick={async () => {
+                                            const planName = prompt("Enter a name for this plan:", `Schedule ${new Date().toLocaleDateString()}`);
+                                            if (!planName) return;
+
+                                            setStatus({ msg: "Saving schedule as plan...", type: "info" });
+
+                                            const { data } = await supabase.from("user_plans").insert({
+                                                user_id: user.id,
+                                                name: planName,
+                                                description: `Generated with ${schedule.length} courses`,
+                                                plan_data: {
+                                                    semesters: [{
+                                                        term: "Generated Schedule",
+                                                        courses: schedule.map(c => ({
+                                                            courseCode: c.course_id,
+                                                            sectionId: "generated",
+                                                            name: c.course_name,
+                                                            credits: c.credits,
+                                                            type: c.course_type,
+                                                            slots: c.slots
+                                                        }))
+                                                    }]
+                                                },
+                                                total_credits: totalCredits,
+                                            }).select().single();
+
+                                            if (data) setStatus({ msg: "Schedule saved to your plans!", type: "success" });
+                                        }}
+                                        className="bg-[#6A8A83] hover:bg-[#5a7872] text-white px-4 py-2 rounded-full font-bold text-sm transition-colors shadow-sm"
+                                    >
+                                        💾 Save as Plan
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
