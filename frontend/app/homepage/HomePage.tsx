@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import Dashboard from "~/components/Dashboard";
+import NavigationBar from "~/components/navigation/NavigationBar";
+import { API_URL } from "~/config";
 
 export default function HomePage() {
   const [chatbotInput, setChatbotInput] = useState("");
@@ -16,7 +18,7 @@ export default function HomePage() {
     if (!chatbotInput.trim()) return;
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/rag/query/", {
+      const response = await fetch(`${API_URL}/api/rag/query/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: chatbotInput, max_results: 5 }),
@@ -42,7 +44,15 @@ export default function HomePage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="w-full h-36 bg-slate-500 shadow-[0px_10px_10px_0px_rgba(0,0,0,0.25)] pl-5 pr-5 flex gap-4 items-center justify-between">
+      {/* Header with two rows */}
+      <div className="w-full bg-slate-500 shadow-[0px_10px_10px_0px_rgba(0,0,0,0.25)]">
+        {/* Top row: Navigation/Login */}
+        <div className="w-full flex justify-end">
+          <NavigationBar />
+        </div>
+
+        {/* Bottom row: AI Input and Chat */}
+        <div className="w-full pl-5 pr-5 pb-4 flex gap-4 items-center justify-between">
         <form
           className="flex-1 flex items-center gap-4"
           onSubmit={handleSubmit}
@@ -123,6 +133,7 @@ export default function HomePage() {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
 
