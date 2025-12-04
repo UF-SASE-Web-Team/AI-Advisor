@@ -1,7 +1,9 @@
 import logging
+import os
 import chromadb
 from chromadb.config import Settings
 import ollama
+from openai import OpenAI
 
 from app.course_loader import Course
 
@@ -14,10 +16,22 @@ class VectorStore:
         ollama_host: str = "http://localhost:11434",
         embedding_model: str = "nomic-embed-text",
         persist_directory: str = "/app/data/chroma",
+        embedding_provider: str = "ollama",  # "ollama" or "openai"
+        openai_api_key: str | None = None,
     ):
-        self.ollama_host = ollama_host
         self.embedding_model = embedding_model
-        self.ollama_client = ollama.Client(host=ollama_host)
+        self.embedding_provider = embedding_provider.lower()
+
+        if self.embedding_provider == "openai":
+            api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY is required when using OpenAI embeddings")
+            self.openai_client = OpenAI(api_key=api_key)
+            logger.info(f"Using OpenAI embeddings with model: {embedding_model}")
+        else:
+            self.ollama_host = ollama_host
+            self.ollama_client = ollama.Client(host=ollama_host)
+            logger.info(f"Using Ollama embeddings with model: {embedding_model}")
 
         # Initialize ChromaDB with persistence
         self.chroma_client = chromadb.Client(Settings(
@@ -26,20 +40,29 @@ class VectorStore:
             is_persistent=True,
         ))
 
+        # Use different collection names for different embedding providers
+        # (embeddings from different models are not compatible)
+        collection_name = f"courses_{self.embedding_provider}"
         self.collection = self.chroma_client.get_or_create_collection(
-            name="courses",
+            name=collection_name,
             metadata={"hnsw:space": "cosine"}
         )
 
-        logger.info(f"Vector store initialized with {self.collection.count()} documents")
+        logger.info(f"Vector store initialized with {self.collection.count()} documents in '{collection_name}'")
 
     def _get_embedding(self, text: str) -> list[float]:
-        # Get embedding with Ollama
-        response = self.ollama_client.embed(
-            model=self.embedding_model,
-            input=text
-        )
-        return response['embeddings'][0]
+        if self.embedding_provider == "openai":
+            response = self.openai_client.embeddings.create(
+                model=self.embedding_model,
+                input=text
+            )
+            return response.data[0].embedding
+        else:
+            response = self.ollama_client.embed(
+                model=self.embedding_model,
+                input=text
+            )
+            return response['embeddings'][0]
 
     def add_courses(self, courses: list[Course]) -> int:
         # adding the courser to vector store
