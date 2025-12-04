@@ -47,10 +47,6 @@ export function ScheduleCalendar() {
     const [schedule, setSchedule] = useState<ScheduleCourse[]>([]);
     const [totalCredits, setTotalCredits] = useState(0);
     const [status, setStatus] = useState<StatusMessage>({ msg: "", type: "" });
-<<<<<<< HEAD
-    const [loading, setLoading] = useState<boolean>(false);
-    const [parameters, setParameters] = useState<boolean>(false);
-=======
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -81,7 +77,6 @@ export function ScheduleCalendar() {
             }
         });
     }, [user]);
->>>>>>> b2411b9 (user schedule and preferences persist in supabase)
 
     // --- Handlers ---
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,18 +195,19 @@ export function ScheduleCalendar() {
     };
 
     return (
-        <div className="min-h-screen w-[900px] bg-[#E1EABB] flex flex-col items-center px-8 py-6 font-sans">
+        <div className="min-h-screen w-full bg-[#E1EABB] flex flex-col items-start px-8 py-6 font-sans">
             
             {/* Header */}
             <h1 className="text-[rgba(106,138,131,1)] text-4xl font-bold font-figmaHand mb-6">
-                Weekly Schedule
+                Schedule Configuration
             </h1>
-            <div className="w-full max-w-5xl flex flex-row gap-8">
+            
+            <div className="w-full max-w-5xl flex flex-col gap-8">
                 
                 {/* Inputs Card */}
-                <div className="bg-[#6A8A83] rounded-3xl px-8 py-6 shadow-sm ">
+                <div className="bg-[#6A8A83] rounded-3xl px-8 py-6 shadow-sm">
                     <h3 className="text-white text-xl font-bold mb-4 font-mono tracking-widest uppercase">Parameters</h3>
-                    <div className="flex gap-6 flex-col">
+                    <div className="flex gap-6 flex-wrap">
                         {[
                             { label: "Major (X)", name: "x" },
                             { label: "Minor (Y)", name: "y" },
@@ -227,42 +223,18 @@ export function ScheduleCalendar() {
                                     value={(formData as any)[field.name]} 
                                     onChange={handleInputChange} 
                                     min={0}
-                                    max={18}
                                     className="p-2 w-24 rounded-xl border-2 border-[#2E3A3A] bg-[#E1EABB] text-[#2E3A3A] font-bold focus:outline-none focus:ring-2 focus:ring-white"
                                 />
                             </div>
                         ))}
-                    <button 
-                        onClick={handleSave} 
-                        className="bg-[#2E3A3A] hover:bg-[#1a2222] text-white px-6 py-3 rounded-full font-bold transition-colors shadow-sm"
-                    >
-                        Save Preferences
-                    </button>
-                    <button 
-                        onClick={handleGenerate} 
-                        disabled={loading}
-                        className={`
-                            px-6 py-3 rounded-full font-bold transition-colors shadow-sm text-white
-                            ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#6A8A83] hover:bg-[#5a7872]'}
-                        `}
-                    >
-                        {loading ? "Solving..." : "Generate Schedule"}
-                    </button>
-
                     </div>
-            </div>
-
+                </div>
 
                 {/* Grid Card */}
-                <div className="bg-white/40 rounded-3xl p-6 shadow-sm border border-[#6A8A83]/20 min-w-[500px]">
-                <div className="flex justify-between">
+                <div className="bg-white/40 rounded-3xl p-6 shadow-sm border border-[#6A8A83]/20">
                     <h3 className="text-[#2E3A3A] text-xl font-bold mb-4 font-figmaHand">
                         Blacklist Times <span className="text-sm font-sans font-normal opacity-70">(Click slots to block)</span>
                     </h3>
-                    <button type="button" onClick={() => setParameters(!parameters)}>
-                        {parameters ? "Hide Parameters" : "Show Parameters"}
-                    </button>
-                </div>
                     
                     <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-2">
                         {/* Header Row */}
@@ -284,7 +256,7 @@ export function ScheduleCalendar() {
                                             key={`${d}-${p}`} 
                                             onClick={() => togglePeriod(d, p)}
                                             className={`
-                                                h-8 rounded-lg cursor-pointer transition-all duration-200 border-2
+                                                h-10 rounded-lg cursor-pointer transition-all duration-200 border-2
                                                 ${isBlocked 
                                                     ? 'bg-[#2E3A3A] border-[#2E3A3A]' 
                                                     : 'bg-white border-transparent hover:border-[#6A8A83] hover:bg-white/80'}
@@ -298,7 +270,25 @@ export function ScheduleCalendar() {
                     </div>
                 </div>
                 
-                
+                {/* Actions */}
+                <div className="flex gap-4">
+                    <button 
+                        onClick={handleSave} 
+                        className="bg-[#2E3A3A] hover:bg-[#1a2222] text-white px-6 py-3 rounded-full font-bold transition-colors shadow-sm"
+                    >
+                        Save Preferences
+                    </button>
+                    <button 
+                        onClick={handleGenerate} 
+                        disabled={loading}
+                        className={`
+                            px-6 py-3 rounded-full font-bold transition-colors shadow-sm text-white
+                            ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#6A8A83] hover:bg-[#5a7872]'}
+                        `}
+                    >
+                        {loading ? "Solving..." : "Generate Schedule"}
+                    </button>
+                </div>
 
                 {/* Status Message */}
                 {status.msg && (
