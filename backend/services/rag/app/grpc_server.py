@@ -141,7 +141,12 @@ def serve(port: int = 50052):
     chat_model = os.environ.get("CHAT_MODEL", "llama3.2")
     course_data_path = os.environ.get("COURSE_DATA_PATH", "/app/data/courses.json")
     chroma_path = os.environ.get("CHROMA_PATH", "/app/data/chroma")
+    llm_provider = os.environ.get("LLM_PROVIDER", "ollama")  # "ollama" or "openai"
+    embedding_provider = os.environ.get("EMBEDDING_PROVIDER", "ollama")  # "ollama" or "openai"
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
 
+    logger.info(f"LLM provider: {llm_provider}")
+    logger.info(f"Embedding provider: {embedding_provider}")
     logger.info(f"Ollama host: {ollama_host}")
     logger.info(f"Embedding model: {embedding_model}")
     logger.info(f"Chat model: {chat_model}")
@@ -163,6 +168,8 @@ def serve(port: int = 50052):
         ollama_host=ollama_host,
         embedding_model=embedding_model,
         persist_directory=chroma_path,
+        embedding_provider=embedding_provider,
+        openai_api_key=openai_api_key,
     )
 
     # Add courses to vector store
@@ -175,6 +182,8 @@ def serve(port: int = 50052):
         courses=courses,
         ollama_host=ollama_host,
         chat_model=chat_model,
+        llm_provider=llm_provider,
+        openai_api_key=openai_api_key,
     )
 
     # Start gRPC server
