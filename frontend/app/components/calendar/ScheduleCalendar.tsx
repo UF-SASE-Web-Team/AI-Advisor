@@ -269,7 +269,7 @@ export function ScheduleCalendar() {
                         ))}
                     </div>
                 </div>
-                
+             
                 {/* Actions */}
                 <div className="flex gap-4">
                     <button 
@@ -292,7 +292,7 @@ export function ScheduleCalendar() {
 
                 {/* Status Message */}
                 {status.msg && (
-                    <div className={`p-4 rounded-xl font-bold border-2 ${
+                    <div className={`p-4 rounded-xl font-bold border-2  mt-4 ${
                         status.type === 'success' ? 'bg-[#d4edda] text-[#155724] border-[#c3e6cb]' :
                         status.type === 'error' ? 'bg-[#f8d7da] text-[#721c24] border-[#f5c6cb]' :
                         'bg-[#fff3cd] text-[#856404] border-[#ffeeba]'
@@ -383,7 +383,6 @@ export function ScheduleCalendar() {
                         </div>
                     </div>
                 )}
-            </div>
         </div>
     );
 }
