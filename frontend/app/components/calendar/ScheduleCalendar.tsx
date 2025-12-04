@@ -1,5 +1,6 @@
 import { useState, useEffect, Fragment } from "react";
 import { supabase } from "../../../supabase";
+import { API_URL } from "~/config";
 
 interface FormData {
     x: number;
@@ -133,7 +134,7 @@ export function ScheduleCalendar() {
 
         try {
             // First, save preferences to backend for the solver
-            await fetch("http://localhost:8080/api/userpreference/", {
+            await fetch(`${API_URL}/api/userpreference/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -147,7 +148,7 @@ export function ScheduleCalendar() {
             });
 
             // Then call the solver
-            const res = await fetch("http://localhost:8080/api/solve/", {
+            const res = await fetch(`${API_URL}/api/solve/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
             });
@@ -383,6 +384,7 @@ export function ScheduleCalendar() {
                         </div>
                     </div>
                 )}
+            </div>
         </div>
     );
 }
