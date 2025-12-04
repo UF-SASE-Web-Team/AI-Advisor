@@ -26,6 +26,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        <title>AI Advisor</title>
+        <link rel="icon" type="image/png" href="/ai_advisor_icon_temp.png" />
         <Links />
       </head>
       <body className="bg-white">

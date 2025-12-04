@@ -14,7 +14,7 @@ service RAGService {
 
 message QueryRequest {
   string question = 1;
-  int32 max_results = 2;  // # of relevant documents to retrieve with default 5
+  int32 max_results = 2;
 }
 
 message QueryResponse {
@@ -31,7 +31,7 @@ message SourceDocument {
 }
 
 message CourseInfoRequest {
-  string course_code = 1;  // like "COP3530"
+  string course_code = 1;
 }
 
 message CourseInfoResponse {

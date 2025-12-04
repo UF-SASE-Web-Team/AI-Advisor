@@ -182,7 +182,7 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "saved"})
 	}))
 
-	// planner solve
+	// Planner solve endpoint
 	http.HandleFunc("/api/solve/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -246,7 +246,7 @@ func main() {
 		json.NewEncoder(w).Encode(jsonResp)
 	}))
 
-	// RAG query
+	// RAG query endpoint
 	http.HandleFunc("/api/rag/query/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -310,7 +310,7 @@ func main() {
 		})
 	}))
 
-	// course info
+	// Course info endpoint
 	http.HandleFunc("/api/rag/course/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
