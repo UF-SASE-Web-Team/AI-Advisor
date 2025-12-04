@@ -22,10 +22,8 @@ export default function HomePage() {
         body: JSON.stringify({ question: chatbotInput, max_results: 5 }),
       });
       const data = await response.json();
-      const newMessages: string[] = Array.isArray(data)
-        ? data.map((d: any) => (typeof d === "string" ? d : JSON.stringify(d)))
-        : [typeof data === "string" ? data : JSON.stringify(data)];
-      setMessages((prev) => [...newMessages, ...prev]);
+      const newMessage = data.answer;
+      setMessages((prev) => [newMessage, ...prev]);
       setIsChatOpen(true);
       setChatbotInput("");
     } catch (error) {

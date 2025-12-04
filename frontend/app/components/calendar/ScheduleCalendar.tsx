@@ -160,6 +160,7 @@ export function ScheduleCalendar() {
             <div className="w-full max-w-5xl flex flex-row gap-8">
                 
                 {/* Inputs Card */}
+                {parameters &&
                 <div className="bg-[#6A8A83] rounded-3xl px-8 py-6 shadow-sm ">
                     <h3 className="text-white text-xl font-bold mb-4 font-mono tracking-widest uppercase">Parameters</h3>
                     <div className="flex gap-6 flex-col">
@@ -202,15 +203,16 @@ export function ScheduleCalendar() {
 
                     </div>
             </div>
+            }
 
 
                 {/* Grid Card */}
-                <div className="bg-white/40 rounded-3xl p-6 shadow-sm border border-[#6A8A83]/20 min-w-[500px]">
+                <div className="bg-white/40 rounded-3xl p-6 shadow-sm border border-[#6A8A83]/20 min-w-[500px] w-full">
                 <div className="flex justify-between">
                     <h3 className="text-[#2E3A3A] text-xl font-bold mb-4 font-figmaHand">
                         Blacklist Times <span className="text-sm font-sans font-normal opacity-70">(Click slots to block)</span>
                     </h3>
-                    <button type="button" onClick={() => setParameters(!parameters)}>
+                    <button className="text-[rgba(106,138,131,1)] font-figmaHand text-l" type="button" onClick={() => setParameters(!parameters)}>
                         {parameters ? "Hide Parameters" : "Show Parameters"}
                     </button>
                 </div>
@@ -248,12 +250,12 @@ export function ScheduleCalendar() {
                         ))}
                     </div>
                 </div>
-                
-                
+            </div>
+             
 
                 {/* Status Message */}
                 {status.msg && (
-                    <div className={`p-4 rounded-xl font-bold border-2 ${
+                    <div className={`p-4 rounded-xl font-bold border-2  mt-4 ${
                         status.type === 'success' ? 'bg-[#d4edda] text-[#155724] border-[#c3e6cb]' :
                         status.type === 'error' ? 'bg-[#f8d7da] text-[#721c24] border-[#f5c6cb]' :
                         'bg-[#fff3cd] text-[#856404] border-[#ffeeba]'
@@ -264,7 +266,7 @@ export function ScheduleCalendar() {
 
                 {/* Results Table */}
                 {schedule.length > 0 && (
-                    <div className="bg-white/60 rounded-3xl p-6 shadow-sm overflow-hidden">
+                    <div className="bg-white/60 rounded-3xl p-6 shadow-sm overflow-hidden mt-4">
                         <div className="flex justify-between items-end mb-4 border-b-2 border-[#6A8A83] pb-2">
                             <h3 className="text-[#2E3A3A] text-2xl font-bold font-figmaHand">Generated Schedule</h3>
                             <span className="text-[#6A8A83] font-bold text-lg">{totalCredits} Credits</span>
@@ -307,7 +309,6 @@ export function ScheduleCalendar() {
                         </div>
                     </div>
                 )}
-            </div>
         </div>
     );
 }
