@@ -1,5 +1,7 @@
 import logging
+import os
 import ollama
+from openai import OpenAI
 
 from app.vector_store import VectorStore
 from app.course_loader import Course, get_course_by_code
@@ -22,12 +24,45 @@ class RAGEngine:
         courses: list[Course],
         ollama_host: str = "http://localhost:11434",
         chat_model: str = "llama3.2",
+        llm_provider: str = "ollama",  # "ollama" or "openai"
+        openai_api_key: str | None = None,
     ):
         self.vector_store = vector_store
         self.courses = courses
-        self.ollama_host = ollama_host
         self.chat_model = chat_model
-        self.ollama_client = ollama.Client(host=ollama_host)
+        self.llm_provider = llm_provider.lower()
+
+        if self.llm_provider == "openai":
+            api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY is required when using OpenAI provider")
+            self.openai_client = OpenAI(api_key=api_key)
+            logger.info(f"Using OpenAI with model: {chat_model}")
+        else:
+            self.ollama_host = ollama_host
+            self.ollama_client = ollama.Client(host=ollama_host)
+            logger.info(f"Using Ollama with model: {chat_model}")
+
+    def _chat(self, system_prompt: str, user_prompt: str) -> str:
+        """Unified chat method that works with both Ollama and OpenAI."""
+        if self.llm_provider == "openai":
+            response = self.openai_client.chat.completions.create(
+                model=self.chat_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            )
+            return response.choices[0].message.content
+        else:
+            response = self.ollama_client.chat(
+                model=self.chat_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            )
+            return response['message']['content']
 
     def query(self, question: str, max_results: int = 5) -> dict:
         # Search for relevant courses
@@ -56,18 +91,11 @@ Question: {question}
 
 Answer:"""
 
-        # Call Ollama
+        # Call LLM (Ollama or OpenAI)
         try:
-            response = self.ollama_client.chat(
-                model=self.chat_model,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-            )
-            answer = response['message']['content']
+            answer = self._chat(SYSTEM_PROMPT, user_prompt)
         except Exception as e:
-            logger.error(f"Error calling Ollama: {e}")
+            logger.error(f"Error calling LLM: {e}")
             return {
                 "answer": f"Error generating response: {str(e)}",
                 "sources": search_results,
@@ -173,14 +201,7 @@ Recommended courses:
 Provide a brief (2-3 sentences) explanation of why these courses are a good fit:"""
 
         try:
-            response = self.ollama_client.chat(
-                model=self.chat_model,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt},
-                ],
-            )
-            return response['message']['content']
+            return self._chat(SYSTEM_PROMPT, prompt)
         except Exception as e:
             logger.error(f"Error generating explanation: {e}")
             return "These courses were selected based on your interests and completed prerequisites."
