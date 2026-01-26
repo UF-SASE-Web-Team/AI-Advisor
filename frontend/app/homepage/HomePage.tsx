@@ -79,10 +79,15 @@ export default function HomePage() {
             type="button"
             onClick={toggleChat}
             aria-expanded={isChatOpen}
-            className="w-24 h-24 rounded-full bg-lime-100 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-lime-100 flex items-center justify-center text-black"
+            aria-label="Open chat history"
+            className="w-24 h-24 rounded-full bg-lime-100 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-lime-100 flex items-center justify-center hover:scale-105 transition-transform duration-200"
             title="Open chat panel"
           >
-            Chat
+            <img 
+              src="/chatbot-icon.png" 
+              alt="Chatbot" 
+              className="w-16 h-16"
+            />
           </button>
 
           {isChatOpen && (
