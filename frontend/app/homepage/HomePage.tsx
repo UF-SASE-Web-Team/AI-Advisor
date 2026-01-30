@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Dashboard from "~/components/Dashboard";
-import NavigationBar from "~/components/navigation/NavigationBar";
+import ChatBotBar from "~/components/navigation/ChatBot";
+import DraggableButton from "~/components/navigation/NavigationBar";
 import { API_URL } from "~/config";
 
 export default function HomePage() {
@@ -46,9 +47,9 @@ export default function HomePage() {
     <div className="bg-white min-h-screen">
       {/* Header with two rows */}
       <div className="w-full bg-slate-500 shadow-[0px_10px_10px_0px_rgba(0,0,0,0.25)]">
-        {/* Top row: Navigation/Login */}
+        {/* Top row: Chat Bot/Login */}
         <div className="w-full flex justify-end">
-          <NavigationBar />
+          <ChatBotBar />
         </div>
 
         {/* Bottom row: AI Input and Chat */}
@@ -136,7 +137,10 @@ export default function HomePage() {
         </div>
         </div>
       </div>
-
+      
+        <div className="navButton">
+          <DraggableButton />
+        </div>
       <Dashboard />
     </div>
   );

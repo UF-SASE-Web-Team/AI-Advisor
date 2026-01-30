@@ -1,103 +1,83 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../supabase";
-import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
-interface UserInfo {
-  full_name: string;
-  avatar_url?: string;
-}
-
-export default function NavigationBar() {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    fetchUser();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin, // redirect
-      },
-    });
-    if (error) console.error("Google sign-in error:", error.message);
-  };
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
-
-  const metadata: UserInfo = {
-    full_name: user?.user_metadata?.full_name || user?.email || "Guest",
-    avatar_url: user?.user_metadata?.avatar_url,
-  };
-
-  const buttonStyle = {
+const buttonStyle = {
     padding: "8px 16px",
+    height: "85px",
+    width: "85px",
     cursor: "pointer",
-    borderRadius: "6px",
-    border: "none",
-    background: "rgba(106,138,131,1)",
+    borderRadius: "50px",
+    border: "white",
+    background: "rgb(184, 217, 183)",
     color: "white",
     fontWeight: 500,
-  };
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        alignItems: "center",
-        gap: "12px",
-        padding: "12px",
-      }}
-    >
-      {!user ? (
-        <button
-          onClick={loginWithGoogle}
-          title="Login with your Google account"
-          style={buttonStyle}
-        >
-          Login with Google
-        </button>
-      ) : (
-        <>
-          <img
-            src={metadata.avatar_url || "/default-avatar.png"}
-            alt="avatar"
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              border: "1px solid #ccc",
-            }}
-          />
-          <span style={{ color: "white" }}>{metadata.full_name}</span>
-          <button
-            onClick={logout}
-            title="Sign out"
-            style={buttonStyle}
-          >
-            Logout
-          </button>
-        </>
-      )}
-    </div>
-  );
+    position: "absolute" as "absolute",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
 }
+
+/* To make a draggable button */
+interface Position {
+    x: number;
+    y: number;
+}
+
+/* Implement the draggeable button */
+const DraggableButton: React.FC = () => {
+    const [position, setPosition] = useState<Position>({x: 100, y: 100});
+    const [isDragging, setIsDragging] = useState(false);
+    const [offset, setOffset] = useState<Position>({x: 0, y: 0});
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setIsDragging(true);
+        setOffset({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y
+        });
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+        if (isDragging) {
+            setPosition({
+                x: e.clientX - offset.x,
+                y: e.clientY - offset.y,
+            });
+        }
+    };
+
+    const toggleDropdown = () => {
+        setIsDropdownOpen((lastState) => !lastState);
+    };
+
+    useEffect(() => {
+        window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("mouseup", handleMouseUp);
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+        };
+    });
+
+    return (
+        <div style={{position: "relative"}}>
+            <div style={{
+                ...buttonStyle,
+                left: position.x,
+                top: position.y
+            }}
+                onMouseDown={handleMouseDown}
+                onClick={toggleDropdown}>
+                    Menu
+                </div>
+        </div>
+    )
+}
+
+export default DraggableButton;
+
