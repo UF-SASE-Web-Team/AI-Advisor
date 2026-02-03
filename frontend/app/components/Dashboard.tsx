@@ -9,8 +9,8 @@ export default function Dashboard() {
       <div className="flex flex-1 gap-4 p-4">
         <PlanPage />
         <CurrentSchedule />
-        <DegreeAudit />
         <ScheduleCalendar />
+        <DegreeAudit />
       </div>
     </div>
   );
