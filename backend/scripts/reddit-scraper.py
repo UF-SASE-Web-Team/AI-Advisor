@@ -3,22 +3,20 @@ from bs4 import BeautifulSoup
 import json
 import os
 
-SEARCH_URL_BASE = "https://old.reddit.com/r/ufl/search?q=professor&restrict_sr=on&sort=relevance&t=all"
 HEADERS = {'User-Agent': 'ProfScraper/1.0'}
 nextPageStem = "&count=25&after=t3_"
-profJson = "professors.json"
 
 
-def redditScrape(count):
-
+def redditScrape(searchTerm, fileName, count):
+    SEARCH_URL_BASE = f"https://old.reddit.com/r/ufl/search?q={searchTerm}&restrict_sr=on&sort=relevance&t=all"
     SEARCHING_URL = SEARCH_URL_BASE
-    if os.path.exists(profJson):
-        with open(profJson, 'r') as f:
+    if os.path.exists(fileName):
+        with open(fileName, 'r') as f:
             db = json.load(f)
         print(f"{len(db)} entries")
     else:
         db = {}
-        print("making professors.json")
+        print(f"making {fileName}")
     count = len(db)
     while (len(db) < 400):
         scrapePage(db, SEARCHING_URL)
@@ -33,13 +31,12 @@ def scrapePage(db, SEARCHING_URL):
         response = requests.get(SEARCHING_URL, headers=HEADERS)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-
         items = soup.find_all('div', class_='search-result-link')
 
         for item in items:
             postId = item.get('data-fullname')
-
-            if postId in db:
+            truncPostId = postId[3:]
+            if truncPostId in db:
                 continue
 
             titleLink = item.find('a', class_='search-title')
@@ -52,13 +49,12 @@ def scrapePage(db, SEARCHING_URL):
             if url.startswith('/r/'):
                 url = f"https://old.reddit.com{url}"
 
-            db[postId[3:]] = {
-                "postId": postId[3:],
+            db[truncPostId] = {
                 "title": title,
                 "url": url,
             }
 
-        with open(profJson, 'w') as f:
+        with open(fileName, 'w') as f:
             json.dump(db, f, indent=4)
 
         print(
@@ -69,4 +65,6 @@ def scrapePage(db, SEARCHING_URL):
 
 
 if __name__ == "__main__":
-    redditScrape(25)
+    searchTerm = input("Type in a search term: ")
+    fileName = input("Type name of json file (add .json to end): ")
+    redditScrape(searchTerm, fileName, 25)
