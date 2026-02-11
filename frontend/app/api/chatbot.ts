@@ -1,7 +1,7 @@
 import { API_URL } from "~/config";
 import { type FormData } from "../components/calendar/ScheduleCalendar";
 
-export const setPreference = async (
+export const setSolverPreference = async (
   formData: FormData,
   blacklist: Record<string, number[]>,
 ) => {
@@ -17,4 +17,11 @@ export const setPreference = async (
       blacklisted_periods: blacklist,
     }),
   });
+};
+
+export const Solver = async () => {
+  return await fetch(`${API_URL}/api/solve/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+  }).then(result => result.json());
 };
