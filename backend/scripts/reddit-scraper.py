@@ -6,7 +6,7 @@ import time
 from urllib.parse import quote
 
 HEADERS = {'User-Agent': 'UFProfSearchBot/1.0'}
-profSearchFile = "profSearch.json"
+postDataFile = "postData.json"
 profListFile = "profList.json"
 
 
@@ -34,8 +34,8 @@ def getProfessors():
 
 
 def getProfPosts():
-    if os.path.exists(profSearchFile):
-        with open(profSearchFile, 'r') as f:
+    if os.path.exists(postDataFile):
+        with open(postDataFile, 'r') as f:
             db = json.load(f)
     else:
         db = {}
@@ -91,7 +91,7 @@ def scrapePage(db, searchingURL, prof_name):
                         "url": title_link['href'] if not title_link['href'].startswith('/r/') else f"https://old.reddit.com{title_link['href']}"
                     }
 
-        with open(profSearchFile, 'w') as f:
+        with open(postDataFile, 'w') as f:
             json.dump(db, f, indent=4)
 
         return found_ids
@@ -102,26 +102,20 @@ def scrapePage(db, searchingURL, prof_name):
 
 
 def getPostData():
-    outputFile = "profPostData.json"
-    if not os.path.exists(profSearchFile):
-        print(f"{profSearchFile} not found")
+    # Merge post text and comments into profSearch.json entries
+    if not os.path.exists(postDataFile):
+        print(f"{postDataFile} not found")
         return
 
-    with open(profSearchFile, 'r') as f:
+    with open(postDataFile, 'r') as f:
         allPosts = json.load(f)
 
-    if os.path.exists(outputFile):
-        with open(outputFile, 'r') as f:
-            try:
-                postData = json.load(f)
-            except json.JSONDecodeError:
-                postData = {}
-    else:
-        postData = {}
+    postData = {}
 
     try:
         for postID, postInfo in allPosts.items():
-            if postID in postData:
+            # only fetch posts that do NOT already have both keys
+            if 'postText' in postInfo and 'comments' in postInfo:
                 continue
 
             url = postInfo.get('url')
@@ -129,12 +123,14 @@ def getPostData():
                 continue
 
             if not url.startswith('https://old.reddit.com'):
-                url = f"https://old.reddit.com{url}" if url.startswith(
-                    '/') else f"https://old.reddit.com{url}"
+                if url.startswith('/'):
+                    url = f"https://old.reddit.com{url}"
+                else:
+                    url = f"https://old.reddit.com/{url}"
 
             json_url = url.rstrip('/') + '.json'
 
-            print(f"Fetching {postInfo['title']}")
+            print(f"Fetching {postInfo.get('title')}")
 
             try:
                 time.sleep(2)
@@ -142,39 +138,50 @@ def getPostData():
                 response.raise_for_status()
                 data = response.json()
 
-                postContent = {
-                    "id": postID,
-                    "professor": postInfo.get('professor'),
-                    "title": postInfo.get('title'),
-                    "url": url,
-                    "post_text": "",
-                    "comments": []
-                }
+                postText = ""
+                comments = []
 
                 if data and len(data) > 0:
                     post = data[0]['data']['children'][0]['data']
-                    postContent['post_text'] = post.get('selftext', '')
+                    postText = post.get('selftext', '')
 
                     if len(data) > 1 and 'children' in data[1]['data']:
                         for comment in data[1]['data']['children']:
-                            if comment['kind'] == 't1':
+                            if comment.get('kind') == 't1':
                                 commentData = comment['data']
-                                postContent['comments'].append({
+                                comments.append({
                                     "author": commentData.get('author'),
                                     "text": commentData.get('body'),
                                     "score": commentData.get('score')
                                 })
 
-                postData[postID] = postContent
+                postData[postID] = {
+                    "id": postID,
+                    "professor": postInfo.get('professor'),
+                    "title": postInfo.get('title'),
+                    "url": url,
+                    "postText": postText,
+                    "comments": comments
+                }
 
             except Exception as e:
                 print(f"Failed to fetch {url}: {e}")
-                continue
+                break
 
     finally:
-        with open(outputFile, 'w') as f:
-            json.dump(postData, f, indent=4)
-        print(f"total posts: {len(postData)}")
+        for pid, pdata in postData.items():
+            if pid in allPosts:
+                allPosts[pid].update({
+                    'postText': pdata.get('postText', ''),
+                    'comments': pdata.get('comments', [])
+                })
+            else:
+                allPosts[pid] = pdata
+
+        with open(postDataFile, 'w') as f:
+            json.dump(allPosts, f, indent=4)
+
+        print(f"saved posts: {len(postData)}, total posts: {len(allPosts)}")
 
 
 if __name__ == "__main__":
