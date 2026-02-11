@@ -6,7 +6,7 @@ import time
 from urllib.parse import quote
 
 HEADERS = {'User-Agent': 'UFProfSearchBot/1.0'}
-fileName = "profSearch.json"
+profSearchFile = "profSearch.json"
 profListFile = "profList.json"
 
 
@@ -33,9 +33,9 @@ def getProfessors():
     print(f"{len(profList)} professors saved")
 
 
-def redditScrape():
-    if os.path.exists(fileName):
-        with open(fileName, 'r') as f:
+def getProfPosts():
+    if os.path.exists(profSearchFile):
+        with open(profSearchFile, 'r') as f:
             db = json.load(f)
     else:
         db = {}
@@ -91,7 +91,7 @@ def scrapePage(db, searchingURL, prof_name):
                         "url": title_link['href'] if not title_link['href'].startswith('/r/') else f"https://old.reddit.com{title_link['href']}"
                     }
 
-        with open(fileName, 'w') as f:
+        with open(profSearchFile, 'w') as f:
             json.dump(db, f, indent=4)
 
         return found_ids
@@ -101,6 +101,83 @@ def scrapePage(db, searchingURL, prof_name):
         return []
 
 
+def getPostData():
+    outputFile = "profPostData.json"
+    if not os.path.exists(profSearchFile):
+        print(f"{profSearchFile} not found")
+        return
+
+    with open(profSearchFile, 'r') as f:
+        allPosts = json.load(f)
+
+    if os.path.exists(outputFile):
+        with open(outputFile, 'r') as f:
+            try:
+                postData = json.load(f)
+            except json.JSONDecodeError:
+                postData = {}
+    else:
+        postData = {}
+
+    try:
+        for postID, postInfo in allPosts.items():
+            if postID in postData:
+                continue
+
+            url = postInfo.get('url')
+            if not url:
+                continue
+
+            if not url.startswith('https://old.reddit.com'):
+                url = f"https://old.reddit.com{url}" if url.startswith(
+                    '/') else f"https://old.reddit.com{url}"
+
+            json_url = url.rstrip('/') + '.json'
+
+            print(f"Fetching {postInfo['title']}")
+
+            try:
+                time.sleep(2)
+                response = requests.get(json_url, headers=HEADERS, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+
+                postContent = {
+                    "id": postID,
+                    "professor": postInfo.get('professor'),
+                    "title": postInfo.get('title'),
+                    "url": url,
+                    "post_text": "",
+                    "comments": []
+                }
+
+                if data and len(data) > 0:
+                    post = data[0]['data']['children'][0]['data']
+                    postContent['post_text'] = post.get('selftext', '')
+
+                    if len(data) > 1 and 'children' in data[1]['data']:
+                        for comment in data[1]['data']['children']:
+                            if comment['kind'] == 't1':
+                                commentData = comment['data']
+                                postContent['comments'].append({
+                                    "author": commentData.get('author'),
+                                    "text": commentData.get('body'),
+                                    "score": commentData.get('score')
+                                })
+
+                postData[postID] = postContent
+
+            except Exception as e:
+                print(f"Failed to fetch {url}: {e}")
+                continue
+
+    finally:
+        with open(outputFile, 'w') as f:
+            json.dump(postData, f, indent=4)
+        print(f"total posts: {len(postData)}")
+
+
 if __name__ == "__main__":
     getProfessors()
-    redditScrape()
+    getProfPosts()
+    getPostData()
