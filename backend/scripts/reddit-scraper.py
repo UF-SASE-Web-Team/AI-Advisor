@@ -102,7 +102,6 @@ def scrapePage(db, searchingURL, prof_name):
 
 
 def getPostData():
-    # Merge post text and comments into profSearch.json entries
     if not os.path.exists(postDataFile):
         print(f"{postDataFile} not found")
         return
@@ -114,7 +113,6 @@ def getPostData():
 
     try:
         for postID, postInfo in allPosts.items():
-            # only fetch posts that do NOT already have both keys
             if 'postText' in postInfo and 'comments' in postInfo:
                 continue
 
@@ -185,6 +183,10 @@ def getPostData():
 
 
 if __name__ == "__main__":
+    # you will have to run the file two or three times.
+    # once you run it the first time and get rate limited, you can comment out getProfessors() and getProfPosts()
+    # i believe with the way it is set up and reddits rate limits you will have to run it a total of three times :skull:
+    
     getProfessors()
     getProfPosts()
     getPostData()
