@@ -156,15 +156,10 @@ export function ScheduleCalendar() {
 
     try {
       // First, save preferences to backend for the solver
-      API.setPreference(formData, blacklist);
-
+      API.setSolverPreference(formData, blacklist);
+      
       // Then call the solver
-      const res = await fetch(`${API_URL}/api/solve/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const data = await res.json();
+      const data = await API.Solver();
 
       if (data.status === "success") {
         const rawCourses = data.scheduled_courses || [];
