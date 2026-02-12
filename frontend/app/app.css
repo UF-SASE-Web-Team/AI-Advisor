@@ -1,10 +1,13 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @theme {
   --color-widget-titlebar: #ffe48b;
   --color-widget-titlebar-border: #ffaf01;
   --color-widget-bg: #f9ffd5;
   --color-widget-border: #a2bd4b;
+  --color-saved-title: rgb(106 138 131);
 
   --font-sans:
     "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
@@ -13,13 +16,21 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  @apply dark:bg-gray-950;
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
 }
 
-@utility font-figmaHand {
+.font-figmaHand {
   font-family: "Patrick Hand", cursive;
+}
+
+.font-silkscreen {
+  font-family: "Silkscreen", cursive;
+}
+
+.font-mono {
+  font-family: "IBM Plex Mono", monospace;
 }
