@@ -1,6 +1,7 @@
 import { useState, useEffect, Fragment } from "react";
 import { supabase } from "../../../supabase";
 import { API_URL } from "~/config";
+import { fetchSchedule } from "~/apis/scheduleConfig";
 
 interface FormData {
     x: number;
@@ -134,7 +135,7 @@ export function ScheduleCalendar() {
 
         try {
             // First, save preferences to backend for the solver
-            await fetch(`${API_URL}/api/userpreference/`, {
+            /* await fetch(`${API_URL}/api/userpreference/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -146,14 +147,33 @@ export function ScheduleCalendar() {
                     blacklisted_periods: blacklist,
                 }),
             });
-
+ */
             // Then call the solver
-            const res = await fetch(`${API_URL}/api/solve/`, {
+            /* const res = await fetch(`${API_URL}/api/solve/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
             });
 
-            const data = await res.json();
+            const data = await res.json(); */
+            console.log("mock posting the schedule config", formData, blacklist);
+
+            const blacklistSlots = Object.entries(blacklist).flatMap(([day, periods]) =>
+                periods.map(period => ({ day, period }))
+            );
+
+            const response = await fetchSchedule("/api/placeholder", {
+                method: "POST",
+                body: JSON.stringify({
+                    x: formData.x,
+                    y: formData.y,
+                    z: formData.z,
+                    min_creds: formData.min_credits,
+                    max_creds: formData.max_credits,
+                    blacklisted_periods: blacklistSlots,
+                }),
+            });
+
+            const data = await response.json();
 
             if (data.status === "success") {
                 const rawCourses = data.scheduled_courses || [];
@@ -180,13 +200,13 @@ export function ScheduleCalendar() {
                 const consolidatedSchedule = Array.from(groupedMap.values());
                 
                 setSchedule(consolidatedSchedule);
-                setTotalCredits(data.total_credits);
+                setTotalCredits(data.total_credits ?? 0);
 
                 if (consolidatedSchedule.length === 0) {
                     setStatus({ msg: "No valid schedule found.", type: "warning" });
                 }
             } else {
-                setStatus({ msg: `Solver Error: ${data.error_message}`, type: "error" });
+                setStatus({ msg: `Solver Error: ${data.error_message ?? "Unknown error"}`, type: "error" });
             }
         } catch (err: any) {
             setStatus({ msg: `Network Error: ${err.message}`, type: "error" });
