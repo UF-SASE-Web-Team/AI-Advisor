@@ -156,6 +156,7 @@ export function ScheduleCalendar() {
 
     try {
       // First, save preferences to backend for the solver
+<<<<<<< HEAD
       API.setPreference(formData, blacklist);
 
       // Then call the solver
@@ -165,6 +166,12 @@ export function ScheduleCalendar() {
       });
 
       const data = await res.json();
+=======
+      API.setSolverPreference(formData, blacklist);
+      
+      // Then call the solver
+      const data = await API.Solver();
+>>>>>>> 55cb36c6c1f6d6f08223eea83697a911a6b618e5
 
       if (data.status === "success") {
         const rawCourses = data.scheduled_courses || [];
