@@ -1,3 +1,5 @@
 export function DegreeAudit() {
-  return <div></div>;
+  return (
+    <div style={{ height: "100vh", background: "coral" }}>Degree Audit</div>
+  );
 }

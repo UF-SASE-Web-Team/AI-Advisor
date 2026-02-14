@@ -6,9 +6,13 @@ export default function Dashboard() {
   // TODO: redirect to login page if user isn't logged in
   return (
     <div style={{ display: "flex", height: "100vh" }}>
-      <DegreeAudit />
-      <SelectPlan />
-      <Calendar />
+      <div style={{ width: "25vw" }}>
+        <DegreeAudit />
+      </div>
+      <div style={{ flexDirection: "column", flex: 1 }}>
+        <SelectPlan />
+        <Calendar />
+      </div>
     </div>
   );
 }

@@ -1,3 +1,5 @@
 export function Calendar() {
-  return <div></div>;
+  return (
+    <div style={{ background: "darkSeaGreen", height: "50vh" }}>Calendar</div>
+  );
 }
