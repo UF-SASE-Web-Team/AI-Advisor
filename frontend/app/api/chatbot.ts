@@ -1,5 +1,5 @@
 import { API_URL } from "~/config";
-import { type FormData } from "../components/calendar/ScheduleCalendar";
+import { type FormData } from "../components/old/calendar/ScheduleCalendar";
 
 export const setSolverPreference = async (
   formData: FormData,

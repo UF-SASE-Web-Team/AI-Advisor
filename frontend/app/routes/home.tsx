@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Dashboard from "~/components/Dashboard";
-import NavigationBar from "~/components/navigation/NavigationBar";
+import Dashboard from "~/components/old/Dashboard";
+import NavigationBar from "~/components/old/navigation/NavigationBar";
 import { API_URL } from "~/config";
 
 export default function HomePage() {
