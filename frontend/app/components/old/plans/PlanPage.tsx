@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { PlanNavigation } from "./PlanNavigation";
-import { supabase } from "../../../supabase";
+import { supabase } from "../../../../supabase";
 
 interface UserPlan {
   id: string;
