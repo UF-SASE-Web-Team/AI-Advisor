@@ -1,0 +1,35 @@
+name: Frontend CI (Docker)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-check:
+    name: Build frontend image and run checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend (dev deps)
+        run: |
+          docker build --pull --progress=plain --target development-dependencies-env -t aiadvisor/frontend:dev ./frontend
+
+      - name: Run frontend typecheck inside image
+        run: |
+          docker run --rm aiadvisor/frontend:dev sh -c "npm run typecheck"
+
+      - name: Build frontend (build stage)
+        run: |
+          docker build --pull --progress=plain --target build-env -t aiadvisor/frontend:build ./frontend
+
+      - name: Verify frontend build artifact
+        run: |
+          docker run --rm aiadvisor/frontend:build sh -c "test -d /app/build && ls -la /app/build"
+
