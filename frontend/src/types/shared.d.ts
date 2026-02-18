@@ -4,8 +4,16 @@ declare module '@shared/*' {
 }
 
 declare module '@shared/schema/*' {
-  const content: any;
-  export = content;
+  export type DeleteUser = any;
+  export type InsertUser = any;
+  export type PublicUser = any;
+  export type SelectUser = any;
+  export type UpdateUser = any;
+
+  export const deleteUserSchema: any;
+  export const insertUserSchema: any;
+  export const publicUserSchema: any;
+  export const selectUserSchema: any;
 }
 
 declare module '@shared/utils' {
