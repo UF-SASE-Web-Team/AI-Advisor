@@ -6,7 +6,8 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "lint": "eslint \"app/**/*.{ts,tsx,js,jsx}\" --max-warnings=0"
   },
   "dependencies": {
     "@fontsource/patrick-hand": "^5.2.8",
@@ -27,6 +28,10 @@
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "eslint": "^8.49.0",
+    "@typescript-eslint/parser": "^7.8.1",
+    "@typescript-eslint/eslint-plugin": "^7.8.1",
+    "eslint-plugin-react": "^7.32.2"
   }
 }
