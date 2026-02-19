@@ -29,8 +29,3 @@ def load_json(path: str, id: str):
 def upload_transcript(rows: list[dict]):
     response = sb.table("transcript").insert(rows).execute()
     print(response)
-
-# testing
-# user = "71ae80c5-e35b-4788-b69b-af5d8d364ad1"
-
-# upload_transcript(load_json(r"C:\Users\anthony\Documents\vscode\AI-Advisor\backend\data\transcript.json", user))
