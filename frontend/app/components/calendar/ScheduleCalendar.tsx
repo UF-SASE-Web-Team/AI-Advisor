@@ -134,47 +134,48 @@ export function ScheduleCalendar() {
       periods.map((period) => ({ day, period })),
     );
 
-    await supabase
-      .from("user_preferences")
-      .update({
-        major_courses_required: formData.x,
-        minor_courses_required: formData.y,
-        elective_courses_required: formData.z,
-        min_credits: formData.min_credits,
-        max_credits: formData.max_credits,
-        blacklist_slots: blacklistSlots,
-      })
-      .eq("user_id", user.id);
+        setStatus({ msg: "Saving preferences...", type: "info" });
+        
+        const blacklistSlots = Object.entries(blacklist).flatMap(([day, periods]) =>
+            periods.map(period => ({ day, period }))
+        );
 
-    setStatus({ msg: "Preferences saved to your account!", type: "success" });
-  };
+        await supabase.from("user_preferences").update({
+            major_courses_required: formData.x,
+            minor_courses_required: formData.y,
+            elective_courses_required: formData.z,
+            min_credits: formData.min_credits,
+            max_credits: formData.max_credits,
+            blacklist_slots: blacklistSlots,
+        }).eq("user_id", user.id);
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    setStatus({ msg: "", type: "" });
-    setSchedule([]);
+        setStatus({ msg: "Preferences saved to your account!", type: "success" });
+    };
 
-    try {
-      // First, save preferences to backend for the solver
-      API.setSolverPreference(formData, blacklist);
-      
-      // Then call the solver
-      const data = await API.Solver();
+    const handleGenerate = async () => {
+        setLoading(true);
+        setStatus({ msg: "", type: "" });
+        setSchedule([]);
 
-      if (data.status === "success") {
-        const rawCourses = data.scheduled_courses || [];
-
-        // --- GROUPING LOGIC ---
-        const groupedMap = new Map<string, ScheduleCourse>();
-
-        rawCourses.forEach((c: any) => {
-          if (!groupedMap.has(c.course_id)) {
-            groupedMap.set(c.course_id, {
-              course_id: c.course_id,
-              course_name: c.course_name,
-              credits: c.credits,
-              course_type: c.course_type,
-              slots: [],
+        try {
+            // First, save preferences to backend for the solver
+            /* await fetch(`${API_URL}/api/userpreference/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    x: formData.x,
+                    y: formData.y,
+                    z: formData.z,
+                    min_credits: formData.min_credits,
+                    max_credits: formData.max_credits,
+                    blacklisted_periods: blacklist,
+                }),
+            });
+ */
+            // Then call the solver
+            /** const res = await fetch(`${API_URL}/api/solve/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
             });
           }
           groupedMap.get(c.course_id)!.slots.push({
@@ -183,7 +184,24 @@ export function ScheduleCalendar() {
           });
         });
 
-        const consolidatedSchedule = Array.from(groupedMap.values());
+            const data = await res.json(); **/
+            console.log("mock posting the schedule config", formData, blacklist);
+
+            const blacklistSlots = Object.entries(blacklist).flatMap(([day, periods]) =>
+                periods.map(period => ({ day, period }))
+            );
+
+            const response = await fetchSchedule("/api/placeholder", {
+                method: "POST",
+                body: JSON.stringify({
+                    x: formData.x,
+                    y: formData.y,
+                    z: formData.z,
+                    min_creds: formData.min_credits,
+                    max_creds: formData.max_credits,
+                    blacklisted_periods: blacklistSlots,
+                }),
+            });
 
         setSchedule(consolidatedSchedule);
         setTotalCredits(data.total_credits);
