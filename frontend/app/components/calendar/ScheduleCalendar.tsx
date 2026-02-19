@@ -149,12 +149,12 @@ export function ScheduleCalendar() {
             });
  */
             // Then call the solver
-            /* const res = await fetch(`${API_URL}/api/solve/`, {
+            /** const res = await fetch(`${API_URL}/api/solve/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
             });
 
-            const data = await res.json(); */
+            const data = await res.json(); **/
             console.log("mock posting the schedule config", formData, blacklist);
 
             const blacklistSlots = Object.entries(blacklist).flatMap(([day, periods]) =>
