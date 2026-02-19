@@ -5,6 +5,7 @@ from supabase import create_client
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.environ["SUPABASE_ANON_KEY"]
+
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def load_json(path: str, id: str):
@@ -14,7 +15,7 @@ def load_json(path: str, id: str):
     for term in data.keys():
         for class_taken in data[term]:
             rows.append({
-                "user_id": id,
+                "id": id,
                 "term": term,
                 "course": class_taken["course"],
                 "name": class_taken["name"],
@@ -26,9 +27,10 @@ def load_json(path: str, id: str):
     return rows
 
 def upload_transcript(rows: list[dict]):
-    sb.table("transcript").insert(rows).execute()
+    response = sb.table("transcript").insert(rows).execute()
+    print(response)
 
 # testing
-user = "71ae80c5-e35b-4788-b69b-af5d8d364ad1"
+# user = "71ae80c5-e35b-4788-b69b-af5d8d364ad1"
 
-upload_transcript(load_json("backend\data\\transcript.json", user))
+# upload_transcript(load_json(r"C:\Users\anthony\Documents\vscode\AI-Advisor\backend\data\transcript.json", user))
