@@ -2,8 +2,8 @@ from pypdf import PdfReader
 import re
 import json
 
-transcript = "Transcript Report - Copy.pdf"
-output = "transcript.json"
+# transcript = "Transcript Report - Copy.pdf"
+# output = "transcript.json"
 
 def parseTransript(transcript, output):
     # pull data from PDF https://pypi.org/project/pypdf/
@@ -57,4 +57,4 @@ for keys, value in ret.items():
         print(v)
 '''
 
-parseTransript(transcript, output)
+# parseTransript(transcript, output)
