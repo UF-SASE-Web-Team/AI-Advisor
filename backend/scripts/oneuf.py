@@ -8,11 +8,21 @@ COURSES_BASE_URL = "https://one.ufl.edu/apix/soc/schedule/"
 semester = "s26"
 
 def main():
-    depts = [19140000, 19050000, 16320000, 16480000, 16360000]
+    depts = [
+        60070000,  # ABE - Agricultural & Biological Engineering
+        19340000,  # BME - Biomedical Engineering
+        19030000,  # CHE - Chemical Engineering
+        19140000,  # CISE - Computer & Information Science & Engineering
+        19050000,  # ECE - Electrical & Computer Engineering
+        19040000,  # ESSIE - Engineering School of Sustainable Infrastructure & Environment (also called Civil and Coastal Engineering ??)
+        19060000,  # ISE - Industrial & Systems Engineering
+        19090000,  # MSE - Materials Science & Engineering
+        19020000,  # MAE - Mechanical & Aerospace Engineering
+    ]
     all_courses = []
     for dept in depts:
         all_courses.extend(get_courses(semester, dept))
-    with open(f"{semester}.json", "w") as f:
+    with open(f"sources/{semester}.json", "w") as f:
         json.dump(all_courses, f, indent=4)
 
 
@@ -50,8 +60,12 @@ def get_courses(sem, dept):
             seen_courses.add(k)
             unique_courses.append(course)
 
+    # FILTER TO 1000-4000 LEVEL CLASSES ONLY !
+    unique_courses = [c for c in unique_courses if c["code"][3] in ('1', '2', '3', '4')]
+
     # add extra keys
     for course in unique_courses:
+        break # not dealing with these for now ###################################
         # course code prefix
         course["codePrefix"] = course["code"][:3]
 
