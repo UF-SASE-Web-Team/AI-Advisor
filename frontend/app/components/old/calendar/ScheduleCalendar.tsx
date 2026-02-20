@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from "react";
 import { supabase } from "../../../../supabase";
 import { API_URL } from "~/config";
-import * as API from "../../../api/chatbot";
+import * as API from "../../../apis/generate_calendar";
 
 export interface FormData {
   x: number;
