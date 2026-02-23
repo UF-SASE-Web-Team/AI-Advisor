@@ -1,3 +1,13 @@
 export function ChatbotDisplay() {
-  return <div style={{ height: "25vh", background: "antiquewhite" }}>test</div>;
+  return (
+    <div
+      className="
+    p-4
+    grow
+    overflow-y-auto
+    "
+    >
+      display area here
+    </div>
+  );
 }
