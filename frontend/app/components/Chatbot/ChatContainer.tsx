@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
+import { sendMsgToBackend } from "~/apis/chatbot";
 
 interface ChatMsg {
   text: string;
@@ -15,6 +16,8 @@ export function ChatContainer() {
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
     if (input.trim() == "") return;
+
+    sendMsgToBackend(input);
 
     // TODO: figure out exact message type, properties
     const newMsg: ChatMsg = {
