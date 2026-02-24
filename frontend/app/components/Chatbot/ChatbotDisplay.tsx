@@ -1,4 +1,4 @@
-export function ChatbotDisplay(thisNode: any) {
+export function ChatbotDisplay({ history }: any) {
   return (
     <div
       className="
@@ -7,7 +7,9 @@ export function ChatbotDisplay(thisNode: any) {
     overflow-y-auto
     "
     >
-      {thisNode.children}
+      {history.map((msg: any) => {
+        <div key={msg.key}>{msg.text}</div>;
+      })}
     </div>
   );
 }

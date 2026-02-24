@@ -3,12 +3,21 @@ import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
 
 export function ChatContainer() {
-  const [msgHistory, setMsgHistory] = useState([]);
+  const [msgHistory, setMsgHistory] = useState([{ text: "", sender: "bot" }]);
   const [input, setInput] = useState("");
 
   const onSubmit = (event: SubmitEvent) => {
-    console.log(typeof event);
     event.preventDefault();
+    if (input.trim() == "") return;
+
+    // TODO: figure out exact message type, properties
+    const newMsg = {
+      text: input,
+      sender: "user",
+      key: Date.now(),
+    };
+    setMsgHistory([...msgHistory, newMsg]);
+    console.log(msgHistory);
     setInput("");
   };
 
@@ -22,10 +31,7 @@ export function ChatContainer() {
       <ChatHeader />
 
       <WidgetBody>
-        <ChatbotDisplay>
-          <div>message!</div>
-          <div>message 2!</div>
-        </ChatbotDisplay>
+        <ChatbotDisplay history={msgHistory} />
 
         <ChatbotInput value={input} onChange={setInput} onSubmit={onSubmit} />
       </WidgetBody>
