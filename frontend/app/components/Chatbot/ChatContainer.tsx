@@ -2,8 +2,14 @@ import { useState, type ReactNode } from "react";
 import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
 
+interface ChatMsg {
+  text: string;
+  sender: string;
+  key: number;
+}
+
 export function ChatContainer() {
-  const [msgHistory, setMsgHistory] = useState([{ text: "", sender: "bot" }]);
+  const [msgHistory, setMsgHistory] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
 
   const onSubmit = (event: SubmitEvent) => {
@@ -11,13 +17,12 @@ export function ChatContainer() {
     if (input.trim() == "") return;
 
     // TODO: figure out exact message type, properties
-    const newMsg = {
+    const newMsg: ChatMsg = {
       text: input,
       sender: "user",
       key: Date.now(),
     };
     setMsgHistory([...msgHistory, newMsg]);
-    console.log(msgHistory);
     setInput("");
   };
 
