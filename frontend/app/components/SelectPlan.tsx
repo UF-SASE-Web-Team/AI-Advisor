@@ -1,6 +1,9 @@
 export function SelectPlan() {
   return (
-    <div style={{ background: "cornflowerBlue", height: "50vh" }}>
+    <div
+      className="h-1/2
+    grid place-items-center"
+    >
       Select Plan
     </div>
   );

@@ -1,5 +1,11 @@
 export function Calendar() {
   return (
-    <div style={{ background: "darkSeaGreen", height: "50vh" }}>Calendar</div>
+    <div
+      className="
+      h-1/2
+    grid place-items-center"
+    >
+      Calendar
+    </div>
   );
 }
