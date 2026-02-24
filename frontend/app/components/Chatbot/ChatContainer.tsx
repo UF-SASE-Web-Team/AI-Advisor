@@ -32,17 +32,19 @@ export function ChatContainer() {
     if (msgHistory.length == 0 || lastMsg.sender == "bot") return;
 
     (async () => {
+      let botMsg: ChatMsg = {
+        text: "Connection Error :(",
+        sender: "bot",
+        key: Date.now(),
+      };
       try {
         const response = await sendMsgToBackend(lastMsg.text);
         if (!response.ok) throw new Error("response broke");
-      } catch (err) {
-        const errorMsg: ChatMsg = {
-          text: "Connection Error :(",
-          sender: "bot",
-          key: Date.now(),
-        };
-        setMsgHistory([...msgHistory, errorMsg]);
-      }
+
+        const content = await response.json();
+        botMsg.text = content.text;
+      } catch (err) {}
+      setMsgHistory([...msgHistory, botMsg]);
     })();
   });
 
@@ -50,8 +52,7 @@ export function ChatContainer() {
     <div
       className="
       flex flex-col
-      m-4
-      "
+      m-4"
     >
       <ChatHeader />
 

@@ -12,7 +12,7 @@ export function ChatbotInput({ value, onChange, onSubmit }: any) {
           value={value}
           onChange={(event) => onChange(event.target.value)}
           type="text"
-          placeholder="Ask AI-Advisor" // TODO: push text to the right; it's to close to border rn
+          placeholder="Ask AI-Advisor" // TODO: push text to the right; it's a little close to border rn
           className="
           p-2
           bg-white border border-gray-300
