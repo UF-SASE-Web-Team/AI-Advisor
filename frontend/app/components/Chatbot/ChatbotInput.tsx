@@ -1,13 +1,16 @@
-export function ChatbotInput() {
+export function ChatbotInput({ value, onChange, onSubmit }: any) {
   return (
     <div>
       <form
+        onSubmit={onSubmit}
         className="
         flex flex-row gap-2
         m-2
         "
       >
         <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
           type="text"
           placeholder="Ask AI-Advisor" // TODO: push text to the right; it's to close to border rn
           className="

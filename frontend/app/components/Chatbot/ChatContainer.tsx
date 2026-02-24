@@ -1,8 +1,17 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
 
 export function ChatContainer() {
+  const [msgHistory, setMsgHistory] = useState([]);
+  const [input, setInput] = useState("");
+
+  const onSubmit = (event: SubmitEvent) => {
+    console.log(typeof event);
+    event.preventDefault();
+    setInput("");
+  };
+
   return (
     <div
       className="
@@ -13,13 +22,12 @@ export function ChatContainer() {
       <ChatHeader />
 
       <WidgetBody>
-        
         <ChatbotDisplay>
           <div>message!</div>
           <div>message 2!</div>
         </ChatbotDisplay>
-        
-        <ChatbotInput />
+
+        <ChatbotInput value={input} onChange={setInput} onSubmit={onSubmit} />
       </WidgetBody>
     </div>
   );
