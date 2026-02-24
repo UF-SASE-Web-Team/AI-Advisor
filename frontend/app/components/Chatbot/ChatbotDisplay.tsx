@@ -1,4 +1,4 @@
-export function ChatbotDisplay() {
+export function ChatbotDisplay(thisNode: any) {
   return (
     <div
       className="
@@ -7,7 +7,7 @@ export function ChatbotDisplay() {
     overflow-y-auto
     "
     >
-      display area here
+      {thisNode.children}
     </div>
   );
 }
