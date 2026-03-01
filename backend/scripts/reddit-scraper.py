@@ -187,6 +187,6 @@ if __name__ == "__main__":
     # once you run it the first time and get rate limited, you can comment out getProfessors() and getProfPosts()
     # i believe with the way it is set up and reddits rate limits you will have to run it a total of three times :skull:
     
-    getProfessors()
-    getProfPosts()
+    # getProfessors()
+    # getProfPosts()
     getPostData()
