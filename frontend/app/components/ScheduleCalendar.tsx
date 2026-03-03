@@ -1,5 +1,5 @@
 import { useState, useEffect, Fragment } from "react";
-import { supabase } from "../../../supabase";
+import { supabase } from "../../supabase";
 import { API_URL } from "~/config";
 import { fetchSchedule } from "~/apis/scheduleConfig";
 

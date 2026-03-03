@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../../supabase";
+import { supabase } from "../../../../supabase";
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
 interface UserInfo {
