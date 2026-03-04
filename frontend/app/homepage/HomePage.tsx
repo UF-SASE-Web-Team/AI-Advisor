@@ -23,14 +23,19 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: chatbotInput, max_results: 5 }),
       });
-      const data = await response.json();
-      const newMessage = data.answer;
+      let newMessage = "";
+      if (response.ok) {
+        const data = await response.json();
+        newMessage = data.answer;
+      } else {
+        newMessage = `I cant get to you right now. Your question was: ${chatbotInput}`;
+      }
       setMessages((prev) => [newMessage, ...prev]);
       setIsChatOpen(true);
       setChatbotInput("");
     } catch (error) {
       console.error("Error submitting chatbot input:", error);
-      setMessages((prev) => [`Error: ${String(error)}`, ...prev]);
+      setMessages((prev) => [`I cant get to you right now. Your question was: ${chatbotInput}`, ...prev]);
       setIsChatOpen(true);
     } finally {
       setLoading(false);
