@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from "react";
-import { supabase } from "../../../supabase";
+import { supabase } from "../../../../supabase";
 import { API_URL } from "~/config";
-import * as API from "../../api/generate_calendar";
+import * as API from "../../../apis/generate_calendar";
 
 export interface FormData {
   x: number;
@@ -157,7 +157,7 @@ export function ScheduleCalendar() {
     try {
       // First, save preferences to backend for the solver
       API.setSolverPreference(formData, blacklist);
-      
+
       // Then call the solver
       const data = await API.Solver();
 
