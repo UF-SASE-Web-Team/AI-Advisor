@@ -7,16 +7,17 @@ export default function Dashboard() {
   // TODO: redirect to login page if user isn't logged in
   return (
     <div className="grid grid-cols-4 h-screen">
+      {/* sidebar */}
       <div
         className="
         col-span-1 grid grid-rows-2
-        border-r
-        "
+        border-r"
       >
         <DegreeAudit />
         <ChatContainer />
       </div>
 
+      {/* primary widget */}
       <div
         className="col-span-3
         flex-row"
