@@ -7,7 +7,7 @@ import { Sidebar } from "~/components/Sidebar";
 export default function Dashboard() {
   // TODO: redirect to login page if user isn't logged in
   return (
-    <div className="grid grid-cols-4 h-screen">
+    <div className="grid grid-cols-[min-content_1fr] h-screen">
       <Sidebar>
         <DegreeAudit />
         <ChatContainer />
@@ -15,7 +15,7 @@ export default function Dashboard() {
 
       {/* primary widget */}
       <div
-        className="col-span-3
+        className="
         flex-row"
       >
         <SelectPlan />

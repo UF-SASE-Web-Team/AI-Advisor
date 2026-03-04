@@ -19,7 +19,7 @@ export function Sidebar({ children }: any) {
     if (!isResizing.current || !sidebarRef.current) return;
     const widthRatio = e.clientX / window.innerWidth;
     if (widthRatio > 0.05) {
-      // sidebarRef.current.style.
+      sidebarRef.current.style.width = widthRatio * window.innerWidth + "px";
     }
   };
 
@@ -36,9 +36,10 @@ export function Sidebar({ children }: any) {
   return (
     <div
       ref={sidebarRef}
+      style={{ width: 0.3 * window.innerWidth }}
       className="
-              col-span-1 grid grid-rows-2
-              border-r"
+        flex flex-col
+        border-r"
     >
       {children}
       <div onMouseDown={startResize} className=""></div>
