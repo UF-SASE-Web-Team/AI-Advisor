@@ -396,8 +396,6 @@ func main() {
 			return
 		}
 
-		userID := r.FormValue("userID")
-
 		maxFileSize := int64(2 << 20) // 2<<20 is 2MB, can adjust if transcripts get too big
 		r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
 		if err := r.ParseMultipartForm(maxFileSize); err != nil {
@@ -406,7 +404,8 @@ func main() {
 			return
 		}
 
-		file, header, err := r.FormFile("transcript") // file must be under 'transcript'
+		// file must be under 'transcript' key in request body
+		file, header, err := r.FormFile("transcript")
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": "missing 'transcript' field"})
@@ -414,7 +413,7 @@ func main() {
 		}
 		defer file.Close()
 
-		if header.Header.Get("Content-Type") != "application/pdf" { // bucket is configured to only accepts pdfs
+		if header.Header.Get("Content-Type") != "application/pdf" {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": "only PDF files are accepted"})
 			return
@@ -427,9 +426,10 @@ func main() {
 			return
 		}
 
+		userID := r.FormValue("userID")
 		filename := fmt.Sprintf("%d_%s_%s", time.Now().UnixMilli(), userID, header.Filename)
 
-		// make sure you have a .env based off of the .env.example
+		// make sure you have a .env based off of the env example
 		supabaseURL := os.Getenv("SUPABASE_URL")
 		serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
 		if supabaseURL == "" {
@@ -443,8 +443,7 @@ func main() {
 			return
 		}
 
-		urlBase := "/storage/v1/object/student-transcripts/"
-		uploadURL := supabaseURL + urlBase + filename
+		uploadURL := supabaseURL + "/storage/v1/object/student-transcripts/" + filename
 		req, err := http.NewRequest(http.MethodPost, uploadURL, bytes.NewReader(fileBytes))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
