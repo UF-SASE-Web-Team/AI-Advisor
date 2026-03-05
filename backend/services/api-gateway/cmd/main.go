@@ -419,19 +419,24 @@ func main() {
 			return
 		}
 
-		filename := fmt.Sprintf("%d_%s", time.Now().UnixMicro(), header.Filename) // im not sure what to name the pdf
+		filename := fmt.Sprintf("%d_%s", time.Now().UnixMilli(), header.Filename)
 
 		// make sure you have a .env based off of the .env.example
 		supabaseURL := os.Getenv("SUPABASE_URL")
 		serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
-		if supabaseURL == "" || serviceRoleKey == "" {
-			log.Println("Missing Supabase environment variables.")
+		if supabaseURL == "" {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": ""})
+			json.NewEncoder(w).Encode(map[string]string{"error": "supabaseURL empty"})
+			return
+		}
+		if serviceRoleKey == "" {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "serviceRoleKey empty"})
 			return
 		}
 
-		uploadURL := fmt.Sprintf("%s/storage/v1/object/student-transcripts/%s", supabaseURL, filename)
+		urlBase := "/storage/v1/object/student-transcripts/"
+		uploadURL := supabaseURL + urlBase + filename
 		req, err := http.NewRequest(http.MethodPost, uploadURL, bytes.NewReader(fileBytes))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -460,7 +465,6 @@ func main() {
 			return
 		}
 
-		log.Printf("Transcript uploaded: %s", filename)
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message":  "transcript uploaded successfully",
