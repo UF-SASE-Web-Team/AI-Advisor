@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -378,6 +380,91 @@ func main() {
 			Instructors:   resp.Instructors,
 			MeetingTimes:  meetingTimes,
 			ErrorMessage:  resp.ErrorMessage,
+		})
+	}))
+
+	// Transcript PDF upload endpoint
+	http.HandleFunc("/api/v2/transcript/upload/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		maxFileSize := int64(2 << 20) // 2<<20 is 2MB, can adjust if transcripts get too big
+		r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
+		if err := r.ParseMultipartForm(maxFileSize); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "file is too big or not pdf"})
+			return
+		}
+
+		file, header, err := r.FormFile("transcript") // file must be under 'transcript'
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "missing 'transcript' field"})
+			return
+		}
+		defer file.Close()
+
+		if header.Header.Get("Content-Type") != "application/pdf" { // bucket is configured to only accepts pdfs
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "only PDF files are accepted"})
+			return
+		}
+
+		fileBytes, err := io.ReadAll(file)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to read file"})
+			return
+		}
+
+		filename := fmt.Sprintf("%d_%s", time.Now().UnixMicro(), header.Filename) // im not sure what to name the pdf
+
+		// make sure you have a .env based off of the .env.example
+		supabaseURL := os.Getenv("SUPABASE_URL")
+		serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+		if supabaseURL == "" || serviceRoleKey == "" {
+			log.Println("Missing Supabase environment variables.")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": ""})
+			return
+		}
+
+		uploadURL := fmt.Sprintf("%s/storage/v1/object/student-transcripts/%s", supabaseURL, filename)
+		req, err := http.NewRequest(http.MethodPost, uploadURL, bytes.NewReader(fileBytes))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create upload request"})
+			return
+		}
+		req.Header.Set("Authorization", "Bearer "+serviceRoleKey)
+		req.Header.Set("Content-Type", "application/pdf")
+		req.Header.Set("x-upsert", "true")
+
+		httpClient := &http.Client{Timeout: 30 * time.Second}
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			log.Printf("Supabase upload error: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to upload to storage"})
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+			body, _ := io.ReadAll(resp.Body)
+			log.Printf("Supabase returned error %d: %s", resp.StatusCode, string(body))
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "storage upload failed"})
+			return
+		}
+
+		log.Printf("Transcript uploaded: %s", filename)
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message":  "transcript uploaded successfully",
+			"filename": filename,
 		})
 	}))
 
