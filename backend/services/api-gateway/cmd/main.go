@@ -94,6 +94,11 @@ var (
 	ragClient     ragpb.RAGServiceClient
 )
 
+func checkUserID() bool {
+
+	return false
+}
+
 func getPlannerAddress() string {
 	if addr := os.Getenv("PLANNER_GRPC_ADDR"); addr != "" {
 		return addr
@@ -390,6 +395,9 @@ func main() {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
+
+		userID := r.FormValue("userID")
+
 		maxFileSize := int64(2 << 20) // 2<<20 is 2MB, can adjust if transcripts get too big
 		r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
 		if err := r.ParseMultipartForm(maxFileSize); err != nil {
@@ -419,7 +427,7 @@ func main() {
 			return
 		}
 
-		filename := fmt.Sprintf("%d_%s", time.Now().UnixMilli(), header.Filename)
+		filename := fmt.Sprintf("%d_%s_%s", time.Now().UnixMilli(), userID, header.Filename)
 
 		// make sure you have a .env based off of the .env.example
 		supabaseURL := os.Getenv("SUPABASE_URL")
@@ -447,7 +455,7 @@ func main() {
 		req.Header.Set("Content-Type", "application/pdf")
 		req.Header.Set("x-upsert", "true")
 
-		httpClient := &http.Client{Timeout: 30 * time.Second}
+		httpClient := &http.Client{}
 		resp, err := httpClient.Do(req)
 		if err != nil {
 			log.Printf("Supabase upload error: %v", err)
