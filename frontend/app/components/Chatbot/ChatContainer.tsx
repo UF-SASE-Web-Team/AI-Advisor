@@ -53,7 +53,8 @@ export function ChatContainer() {
       className="
       flex-1
       flex flex-col
-      m-4"
+      m-4
+      min-h-0"
     >
       <ChatHeader />
 
@@ -87,7 +88,8 @@ const WidgetBody = ({ children }: any) => {
   bg-widget-bg
   border-1 border-widget-border
   grow flex flex-col
-  rounded-b-md"
+  rounded-b-md
+  min-h-0"
     >
       {children}
     </div>
