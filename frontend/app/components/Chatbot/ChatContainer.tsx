@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
 import { sendMsgToBackend } from "~/apis/chatbot";
+import { Widget } from "../Widget";
 
 interface ChatMsg {
   text: string;
@@ -49,50 +50,9 @@ export function ChatContainer() {
   });
 
   return (
-    <div
-      className="
-      flex-1
-      flex flex-col
-      m-4
-      min-h-0"
-    >
-      <ChatHeader />
-
-      <WidgetBody>
-        <ChatbotDisplay history={msgHistory} />
-
-        <ChatbotInput value={input} onChange={setInput} onSubmit={onSubmit} />
-      </WidgetBody>
-    </div>
+    <Widget title="AI Advisor">
+      <ChatbotDisplay history={msgHistory} />
+      <ChatbotInput value={input} onChange={setInput} onSubmit={onSubmit} />
+    </Widget>
   );
 }
-
-const ChatHeader = () => {
-  return (
-    <div
-      className="
-    p-3 font-bold
-    bg-widget-titlebar
-    border-1 border-widget-titlebar-border
-    rounded-t-md
-    flex-none"
-    >
-      AI-Advisor
-    </div>
-  );
-};
-
-const WidgetBody = ({ children }: any) => {
-  return (
-    <div
-      className="
-  bg-widget-bg
-  border-1 border-widget-border
-  flex-1 flex flex-col
-  rounded-b-md
-  min-h-0"
-    >
-      {children}
-    </div>
-  );
-};

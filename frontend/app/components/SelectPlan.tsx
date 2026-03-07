@@ -1,10 +1,9 @@
+import { Widget } from "./Widget";
+
 export function SelectPlan() {
   return (
-    <div
-      className="h-1/2
-    grid place-items-center"
-    >
-      Select Plan
-    </div>
+    <Widget title="Semester Plan Selection">
+      Test
+    </Widget>
   );
 }
