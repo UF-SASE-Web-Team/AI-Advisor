@@ -41,6 +41,7 @@ export function Sidebar({ children }: any) {
       style={{ width: "30vw", minWidth: "20vw", maxWidth: "80vw" }}
       className="
         flex flex-col
+        h-full
         border-r
         relative"
     >

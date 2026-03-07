@@ -43,7 +43,7 @@ export function ChatContainer() {
 
         const content = await response.json();
         botMsg.text = content.text;
-      } catch (err) {}
+      } catch (err) { }
       setMsgHistory([...msgHistory, botMsg]);
     })();
   });
@@ -74,7 +74,8 @@ const ChatHeader = () => {
     p-3 font-bold
     bg-widget-titlebar
     border-1 border-widget-titlebar-border
-    rounded-t-md"
+    rounded-t-md
+    flex-none"
     >
       AI-Advisor
     </div>
@@ -87,7 +88,7 @@ const WidgetBody = ({ children }: any) => {
       className="
   bg-widget-bg
   border-1 border-widget-border
-  grow flex flex-col
+  flex-1 flex flex-col
   rounded-b-md
   min-h-0"
     >
