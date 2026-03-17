@@ -69,7 +69,7 @@ export function ChatContainer() {
 
         <ChatbotInput value={input} onChange={setInput} onSubmit={onSubmit} />
       </WidgetBody>
-      )};
+      )}
     </div>
   );
 }
