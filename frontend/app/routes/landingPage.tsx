@@ -13,10 +13,12 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function landingPage() {
-  return <>
-    {mainLanding()}
-    <AboutLanding />
-    <ProfileLanding />
-    {otherProjectsLanding()}
-  </>;
+  return (
+    <div className="min-h-screen overflow-x-clip">
+      {mainLanding()}
+      <AboutLanding />
+      <ProfileLanding />
+      {otherProjectsLanding()}
+    </div>
+  );
 }

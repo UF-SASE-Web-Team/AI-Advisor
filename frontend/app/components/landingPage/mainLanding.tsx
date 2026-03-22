@@ -1,6 +1,6 @@
 export function mainLanding() {
   return (
-    <div className="w-full min-h-screen bg-[#F6F8FF] overflow-x-hidden">
+    <div className="w-full min-h-screen bg-[#F6F8FF] overflow-x-clip">
       {/* NAVBAR */}
       <nav className="top-0 left-0 z-50 w-full h-20 bg-[#C4CC9E] shadow-md flex items-center px-6">
         <div className="flex items-center gap-4">

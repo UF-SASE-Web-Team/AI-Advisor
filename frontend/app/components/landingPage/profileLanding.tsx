@@ -8,7 +8,7 @@ const TEAM_MEMBERS = Array.from({ length: 8 }, () => ({
 
 export function ProfileLanding() {
   return (
-    <div className="w-full bg-[#F6F8FF] overflow-x-hidden">
+    <div className="w-full bg-[#F6F8FF] overflow-x-clip">
         <section className="relative max-w-7xl mx-auto px-8 md:px-16 py-24">
         {/* Team member cards grid */}
         <div className="mt-20 flex gap-6 overflow-x-auto pb-4 md:overflow-visible md:grid md:grid-cols-4 lg:grid-cols-8">

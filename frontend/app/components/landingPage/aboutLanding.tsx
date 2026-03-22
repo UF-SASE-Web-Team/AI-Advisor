@@ -3,7 +3,7 @@ const LOREM =
 
 export function AboutLanding() {
   return (
-    <div className="w-full bg-[#F6F8FF] overflow-x-hidden">
+    <div className="w-full bg-[#F6F8FF] overflow-x-clip">
       {/* About the Project — title+line left (touching edge), subsection content centered, spacer right */}
       <section className="py-24">
         <div className="w-full flex flex-col md:flex-row md:items-start gap-12 md:gap-16">
