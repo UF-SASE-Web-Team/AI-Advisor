@@ -4,10 +4,10 @@ const LOREM =
 export function AboutLanding() {
   return (
     <div className="w-full bg-[#F6F8FF] overflow-x-hidden">
-      {/* About the Project — line on left, text right-aligned relative to line */}
+      {/* About the Project — title+line left (touching edge), subsection content centered, spacer right */}
       <section className="py-24">
-        <div className="px-6 md:px-8">
-          <div className="w-96">
+        <div className="w-full flex flex-col md:flex-row md:items-start gap-12 md:gap-16">
+          <div className="py-4 w-96 flex-shrink-0 pl-4 md:pl-0">
             <h2 className="text-black text-3xl font-semibold font-mono text-right">
               About the
               <br />
@@ -15,15 +15,34 @@ export function AboutLanding() {
             </h2>
             <div className="w-96 h-2.5 bg-dark-pink mt-4" />
           </div>
+          <div className="flex-1 flex justify-center px-6 md:px-8 min-w-0">
+            <div className="max-w-xl w-full space-y-2 mx-auto">
+              <div>
+                <h3 className="text-black text-base font-semibold font-mono mb-2">
+                  Subsection #1
+                </h3>
+                <p className="text-black text-[10px] font-normal font-tenor leading-4">
+                  {LOREM}
+                  <br />
+                  <br />
+                  {LOREM}
+                </p>
+              </div>
+              <p className="text-black text-[10px] font-normal font-tenor leading-4">
+                {LOREM}
+              </p>
+            </div>
+          </div>
+          <div className="hidden md:block w-96 flex-shrink-0" aria-hidden />
         </div>
+      </section>
 
-        <div className="max-w-7xl mx-auto px-6 md:px-8 mt-12 grid md:grid-cols-[minmax(0,11rem)_1fr] gap-12 md:gap-16">
-          <div />
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-black text-base font-semibold font-mono mb-4">
-                Subsection #1
-              </h3>
+      {/* Meet the Team — spacer left, subsection content centered, title+line right (touching edge) */}
+      <section className="py-0">
+        <div className="w-full flex flex-col md:flex-row md:items-start gap-12 md:gap-16">
+          <div className="hidden md:block w-96 flex-shrink-0" aria-hidden />
+          <div className="flex-1 flex justify-center px-6 md:px-8 min-w-0 order-first md:order-none">
+            <div className="max-w-xl w-full mx-auto">
               <p className="text-black text-[10px] font-normal font-tenor leading-4">
                 {LOREM}
                 <br />
@@ -31,29 +50,8 @@ export function AboutLanding() {
                 {LOREM}
               </p>
             </div>
-            <p className="text-black text-[10px] font-normal font-tenor leading-4">
-              {LOREM}
-            </p>
           </div>
-        </div>
-      </section>
-
-      {/* Meet the Team — line on right, text left-aligned relative to line */}
-      
-      <section className="py-24">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 mt-12 grid md:grid-cols-[1fr_minmax(0,11rem)] gap-12 md:gap-16">
-          <div className="order-2 md:order-1">
-            <p className="text-black text-[10px] font-normal font-tenor leading-4">
-              {LOREM}
-              <br />
-              <br />
-              {LOREM}
-            </p>
-          </div>
-          <div className="order-1 md:order-2" />
-        </div>
-        <div className="px-6 md:px-8 flex justify-end">
-          <div className="w-96">
+          <div className="py-4 w-96 flex-shrink-0 pr-4 md:pr-0 ml-auto md:ml-0">
             <h2 className="text-black text-3xl font-semibold font-mono text-left">
               Meet the
               <br />
