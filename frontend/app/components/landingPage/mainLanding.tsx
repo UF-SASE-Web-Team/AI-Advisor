@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 export function mainLanding() {
   return (
     <div className="w-full min-h-screen bg-[#F6F8FF] overflow-x-clip">
@@ -17,9 +19,12 @@ export function mainLanding() {
           Made By UF SASE
         </span>
 
-        <button className="ml-auto px-4 py-2 rounded-xl bg-[#C7D964] text-[#F9FFD5] font-semibold font-mono">
+        <Link
+          to="/login"
+          className="ml-auto px-4 py-2 rounded-xl bg-[#C7D964] text-[#F9FFD5] font-semibold font-mono transition-transform duration-200 hover:scale-105"
+        >
           Log In
-        </button>
+        </Link>
       </nav>
 
       {/* HERO */}
@@ -36,7 +41,10 @@ export function mainLanding() {
               possibilities so you can make optimal decisions.
             </p>
 
-            <button className="mt-6 inline-flex w-fit items-center justify-center gap-3 px-14 py-4 rounded-2xl bg-[#2EA9FF] text-[#F6F8FF] text-3xl font-bold font-silkscreen leading-none">
+            <Link
+              to="/dashboard"
+              className="mt-6 inline-flex w-fit items-center justify-center gap-3 px-14 py-4 rounded-2xl bg-[#2EA9FF] text-[#F6F8FF] text-3xl font-bold font-silkscreen leading-none transition-transform duration-200 hover:scale-105"
+            >
               <svg
                 width="32"
                 height="32"
@@ -52,7 +60,7 @@ export function mainLanding() {
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
               <span className="leading-none">Get Started</span>
-            </button>
+            </Link>
           </div>
 
           {/* RIGHT IMAGE PLACEHOLDER */}
