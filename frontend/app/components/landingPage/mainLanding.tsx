@@ -2,15 +2,18 @@ export function mainLanding() {
   return (
     <div className="w-full min-h-screen bg-[#F6F8FF] overflow-x-clip">
       {/* NAVBAR */}
-      <nav className="top-0 left-0 z-50 w-full h-[12vh] bg-[#F9FFD5] shadow-md flex items-center px-6">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-[#E77C3C]" />
-          <h1 className="justify-start text-[#C94A6A] text-3xl font-bold font-silkscreen">
+      <nav className="top-0 left-0 z-50 w-full h-[12vh] min-h-[64px] bg-[#F9FFD5] shadow-md flex items-center overflow-visible px-6">
+        <div className="flex items-center gap-4 relative h-full mt-3">
+          <div
+            className="absolute bottom-0 left-0 w-28 h-28 rounded-full bg-[#FFAF01] translate-y-1/3 flex-shrink-0"
+            aria-hidden
+          />
+          <h1 className="relative mt-6 z-10 pl-32 justify-start text-[#FF4D65] text-3xl font-bold font-silkscreen">
             AI Advisor
           </h1>
         </div>
 
-        <span className="ml-16 text-[#F07CA3] font-semibold font-mono">
+        <span className="ml-16 mt-10 text-[#F07CA3] font-semibold font-mono">
           Made By UF SASE
         </span>
 
@@ -63,7 +66,7 @@ export function mainLanding() {
             <defs>
               <path id="arcPath" d="M 25,118 A 60,60 0 0,1 175,118" />
             </defs>
-            <text fill="#c94a6a" fontSize="14" fontWeight="600" fontFamily="IBM Plex Mono, monospace">
+            <text fill="#FF4D65" fontSize="14" fontWeight="600" fontFamily="IBM Plex Mono, monospace">
               <textPath xlinkHref="#arcPath" startOffset="50%" textAnchor="middle">
                 ...or learn about the project
               </textPath>
@@ -77,11 +80,11 @@ export function mainLanding() {
               viewBox="0 0 24 24"
               fill="none"
               stroke="black"
-              strokeWidth="1"
+              strokeWidth="0.7"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M12 5v11.7M6 12l6 6 6-6" />
+              <path d="M12 5v12.5M6 12l6 6 6-6" />
             </svg>
           </div>
         </div>
