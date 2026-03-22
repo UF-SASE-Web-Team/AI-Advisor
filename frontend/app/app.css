@@ -36,3 +36,11 @@ body {
 .font-tenor {
   font-family: "Tenor Sans", sans-serif;
 }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

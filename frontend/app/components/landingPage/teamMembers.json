@@ -1,0 +1,52 @@
+[
+  {
+    "name": "First Lastname",
+    "role": "YourRole",
+    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Leads the design and development efforts for the project."
+  },
+  {
+    "name": "Second Person",
+    "role": "YourRole",
+    "description": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Handles backend architecture and API integrations."
+  },
+  {
+    "name": "Third Member",
+    "role": "YourRole",
+    "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco. Focuses on AI model training and optimization."
+  },
+  {
+    "name": "Fourth Teammate",
+    "role": "YourRole",
+    "description": "Duis aute irure dolor in reprehenderit in voluptate. Manages user research and product strategy."
+  },
+  {
+    "name": "Fifth Contributor",
+    "role": "YourRole",
+    "description": "Excepteur sint occaecat cupidatat non proident. Oversees frontend development and UX implementation."
+  },
+  {
+    "name": "Sixth Collaborator",
+    "role": "YourRole",
+    "description": "Sunt in culpa qui officia deserunt mollit anim id est laborum. Coordinates deployment and DevOps workflows."
+  },
+  {
+    "name": "Seventh Developer",
+    "role": "YourRole",
+    "description": "Consectetur adipiscing elit sed do eiusmod tempor. Specializes in database design and query optimization."
+  },
+  {
+    "name": "Eighth Engineer",
+    "role": "YourRole",
+    "description": "Incididunt ut labore et dolore magna aliqua. Works on mobile app development and cross-platform solutions."
+  },
+  {
+    "name": "Ninth Team Lead",
+    "role": "YourRole",
+    "description": "Quis nostrud exercitation ullamco laboris nisi. Oversees sprint planning and agile methodologies."
+  },
+  {
+    "name": "Tenth Specialist",
+    "role": "YourRole",
+    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements."
+  }
+]
