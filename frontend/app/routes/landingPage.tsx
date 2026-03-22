@@ -2,7 +2,7 @@ import type { Route } from "./+types/home";
 import { mainLanding } from "../components/landingPage/mainLanding";
 import { AboutLanding } from "../components/landingPage/aboutLanding";
 import { ProfileLanding } from "../components/landingPage/profileLanding";
-import { otherProjectsLanding } from "../components/landingPage/otherProjectsLanding";
+import { OtherProjectsLanding } from "../components/landingPage/otherProjectsLanding";
 
 
 export function meta({}: Route.MetaArgs) {
@@ -18,7 +18,7 @@ export default function landingPage() {
       {mainLanding()}
       <AboutLanding />
       <ProfileLanding />
-      {otherProjectsLanding()}
+      <OtherProjectsLanding />
     </div>
   );
 }
