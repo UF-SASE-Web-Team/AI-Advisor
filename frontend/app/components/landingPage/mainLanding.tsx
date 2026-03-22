@@ -36,8 +36,22 @@ export function mainLanding() {
               possibilities so you can make optimal decisions.
             </p>
 
-            <button className="mt-6 w-fit px-10 py-4 rounded-2xl bg-[#2EA9FF] text-[#F6F8FF] text-3xl font-bold font-silkscreen">
-              Get Started
+            <button className="mt-6 inline-flex w-fit items-center justify-center gap-3 px-14 py-4 rounded-2xl bg-[#2EA9FF] text-[#F6F8FF] text-3xl font-bold font-silkscreen leading-none">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0 block translate-y-0.5"
+                aria-hidden
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              <span className="leading-none">Get Started</span>
             </button>
           </div>
 
