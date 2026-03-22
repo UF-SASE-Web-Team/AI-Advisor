@@ -2,9 +2,10 @@ import { Link } from "react-router";
 
 export function mainLanding() {
   return (
-    <div className="w-full min-h-screen bg-[#F6F8FF] overflow-x-clip">
-      {/* NAVBAR */}
-      <nav className="top-0 left-0 z-50 w-full h-[12vh] min-h-[64px] bg-[#F9FFD5] shadow-md flex items-center overflow-visible px-6">
+    <div className="w-full min-h-screen bg-[#F6F8FF]">
+      <div className="overflow-x-clip">
+        {/* NAVBAR */}
+        <nav className="top-0 left-0 z-50 w-full h-[12vh] min-h-[64px] bg-[#F9FFD5] shadow-md flex items-center overflow-visible px-6">
         <div className="flex items-center gap-4 relative h-full mt-3">
           <div
             className="absolute bottom-0 left-0 w-28 h-28 rounded-full bg-[#FFAF01] translate-y-1/3 flex-shrink-0"
@@ -69,20 +70,30 @@ export function mainLanding() {
           </div>
         </div>
       </section>
+      </div>
 
-      {/* GREEN STRIP + SCROLL INDICATOR WRAPPER */}
-      <div className="relative">
+      {/* GREEN STRIP + SCROLL INDICATOR — outside overflow-x-clip so hover scale doesn't get clipped */}
+      <div className="relative overflow-visible">
         {/* GREEN STRIP */}
         <div className="w-full h-32 bg-[#E7F59C] shadow-md" />
 
         {/* SCROLL INDICATOR + curved text wrapper */}
-        <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 flex flex-col items-center">
+        <div className="absolute -bottom-14 left-1/2 -translate-x-1/2">
+          <button
+            type="button"
+            onClick={() =>
+              document.getElementById("about-the-project")?.scrollIntoView({ behavior: "smooth" })
+            }
+            className="flex flex-col items-center cursor-pointer transition-all duration-200 ease-out hover:-translate-y-2 hover:drop-shadow-xl"
+            aria-label="Scroll to About the Project"
+          >
           {/* Curved text wrapping around top of circle */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             xmlnsXlink="http://www.w3.org/1999/xlink"
             viewBox="0 0 200 130"
-            className="absolute top-0 w-72 h-36 -translate-y-15"
+            overflow="visible"
+            className="absolute top-0 w-72 h-36 -translate-y-15 pointer-events-none"
             aria-hidden
           >
             <defs>
@@ -95,7 +106,7 @@ export function mainLanding() {
             </text>
           </svg>
           {/* Pink circle */}
-          <div className="relative w-29 h-29 rounded-full bg-[#F6A5C0] flex items-center justify-center shadow-lg">
+          <div className="relative w-29 h-29 rounded-full bg-[#F6A5C0] flex items-center justify-center shadow-lg pointer-events-none">
             <svg
               width="80"
               height="80"
@@ -109,6 +120,7 @@ export function mainLanding() {
               <path d="M12 5v12.5M6 12l6 6 6-6" />
             </svg>
           </div>
+        </button>
         </div>
       </div>
     </div>

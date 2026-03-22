@@ -14,7 +14,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function landingPage() {
   return (
-    <div className="min-h-screen overflow-x-clip">
+    <div className="min-h-screen">
       {mainLanding()}
       <AboutLanding />
       <ProfileLanding />
