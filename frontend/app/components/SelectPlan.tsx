@@ -22,35 +22,31 @@ export function SelectPlan() {
 
   return (
     <Widget title="Semester Plan Selection">
-      <div className="m-3 flex-1 relative flex flex-row gap-4 min-h-0">
+      <div className="m-3 gap-4 min-h-0
+      flex flex-row flex-1
+      relative">
+        {/* Left col */}
         <div className="flex-1 relative min-h-0">
-          {/* Sizer matching the tallest class item so it perfectly defines 2 rows height */}
-          <div className="invisible pointer-events-none" aria-hidden="true">
-            <div className="grid grid-cols-1 gap-3">
-              <ClassItem {...placeholderClasses[1]} />
-              <ClassItem {...placeholderClasses[1]} />
-            </div>
-          </div>
-          {/* Scrollable area filling the space */}
-          <div className="absolute inset-0 overflow-y-auto pr-2 custom-scrollbar">
-            <ClassList>
-              <ClassItem {...placeholderClasses[0]} />
-              <ClassItem {...placeholderClasses[1]} />
-              <ClassItem {...placeholderClasses[0]} />
-              <ClassItem {...placeholderClasses[1]} />
-              <ClassItem {...placeholderClasses[0]} />
-              <ClassItem {...placeholderClasses[1]} />
-              <ClassItem {...placeholderClasses[0]} />
-              <ClassItem {...placeholderClasses[1]} />
-            </ClassList>
-          </div>
+          {/* Scrollable area*/}
+          <ClassList>
+            <ClassItem {...placeholderClasses[0]} />
+            <ClassItem {...placeholderClasses[1]} />
+            <ClassItem {...placeholderClasses[0]} />
+            <ClassItem {...placeholderClasses[1]} />
+            <ClassItem {...placeholderClasses[0]} />
+            <ClassItem {...placeholderClasses[1]} />
+            <ClassItem {...placeholderClasses[0]} />
+            <ClassItem {...placeholderClasses[1]} />
+          </ClassList>
         </div>
 
+        {/* Right col */}
         <div className="flex-none w-[160px] md:w-[200px]">
           <SemPlanControls />
+          <Invis2RowHeightBlock />
         </div>
       </div>
-    </Widget>
+    </Widget >
   );
 }
 
@@ -59,7 +55,8 @@ const ClassList = ({ children }: any) => {
     <div
       className="
   grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3
-  gap-3"
+  gap-3
+  absolute inset-0 overflow-y-auto pr-2 custom-scrollbar"
     >
       {children}
     </div>
@@ -102,3 +99,14 @@ const SemPlanControls = () => {
     </div>
   );
 };
+
+const Invis2RowHeightBlock = ({ classItem }: any) => {
+  return (
+    <div className="invisible pointer-events-none" aria-hidden="true">
+      <div className="grid grid-cols-1 gap-3">
+        <ClassItem {...classItem} />
+        <ClassItem {...classItem} />
+      </div>
+    </div>
+  );
+}
