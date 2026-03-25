@@ -94,11 +94,6 @@ var (
 	ragClient     ragpb.RAGServiceClient
 )
 
-func checkUserID() bool {
-
-	return false
-}
-
 func getPlannerAddress() string {
 	if addr := os.Getenv("PLANNER_GRPC_ADDR"); addr != "" {
 		return addr
@@ -396,7 +391,14 @@ func main() {
 			return
 		}
 
-		maxFileSize := int64(2 << 20) // 2<<20 is 2MB, can adjust if transcripts get too big
+		userID := r.FormValue("userID") // from the request body
+		if userID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "userID is required"})
+			return
+		}
+
+		maxFileSize := int64(2 << 20) // 2MB, can be more if wanted
 		r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
 		if err := r.ParseMultipartForm(maxFileSize); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -404,8 +406,7 @@ func main() {
 			return
 		}
 
-		// file must be under 'transcript' key in request body
-		file, header, err := r.FormFile("transcript")
+		file, header, err := r.FormFile("transcript") // where the pdf file is sent in
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": "missing 'transcript' field"})
@@ -413,6 +414,7 @@ func main() {
 		}
 		defer file.Close()
 
+		// ensures only pdfs are uploaded - the supabase bucket also checks
 		if header.Header.Get("Content-Type") != "application/pdf" {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": "only PDF files are accepted"})
@@ -425,21 +427,16 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{"error": "failed to read file"})
 			return
 		}
+		// creates filename, just userID_transcript
+		filename := fmt.Sprintf("%s_transcript.pdf", userID)
 
-		userID := r.FormValue("userID")
-		filename := fmt.Sprintf("%d_%s_%s", time.Now().UnixMilli(), userID, header.Filename)
-
-		// make sure you have a .env based off of the env example
+		// grabbing supabase credentials from .env
+		// make sure you have a .env in the backend folder
 		supabaseURL := os.Getenv("SUPABASE_URL")
 		serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
-		if supabaseURL == "" {
+		if supabaseURL == "" || serviceRoleKey == "" {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "supabaseURL empty"})
-			return
-		}
-		if serviceRoleKey == "" {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "serviceRoleKey empty"})
+			json.NewEncoder(w).Encode(map[string]string{"error": "supabase configuration missing"})
 			return
 		}
 
@@ -450,9 +447,10 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create upload request"})
 			return
 		}
+
 		req.Header.Set("Authorization", "Bearer "+serviceRoleKey)
 		req.Header.Set("Content-Type", "application/pdf")
-		req.Header.Set("x-upsert", "true")
+		req.Header.Set("x-upsert", "true") // replaces old transcript if needed
 
 		httpClient := &http.Client{}
 		resp, err := httpClient.Do(req)
