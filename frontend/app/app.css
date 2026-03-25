@@ -5,6 +5,7 @@
   --color-widget-titlebar-border: #ffaf01;
   --color-widget-bg: #f9ffd5;
   --color-widget-border: #a2bd4b;
+  --color-dark-pink: #FF4D65;
 
   --color-class-item: #e0ebfa;
   --color-class-item-border: #99bcea;
@@ -25,4 +26,24 @@ body {
 
 @utility font-figmaHand {
   font-family: "Patrick Hand", cursive;
+}
+
+.font-silkscreen {
+  font-family: "Silkscreen", cursive;
+}
+
+.font-mono {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.font-tenor {
+  font-family: "Tenor Sans", sans-serif;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

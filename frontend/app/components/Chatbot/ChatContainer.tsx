@@ -13,6 +13,8 @@ interface ChatMsg {
 export function ChatContainer() {
   const [msgHistory, setMsgHistory] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
