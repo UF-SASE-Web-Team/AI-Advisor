@@ -149,6 +149,20 @@ def ask(prompt: str, llm: Any):
           pass
   return tools_used, res["messages"][-1].content
 
+def parse_tool_call(tool_call: dict):
+    function_call: str = f"{tool_call["name"]}("
+    for arg in tool_call["args"]:
+        function_call += f"{arg}={tool_call["args"][arg]}"
+    function_call += ")"
+    return function_call
+
+def parse_tool_calls(calls: list[dict]):
+    calls = []
+    for item in calls:
+        print(item)
+        calls.append(parse_tool_call(item))
+    return ", ".join(calls)
+
 def run_ask_loop():
     while True:
         prompt = input("Prompt: ")
@@ -159,14 +173,14 @@ def run_ask_loop():
 
 if __name__ == "__main__":
     EXAMPLE_PROMPT_1 = """
-    I want to take to take Applications in Biological Engineering and I would like to see what the professor is like.
+    I want to take to take Penetration Testing and I would like to see what the professor is like.
     """
     EXAMPLE_PROMPT_2 = """
     I want to take to take Applications in Biological Engineering and I would like to see what other people think about it.
     """
     tools, response = ask(prompt=EXAMPLE_PROMPT_1, llm=llm)
-    # print(tools)
-    # print(response)
+    print(parse_tool_calls(tools))
+    print(response)
     # test = get_reddit_data_professor(professor_name="John Mendoza-Garcia")
     # print(test)
     # run_ask_loop()
