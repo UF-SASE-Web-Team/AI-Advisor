@@ -1,5 +1,6 @@
 import * as React from "react";
 import type { Route } from "./+types/loginPage";
+import { supabase } from "../../supabase";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -26,8 +27,17 @@ export default function LoginPage() {
     console.log("Login submit:", form);
   }
 
-  function onGoogleLogin() {
-    console.log("Google login clicked");
+  async function onGoogleLogin() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+
+    if (error) {
+      console.error("Google sign-in error:", error.message);
+    }
   }
 
   return (
