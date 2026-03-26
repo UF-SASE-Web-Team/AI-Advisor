@@ -10,6 +10,8 @@ services:
     depends_on:
       - planner
       - rag
+    env_file:
+      - .env
 
   rag:
     build: ./services/rag
