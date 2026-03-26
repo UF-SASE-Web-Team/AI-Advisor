@@ -6,6 +6,7 @@ from langchain.agents import create_agent
 from langchain.tools import tool
 from typing import Any
 import json
+import re
 from sentence_transformers import SentenceTransformer, util
 
 from timeit import timeit
@@ -13,19 +14,19 @@ from timeit import timeit
 
 load_dotenv()
 
-# mercury_llm = ChatOpenAI(
-#   model="inception/mercury",
-#   api_key=os.getenv("MERCURY_LLM_API_KEY"),
-#   base_url="https://openrouter.ai/api/v1"
-# )
-
 llm = ChatOpenAI(
-    model="gpt-5-nano",
-    reasoning_effort="low",
-    max_retries=2,
-    api_key=os.getenv("LLM_API_KEY"), # type: ignore
-    base_url="https://api.ai.it.ufl.edu",
+  model="inception/mercury",
+  api_key=os.getenv("MERCURY_LLM_API_KEY"),
+  base_url="https://openrouter.ai/api/v1"
 )
+
+# llm = ChatOpenAI(
+#     model="gpt-5-nano",
+#     reasoning_effort="low",
+#     max_retries=2,
+#     api_key=os.getenv("LLM_API_KEY"), # type: ignore
+#     base_url="https://api.ai.it.ufl.edu",
+# )
 
 # 1. Load a pre-trained model 
 # 'all-MiniLM-L6-v2' is fast and efficient for general use
@@ -77,14 +78,15 @@ def get_course_info(course_name: str):
     data = json.loads(text)
 
     # Check if course code or name
-    # key = "name"
-    # if course_name.isalpha() == False:
-    #     key = "code"
+    key = "name"
+    has_code = re.search("[A-Z]{3}[0-9]{4}", course_name)
+    if has_code != None:
+        key = "code"
     
     # Convert to a map
     data_map = {}
     for item in data:
-        data_map[item["name"]] = item
+        data_map[item[key]] = item
 
     # Find most similiar search
     options = list(data_map.keys())
@@ -92,6 +94,7 @@ def get_course_info(course_name: str):
     if result == None:
         return "Course was not found"
     
+    print(data_map[result])
     return data_map[result]
 
 def get_reddit_data_professor(professor_name: str):
@@ -167,20 +170,24 @@ def run_ask_loop():
     while True:
         prompt = input("Prompt: ")
         tools, response = ask(prompt=prompt, llm=llm)
-        print(f"Tools: {tools}")
+        print("Tools Called:")
+        for tool in tools:
+            print(parse_tool_call(tool))
         print(f"Response: {response}")
         print()
 
 if __name__ == "__main__":
-    EXAMPLE_PROMPT_1 = """
-    I want to take to take Penetration Testing and I would like to see what the professor is like.
-    """
-    EXAMPLE_PROMPT_2 = """
-    I want to take to take Applications in Biological Engineering and I would like to see what other people think about it.
-    """
-    tools, response = ask(prompt=EXAMPLE_PROMPT_1, llm=llm)
-    print(parse_tool_calls(tools))
-    print(response)
+    # EXAMPLE_PROMPT_1 = """
+    # I want to take to take Penetration Testing and I would like to see what the professor is like.
+    # """
+    # EXAMPLE_PROMPT_2 = """
+    # I want to take to take Applications in Biological Engineering and I would like to see what other people think about it.
+    # """
+    # tools, response = ask(prompt=EXAMPLE_PROMPT_1, llm=llm)
+    # print("Tools Called:")
+    # for tool in tools:
+    #     print(parse_tool_call(tool))
+    run_ask_loop()
     # test = get_reddit_data_professor(professor_name="John Mendoza-Garcia")
     # print(test)
     # run_ask_loop()
