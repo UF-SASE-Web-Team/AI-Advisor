@@ -1,6 +1,6 @@
 export function ChatbotInput({ value, onChange, onSubmit }: any) {
   return (
-    <div>
+    <div className="flex-none">
       <form
         onSubmit={onSubmit}
         className="

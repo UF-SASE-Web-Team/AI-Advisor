@@ -7,9 +7,12 @@
   --color-widget-border: #a2bd4b;
   --color-dark-pink: #FF4D65;
 
+  --color-class-item: #e0ebfa;
+  --color-class-item-border: #99bcea;
+
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 html,
