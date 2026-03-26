@@ -165,7 +165,11 @@ function CornerAccent() {
 function RobotBadge() {
   return (
     <div className="grid place-items-center">
-      <div className="h-48 w-48 rounded-full bg-amber-400 shadow-lg" />
+      <img
+        src="/Login_page_photo.png"
+        alt="Login robot"
+        className="h-48 w-48 rounded-full object-cover"
+      />
     </div>
   );
 }
