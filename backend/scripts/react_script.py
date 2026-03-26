@@ -32,6 +32,7 @@ llm = ChatOpenAI(
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def search_similarity(word: str, options: list[str]):
+    # TODO: Make this more efficient
     word_embedding = model.encode([word])[0]
     options_embedding = model.encode(options)
 
@@ -74,6 +75,11 @@ def get_course_info(course_name: str):
     with open("../data/courses.json") as file:
         text += file.read()
     data = json.loads(text)
+
+    # Check if course code or name
+    # key = "name"
+    # if course_name.isalpha() == False:
+    #     key = "code"
     
     # Convert to a map
     data_map = {}
@@ -88,11 +94,43 @@ def get_course_info(course_name: str):
     
     return data_map[result]
 
+def get_reddit_data_professor(professor_name: str):
+    """ Gets insight into reddit data for a professor"""
+    text: str = ""
+    with open("../data/reddit_post_data.json") as file:
+        text += file.read()
+    data = json.loads(text).values()
+
+    # Convert to a map
+    data_map = {}
+    for item in data:
+        if item["professor"] not in data_map:
+            data_map[item["professor"]] = []
+        if len(item["postText"]) > 0:
+            data_map[item["professor"]].append((item["postText"], item["comments"]))
+
+    # Find most similiar search
+    options = list(data_map.keys())
+    result = search_similarity(professor_name, options)
+    if result == None:
+        return "Professor was not found"
+    
+    return data_map[result]
+    
+
+
+# def get_reddit_data_class_name(class_name: str):
+#     """ Gets insight into reddit data for a professor"""
+#     with open("../data/courses.json") as file:
+#         text += file.read()
+    
+
 # llm.invoke("test")
 def ask(prompt: str, llm: Any):
   agent = create_agent(llm, tools=[
     get_professor_rating,
-    get_course_info
+    get_course_info,
+    get_reddit_data_professor
     # get_class_times,
     # get_reqs_filled,
     # get_reqs_needed
@@ -111,13 +149,31 @@ def ask(prompt: str, llm: Any):
           pass
   return tools_used, res["messages"][-1].content
 
+def run_ask_loop():
+    while True:
+        prompt = input("Prompt: ")
+        tools, response = ask(prompt=prompt, llm=llm)
+        print(f"Tools: {tools}")
+        print(f"Response: {response}")
+        print()
+
 if __name__ == "__main__":
-    tools, response = ask(prompt="I want to take to take Penetration Testing: Ethical Hacking and I would like to see what the professor is like.", llm=llm)
+    EXAMPLE_PROMPT_1 = """
+    I want to take to take Applications in Biological Engineering and I would like to see what the professor is like.
+    """
+    EXAMPLE_PROMPT_2 = """
+    I want to take to take Applications in Biological Engineering and I would like to see what other people think about it.
+    """
+    tools, response = ask(prompt=EXAMPLE_PROMPT_1, llm=llm)
+    # print(tools)
+    # print(response)
+    # test = get_reddit_data_professor(professor_name="John Mendoza-Garcia")
+    # print(test)
+    # run_ask_loop()
     # print(tools)
     # print(response)
     # stuff = get_professor_rating(professor_name="John Mendoza-Garcia")
     # stuff1= get_course_info(course_name="Applications in Biological Engineering")
-    print(tools)
-    print(response)
+    
 # ask(prompt="I want to take COP3504 and I would like to see what requirements it fulfills.", llm=mercury_llm)
 
