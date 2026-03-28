@@ -5,18 +5,20 @@ export function mainLanding() {
     <div className="w-full min-h-screen bg-[#F6F8FF]">
       <div className="overflow-x-clip">
         {/* NAVBAR */}
-        <nav className="top-0 left-0 z-50 w-full h-[12vh] min-h-[64px] bg-[#F9FFD5] shadow-md flex items-center overflow-visible px-6">
-        <div className="flex items-center gap-4 relative h-full mt-3">
-          <div
-            className="absolute bottom-0 left-0 w-28 h-28 rounded-full bg-[#FFAF01] translate-y-1/3 flex-shrink-0"
+        <nav className="top-0 left-0 z-50 w-full min-h-[72px] bg-[#F9FFD5] shadow-md flex items-center gap-3 sm:gap-6 overflow-visible px-4 sm:px-6 py-3 sm:py-2">
+        <div className="flex items-center gap-4 relative h-full">
+          <img
+            src="/Login_page_photo.png"
+            alt=""
             aria-hidden
+            className="absolute bottom-0 left-0 w-28 h-28 rounded-full object-cover translate-y-1/2 flex-shrink-0"
           />
-          <h1 className="relative mt-6 z-10 pl-32 justify-start text-[#FF4D65] text-3xl font-bold font-silkscreen">
+          <h1 className="relative mt-4 sm:mt-6 z-10 pl-28 sm:pl-32 justify-start text-[#FF4D65] text-2xl sm:text-3xl font-bold font-silkscreen">
             AI Advisor
           </h1>
         </div>
 
-        <span className="ml-16 mt-10 text-[#F07CA3] font-semibold font-mono">
+        <span className="hidden lg:block self-end -ml-1 pb-0 text-[#F07CA3] font-semibold font-mono">
           Made By UF SASE
         </span>
 
@@ -29,15 +31,15 @@ export function mainLanding() {
       </nav>
 
       {/* HERO */}
-      <section className="pt-5vh h-[65vh] min-h-[400px] py-12 bg-stone-50 flex items-center justify-center">
-        <div className="max-w-7xl w-full px-8 grid grid-cols-1 md:grid-cols-2 gap-16">
+      <section className="pt-5vh min-h-[430px] py-12 bg-stone-50 flex items-center justify-center">
+        <div className="max-w-7xl w-full px-6 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
           {/* LEFT TEXT */}
           <div className="flex flex-col gap-6">
-            <h2 className="text-4xl font-bold font-silkscreen">
+            <h2 className="text-[#111827] text-3xl sm:text-4xl font-bold font-silkscreen leading-tight">
               Create Your Dream Schedule
             </h2>
 
-            <p className="text-[#9CA3AF] font-semibold font-mono max-w-xl">
+            <p className="text-[#9CA3AF] text-sm sm:text-base font-semibold font-mono max-w-xl">
               Integrated with AI to provide smart suggestions that see all
               possibilities so you can make optimal decisions.
             </p>
@@ -65,7 +67,7 @@ export function mainLanding() {
           </div>
 
           {/* RIGHT IMAGE PLACEHOLDER */}
-          <div className="w-full h-72 bg-zinc-300 flex items-center justify-center text-black font-mono font-semibold">
+          <div className="w-full h-64 sm:h-72 bg-zinc-300 flex items-center justify-center text-black text-sm sm:text-base font-mono font-semibold">
             photo of happy people using the site
           </div>
         </div>
@@ -99,7 +101,7 @@ export function mainLanding() {
             <defs>
               <path id="arcPath" d="M 25,118 A 60,60 0 0,1 175,118" />
             </defs>
-            <text fill="#FF4D65" fontSize="14" fontWeight="600" fontFamily="IBM Plex Mono, monospace">
+            <text fill="#FF4D65" fontSize="13" fontWeight="600" fontFamily="IBM Plex Mono, monospace">
               <textPath xlinkHref="#arcPath" startOffset="50%" textAnchor="middle">
                 ...or learn about the project
               </textPath>

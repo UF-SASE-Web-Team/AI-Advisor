@@ -67,7 +67,7 @@ export function ProfileLanding() {
   return (
     <div className="w-full bg-[#F6F8FF] overflow-x-clip">
       <section className="relative max-w-7xl mx-auto px-8 md:px-16 py-24">
-        <div className="mt-20 flex items-center gap-4 -mx-10 md:-mx-16">
+        <div className="mt-8 lg:mt-12 flex items-center gap-4 -mx-10 md:-mx-16">
           <button
             type="button"
             onClick={scrollLeft}
