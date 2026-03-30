@@ -6,44 +6,44 @@ export function AboutLanding() {
     <div className="w-full bg-[#F6F8FF] overflow-x-clip">
       {/* About the Project — title+line left (touching edge), subsection content centered, spacer right */}
       <section id="about-the-project" className="py-24 scroll-mt-4">
-        <div className="w-full flex flex-col md:flex-row md:items-start gap-12 md:gap-16">
-          <div className="py-4 w-96 flex-shrink-0 pl-4 md:pl-0">
-            <h2 className="text-black text-3xl font-semibold font-mono text-right">
+        <div className="w-full flex flex-col lg:flex-row lg:items-start gap-10 lg:gap-14 xl:gap-16">
+          <div className="py-4 w-full lg:w-80 xl:w-96 flex-shrink-0 px-6 lg:px-0">
+            <h2 className="text-black text-3xl font-semibold font-mono lg:text-right">
               About the
               <br />
               Project
             </h2>
-            <div className="w-96 h-2.5 bg-dark-pink mt-4" />
+            <div className="w-full lg:w-80 xl:w-96 h-2.5 bg-dark-pink mt-4" />
           </div>
-          <div className="flex-1 flex justify-center px-6 md:px-8 min-w-0">
-            <div className="max-w-xl w-full space-y-2 mx-auto">
+          <div className="flex-1 flex justify-center px-6 sm:px-8 min-w-0">
+            <div className="max-w-2xl w-full space-y-3 mx-auto">
               <div>
-                <h3 className="text-black text-base font-semibold font-mono mb-2">
+                <h3 className="text-black text-lg lg:text-xl font-semibold font-mono mb-2">
                   Subsection #1
                 </h3>
-                <p className="text-black text-[10px] font-normal font-tenor leading-4">
+                <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
                   {LOREM}
                   <br />
                   <br />
                   {LOREM}
                 </p>
               </div>
-              <p className="text-black text-[10px] font-normal font-tenor leading-4">
+              <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
                 {LOREM}
               </p>
             </div>
           </div>
-          <div className="hidden md:block w-96 flex-shrink-0" aria-hidden />
+          <div className="hidden lg:block w-80 xl:w-96 flex-shrink-0" aria-hidden />
         </div>
       </section>
 
       {/* Meet the Team — spacer left, subsection content centered, title+line right (touching edge) */}
       <section className="py-0">
-        <div className="w-full flex flex-col md:flex-row md:items-start gap-12 md:gap-16">
-          <div className="hidden md:block w-96 flex-shrink-0" aria-hidden />
-          <div className="flex-1 flex justify-center px-6 md:px-8 min-w-0 order-first md:order-none">
-            <div className="max-w-xl w-full mx-auto">
-              <p className="text-black text-[10px] font-normal font-tenor leading-4">
+        <div className="w-full flex flex-col lg:flex-row lg:items-start gap-10 lg:gap-14 xl:gap-16">
+          <div className="hidden lg:block w-80 xl:w-96 flex-shrink-0" aria-hidden />
+          <div className="flex-1 flex justify-center px-6 sm:px-8 min-w-0 order-first lg:order-none">
+            <div className="max-w-2xl w-full mx-auto">
+              <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
                 {LOREM}
                 <br />
                 <br />
@@ -51,13 +51,13 @@ export function AboutLanding() {
               </p>
             </div>
           </div>
-          <div className="py-4 w-96 flex-shrink-0 pr-4 md:pr-0 ml-auto md:ml-0">
+          <div className="py-4 xl:pt-120 w-full lg:w-80 xl:w-96 flex-shrink-0 px-6 lg:px-0 ml-auto lg:ml-0">
             <h2 className="text-black text-3xl font-semibold font-mono text-left">
               Meet the
               <br />
               Team
             </h2>
-            <div className="w-96 h-2.5 bg-dark-pink mt-4" />
+            <div className="w-full lg:w-80 xl:w-96 h-2.5 bg-dark-pink mt-4" />
           </div>
         </div>
       </section>
