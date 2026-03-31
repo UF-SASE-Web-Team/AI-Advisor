@@ -6,19 +6,18 @@ import { ChatContainer } from "~/components/Chatbot/ChatContainer";
 export default function Dashboard() {
   // TODO: redirect to login page if user isn't logged in
   return (
-    <div className="grid grid-cols-4 h-screen">
+    <div className="grid grid-cols-[min-content_1fr] h-screen">
       <div
-        className="
-        col-span-1 grid grid-rows-2
-        border-r
-        "
-      >
+        style={{ width: "30vw" }}
+        className="flex flex-col
+        h-full">
         <DegreeAudit />
         <ChatContainer />
       </div>
 
+      {/* primary widget */}
       <div
-        className="col-span-3
+        className="
         flex-row"
       >
         <SelectPlan />

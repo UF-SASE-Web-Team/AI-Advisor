@@ -4,6 +4,9 @@ export default {
     extend: {
       fontFamily: {
         figmaHand: ['"Patrick Hand"', 'cursive'],
+        silkscreen: ["Silkscreen", "cursive"],
+        mono: ["IBM Plex Mono", "monospace"],
+        tenor: ["Tenor Sans", "sans-serif"],
       },
     },
   },

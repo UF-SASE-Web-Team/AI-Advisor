@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
 import { sendMsgToBackend } from "~/apis/chatbot";
+import { Widget } from "../Widget";
 
 interface ChatMsg {
   text: string;
@@ -12,6 +13,8 @@ interface ChatMsg {
 export function ChatContainer() {
   const [msgHistory, setMsgHistory] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
@@ -43,52 +46,15 @@ export function ChatContainer() {
 
         const content = await response.json();
         botMsg.text = content.text;
-      } catch (err) {}
+      } catch (err) { }
       setMsgHistory([...msgHistory, botMsg]);
     })();
   });
 
   return (
-    <div
-      className="
-      flex flex-col
-      m-4"
-    >
-      <ChatHeader />
-
-      <WidgetBody>
-        <ChatbotDisplay history={msgHistory} />
-
-        <ChatbotInput value={input} onChange={setInput} onSubmit={onSubmit} />
-      </WidgetBody>
-    </div>
+    <Widget title="AI Advisor">
+      <ChatbotDisplay history={msgHistory} />
+      <ChatbotInput value={input} onChange={setInput} onSubmit={onSubmit} />
+    </Widget>
   );
 }
-
-const ChatHeader = () => {
-  return (
-    <div
-      className="
-    p-3 font-bold
-    bg-widget-titlebar
-    border-1 border-widget-titlebar-border
-    rounded-t-md"
-    >
-      AI-Advisor
-    </div>
-  );
-};
-
-const WidgetBody = ({ children }: any) => {
-  return (
-    <div
-      className="
-  bg-widget-bg
-  border-1 border-widget-border
-  grow flex flex-col
-  rounded-b-md"
-    >
-      {children}
-    </div>
-  );
-};
