@@ -14,19 +14,19 @@ from timeit import timeit
 
 load_dotenv()
 
-llm = ChatOpenAI(
-  model="inception/mercury",
-  api_key=os.getenv("MERCURY_LLM_API_KEY"),
-  base_url="https://openrouter.ai/api/v1"
-)
-
 # llm = ChatOpenAI(
-#     model="gpt-5-nano",
-#     reasoning_effort="low",
-#     max_retries=2,
-#     api_key=os.getenv("LLM_API_KEY"), # type: ignore
-#     base_url="https://api.ai.it.ufl.edu",
+#   model="inception/mercury",
+#   api_key=os.getenv("MERCURY_LLM_API_KEY"),
+#   base_url="https://openrouter.ai/api/v1"
 # )
+
+llm = ChatOpenAI(
+    model="gpt-5-nano",
+    reasoning_effort="low",
+    max_retries=2,
+    api_key=os.getenv("LLM_API_KEY"), # type: ignore
+    base_url="https://api.ai.it.ufl.edu",
+)
 
 # 1. Load a pre-trained model 
 # 'all-MiniLM-L6-v2' is fast and efficient for general use
@@ -71,7 +71,7 @@ def get_professor_rating(professor_name: str):
     return data_map[result]
 
 def get_course_info(course_name: str):
-    """ Gets course info given a course name """
+    """ Gets course info given a course name or course code """
     text: str = ""
     with open("../data/courses.json") as file:
         text += file.read()
@@ -98,7 +98,7 @@ def get_course_info(course_name: str):
     return data_map[result]
 
 def get_reddit_data_professor(professor_name: str):
-    """ Gets insight into reddit data for a professor"""
+    """ Gets insight from reddit data for a professor"""
     text: str = ""
     with open("../data/reddit_post_data.json") as file:
         text += file.read()
@@ -119,13 +119,29 @@ def get_reddit_data_professor(professor_name: str):
         return "Professor was not found"
     
     return data_map[result]
+
+def get_reddit_data_topics(topic: str):
+    """ Gets insight from reddit data for a topic or question"""
+    text: str = ""
+    with open("../data/reddit_post_data.json") as file:
+        text += file.read()
+    data = json.loads(text).values()
+
+    # Convert to a map
+    data_map = {}
+    for item in data:
+        if item["title"] not in data_map:
+            data_map[item["title"]] = []
+        if len(item["postText"]) > 0:
+            data_map[item["title"]].append((item["postText"], item["comments"]))
+
+    # Find most similiar search
+    options = list(data_map.keys())
+    result = search_similarity(topic, options)
+    if result == None:
+        return "Topic was not found"
     
-
-
-# def get_reddit_data_class_name(class_name: str):
-#     """ Gets insight into reddit data for a professor"""
-#     with open("../data/courses.json") as file:
-#         text += file.read()
+    return data_map[result]
     
 
 # llm.invoke("test")
@@ -133,14 +149,20 @@ def ask(prompt: str, llm: Any):
   agent = create_agent(llm, tools=[
     get_professor_rating,
     get_course_info,
-    get_reddit_data_professor
+    get_reddit_data_professor,
+    get_reddit_data_topics
     # get_class_times,
     # get_reqs_filled,
     # get_reqs_needed
   ])
   res = agent.invoke(
       {"messages": [
-         {"role": "system", "content": "Make sure to use the tools strictly and use only data from there. Do not hallucinate data or use other info."}, 
+         {"role": "system", "content": """
+          Make sure to use the tools strictly and use only data from there. Do not hallucinate data or use other info.
+          Only answer academic inquiries.
+          Some basic info about user is:
+            STUDENT UNIVERSITY: University of Florida
+          """}, 
          {"role": "user", "content": prompt}
       ]}
   )
