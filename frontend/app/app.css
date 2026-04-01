@@ -15,15 +15,6 @@
     "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-html,
-body {
-  @apply bg-white dark:bg-gray-950;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
-}
-
 @utility font-figmaHand {
   font-family: "Patrick Hand", cursive;
 }
