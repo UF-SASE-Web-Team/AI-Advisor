@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Route } from "./+types/loginPage";
 import { supabase } from "../../supabase";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "Login | AI Advisor" },
     { name: "description", content: "Log in to AI Advisor." },
@@ -31,7 +31,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: window.location.origin + "/dashboard",
       },
     });
 
