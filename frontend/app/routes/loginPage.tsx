@@ -29,15 +29,16 @@ export default function LoginPage() {
 
   async function onGoogleLogin() {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/dashboard",
-      },
+      provider: "google"
     });
 
+    // TODO: replace with proper error page
     if (error) {
       console.error("Google sign-in error:", error.message);
+      return;
     }
+
+    window.location.replace(window.location.origin + "/dashboard");
   }
 
   return (
