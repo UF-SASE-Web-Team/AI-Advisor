@@ -3,10 +3,11 @@ import { Calendar } from "~/components/dashboard/Calendar";
 import { SelectPlan } from "~/components/dashboard/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
 import { useNavigate } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "supabase";
 
 export default function Dashboard() {
+  const [renderDash, setRender] = useState(false);
   // Redirect user if not logged in
   const navigate = useNavigate();
   useEffect(() => {
@@ -15,11 +16,13 @@ export default function Dashboard() {
       // Manual login might need a different check
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/login"); }
+      else { setRender(true); }
     };
     checkAuth();
   }, [navigate]);
 
   // Dashboard page
+  if (!renderDash) return null;
   return (
     <div className="grid grid-cols-[min-content_1fr] h-screen">
       <div
