@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	plannerpb "github.com/UF-SASE-Web-Team/AI-Advisor/backend/services/api-gateway/proto/planner"
@@ -88,16 +89,28 @@ type MeetingTime struct {
 	Room      string   `json:"room"`
 }
 
-type TestResponse struct {
-	Message  string      `json:"message"`
-	Received interface{} `json:"received,omitempty"`
-}
-
 var (
 	savedPref     UserPreference
 	plannerClient plannerpb.PlannerServiceClient
 	ragClient     ragpb.RAGServiceClient
 )
+
+type Supabase struct {
+	URL string
+	Key string
+}
+
+type contextKey string
+
+const userIDContextKey contextKey = "user_id"
+
+func NewSupabase() *Supabase {
+	return &Supabase{
+		URL: os.Getenv("SUPABASE_URL"),
+		Key: os.Getenv("SUPABASE_SERVICE_ROLE_KEY"),
+	}
+}
+
 
 func getPlannerAddress() string {
 	if addr := os.Getenv("PLANNER_GRPC_ADDR"); addr != "" {
@@ -131,40 +144,91 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func handleTestEndpoint(message string) http.HandlerFunc {
+func GetUserWithAuth(supabase *Supabase, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet && r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "missing or invalid authorization header"})
 			return
 		}
 
-		resp := TestResponse{Message: message}
-
-		if r.Method == http.MethodPost {
-			body, err := io.ReadAll(r.Body)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "failed to read request body")
-				return
-			}
-
-			if len(body) > 0 {
-				var payload interface{}
-				if err := json.Unmarshal(body, &payload); err != nil {
-					w.WriteHeader(http.StatusBadRequest)
-					fmt.Fprintln(w, "invalid request body")
-					return
-				}
-				resp.Received = payload
-			}
+		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		if token == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "missing bearer token"})
+			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if supabase.URL == "" || supabase.Key == "" {
+			log.Printf("auth failed: supabase configuration missing")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "supabase configuration missing"})
+			return
+		}
+
+		req, err := http.NewRequest(http.MethodGet, supabase.URL+"/auth/v1/user", nil)
+		if err != nil {
+			log.Printf("auth failed: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create auth request"})
+			return
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("apikey", supabase.Key)
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Printf("auth failed: %v", err)
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "invalid or expired token"})
+			return
+		}
+		defer resp.Body.Close()
+
+		respBody, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			log.Printf("auth failed reading response: %v", readErr)
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "invalid or expired token"})
+			return
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("auth failed: supabase status %d", resp.StatusCode)
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "invalid or expired token"})
+			return
+		}
+
+		var user map[string]interface{}
+		if err := json.Unmarshal(respBody, &user); err != nil {
+			log.Printf("auth failed decoding response: %v", err)
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "invalid or expired token"})
+			return
+		}
+
+		userID, ok := user["id"].(string)
+		if !ok || userID == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "user id not found in token"})
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), userIDContextKey, userID)
+		next(w, r.WithContext(ctx))
 	}
 }
 
+func userIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(userIDContextKey).(string)
+	return userID, ok
+}
+
 func main() {
+	supabase := NewSupabase()
+
 	// Connect to planner gRPC service
 	plannerAddr := getPlannerAddress()
 	plannerConn, err := grpc.NewClient(
@@ -202,10 +266,6 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "hello from api-gateway")
 	})
-
-	// Test endpoints for frontend integration
-	http.HandleFunc("/api/chatbot/", enableCORS(handleTestEndpoint("chatbot test")))
-	http.HandleFunc("/api/schedule-generation/", enableCORS(handleTestEndpoint("schedule generation test")))
 
 	// User preference endpoint
 	http.HandleFunc("/api/userpreference/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
@@ -426,17 +486,17 @@ func main() {
 	}))
 
 	// Transcript PDF upload endpoint
-	http.HandleFunc("/api/v2/transcript/upload/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/v2/transcript/upload/", enableCORS(GetUserWithAuth(supabase, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
-		userID := r.FormValue("userID") // from the request body
-		if userID == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{"error": "userID is required"})
+		userID, ok := userIDFromContext(r.Context())
+		if !ok || userID == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
 			return
 		}
 
@@ -515,9 +575,10 @@ func main() {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message":  "transcript uploaded successfully",
+			"user_id":  userID,
 			"filename": filename,
 		})
-	}))
+	})))
 
 	log.Println("api-gateway :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
