@@ -5,6 +5,7 @@ import { ChatContainer } from "~/components/Chatbot/ChatContainer";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "supabase";
+import { TempButton } from "~/components/dashboard/temp_upload";
 
 export default function Dashboard() {
   const [renderDash, setRender] = useState(false);
@@ -40,6 +41,7 @@ export default function Dashboard() {
       >
         <SelectPlan />
         <Calendar />
+        <TempButton />
       </div>
     </div>
   );
