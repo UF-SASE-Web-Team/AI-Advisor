@@ -1,6 +1,6 @@
-import { DegreeAudit } from "~/components/DegreeAudit";
-import { Calendar } from "~/components/Calendar";
-import { SelectPlan } from "~/components/SelectPlan";
+import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
+import { Calendar } from "~/components/dashboard/Calendar";
+import { SelectPlan } from "~/components/dashboard/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
 
 export default function Dashboard() {

@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
 import { sendMsgToBackend } from "~/apis/chatbot";
-import { Widget } from "../Widget";
+import { Widget } from "../dashboard/Widget";
 
 interface ChatMsg {
   text: string;
