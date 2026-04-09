@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
-import teamMembers from "./teamMembers.json";
+import teamMembers from "../../data/teamMembers.json";
 
-type TeamMember = { name: string; role: string; description: string };
+type TeamMember = { name: string; role: string; description: string, imageUrl: string };
 const TEAM_MEMBERS = teamMembers as TeamMember[];
 
 const GAP = 24;
@@ -93,10 +93,10 @@ export function ProfileLanding() {
                 }`}
                 style={{ width: CARD_WIDTH }}
               >
-                <div
-                  className="bg-zinc-300 rounded aspect-square"
-                  style={{ width: CARD_WIDTH }}
-                />
+                <div className="rounded aspect-square"
+                  style={{ width: CARD_WIDTH }}>
+                  <img src = {member.imageUrl} />
+                </div>                
                 <p className="mt-3 text-black text-[10px] font-normal font-tenor leading-4">
                   {member.name},
                   <br />
@@ -116,7 +116,9 @@ export function ProfileLanding() {
         </div>
 
         <div className="mt-16 flex flex-col md:flex-row gap-8 items-start">
-          <div className="w-56 h-56 flex-shrink-0 bg-zinc-300 rounded" />
+          <div className="w-56 h-56 flex-shrink-0 rounded">
+            <img src={selected.imageUrl}></img>
+          </div>
           <div>
             <h3 className="text-black text-2xl font-semibold font-mono">
               {selected.name}
