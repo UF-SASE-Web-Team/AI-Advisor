@@ -10,11 +10,10 @@ supabase: Client = create_client(url, key)
 
 def get_professor_rating(professor_name: str):
     """  Get professor rating and other info given a professor name """
-    print(professor_name)
     professor_data = (
         supabase.table("professors")
         .select("*")
-        .ilike("name", f"%{professor_name}%")
+        .filter("name", "wfts", f"'{professor_name}'")
         .execute()
     )
     return professor_data
@@ -35,7 +34,7 @@ def get_reddit_data_professor(professor_name: str):
     reddit_data = (
         supabase.table("reddit_posts")
         .select("*")
-        .text_search("professor", professor_name, options={"config": "english"})
+        .filter("professor", "wfts", f"'{professor_name}'")
         .execute()
     )
     return reddit_data
@@ -45,7 +44,7 @@ def get_reddit_data_topics(topic: str):
     reddit_data = (
         supabase.table("reddit_posts")
         .select("*")
-        .text_search("title", topic, options={"config": "english"})
+        .filter("title", "wfts", f"'{topic}'")
         .execute()
     )
     return reddit_data

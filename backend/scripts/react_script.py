@@ -8,6 +8,7 @@ from typing import Any
 import json
 import re
 from sentence_transformers import SentenceTransformer, util
+from langgraph.checkpoint.postgres import PostgresSaver
 from supabase import create_client, Client
 from langgraph.checkpoint.memory import MemorySaver
 from timeit import timeit
@@ -21,6 +22,16 @@ load_dotenv()
 #   api_key=os.getenv("MERCURY_LLM_API_KEY"),
 #   base_url="https://openrouter.ai/api/v1"
 # )
+
+# Use your Supabase connection string
+DB_URI = "postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
+
+with PostgresSaver.from_conn_string(DB_URI) as checkpointer:
+    # Create the necessary tables in Supabase (first time only)
+    checkpointer.setup()
+
+    # Compile your graph with the persistent checkpointer
+    graph = builder.compile(checkpointer=checkpointer)
 
 llm = ChatOpenAI(
     model="gpt-oss-120b",
@@ -96,11 +107,11 @@ if __name__ == "__main__":
     # I want to take to take Applications in Biological Engineering and I would like to see what other people think about it.
     # """
     # tools, response = ask(prompt=EXAMPLE_PROMPT_1, llm=llm)
-    get_professor_rating("Michael Link")
+    # print(get_professor_rating("'Michael Link'"))
     # print("Tools Called:")
     # for tool in tools:
     #     print(parse_tool_call(tool))
-    # run_ask_loop()
+    run_ask_loop()
     # test = get_reddit_data_professor(professor_name="John Mendoza-Garcia")
     # print(test)
     # run_ask_loop()
