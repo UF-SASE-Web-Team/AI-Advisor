@@ -2,151 +2,151 @@
   {
     "name": "Adrian Moreno",
     "role": "Backend Developer",
-    "description": "Contributes to the AI Leads the design and development efforts for the project.",
+    "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "/headshots/Adrian_Moreno.png"
   },
   {
     "name": "Ajay Vangara",
-    "role": "Frontend Contributer",
-    "description": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Handles backend architecture and API integrations.",
+    "role": "Frontend Developer",
+    "description": "Contributes toward creating frontend features and neccesary API connections.",
     "imageUrl": "headshots/Ajay_Vangara.png"
   },
   {
     "name": "Anthony Le",
     "role": "Backend Developer",
-    "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco. Focuses on AI model training and optimization.",
+    "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Anthony_Le.JPG"
   },
   {
     "name": "Connie Huang",
     "role": "Backend Developer",
-    "description": "Duis aute irure dolor in reprehenderit in voluptate. Manages user research and product strategy.",
+    "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Connie_Huang.JPG"
   },
   {
     "name": "Frankie Lin",
     "role": "UIUX Developer",
-    "description": "Excepteur sint occaecat cupidatat non proident. Oversees frontend development and UX implementation.",
+    "description": "Designs the user experience and interface on Figma.",
     "imageUrl": "headshots/Frankie_Lin.png"
   },
   {
     "name": "Grace Zhao",
     "role": "UIUX Lead",
-    "description": "Sunt in culpa qui officia deserunt mollit anim id est laborum. Coordinates deployment and DevOps workflows.",
+    "description": "Leads the developement of the AI Advisor design process.",
     "imageUrl": "headshots/Grace_Zhao.jpg"
   },
   {
-    "name": "Hayden_Luong",
+    "name": "Hayden Luong",
     "role": "Backend Developer",
-    "description": "Consectetur adipiscing elit sed do eiusmod tempor. Specializes in database design and query optimization.",
+    "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Hayden_Luong.jpg"
   },
   {
     "name": "Helen Zou",
     "role": "Frontend Co-Lead",
-    "description": "Incididunt ut labore et dolore magna aliqua. Works on mobile app development and cross-platform solutions.",
+    "description": "Co-lead the delegation of frontend development.",
     "imageUrl": "headshots/Helen_Zou.jpg"
   },
   {
     "name": "Jacob Nguyen",
     "role": "Backend Developer",
-    "description": "Quis nostrud exercitation ullamco laboris nisi. Oversees sprint planning and agile methodologies.",
+    "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Jacob_Nguyen.jpeg"
   },
   {
     "name": "Jonathan Tang",
     "role": "Backend Co-Lead",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Co-lead the design and delegation of the AI Advisor backend.",
     "imageUrl": "headshots/Jonathan_Tang.JPG"
   },
   {
     "name": "Kaylee Renna",
     "role": "UIUX Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Designs the user experience and interface on Figma.",
     "imageUrl": "headshots/Kaylee_Renna.jpeg"
   },
   {
     "name": "Kenneth Deng",
     "role": "Frontend Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Contributes toward creating frontend features and neccesary API connections.",
     "imageUrl": "headshots/Kenneth_Deng.png"
   },
   {
     "name": "Kenzo Fukuda",
     "role": "Frontend Co-Lead",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Co-lead the delegation of frontend development.",
     "imageUrl": "headshots/Kenzo_Fukuda.jpg"
   },
   {
     "name": "Leonna Xie",
     "role": "Frontend Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Contributes toward creating frontend features and neccesary API connections.",
     "imageUrl": "headshots/Leonna_Xie.png"
   },
   {
     "name": "Lynette Hemingway",
     "role": "SASE Co-Webmaster",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Oversee the SWT Project Team alongside the SASE Website Team.",
     "imageUrl": "headshots/Lynette_Hemingway.jpg"
   },
   {
     "name": "Nathan Kim",
     "role": "Backend Co-Lead",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Co-lead the design and delegation of the AI Advisor backend.",
     "imageUrl": "headshots/Nathan_Kim.JPG"
   },
   {
     "name": "Nivedha Sankaran",
     "role": "Frontend Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Contributes toward creating frontend features and neccesary API connections.",
     "imageUrl": "headshots/Nivedha_Sankaran.JPG"
   },
   {
     "name": "Pari Vyas",
     "role": "Frontend Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Contributes toward creating frontend features and neccesary API connections.",
     "imageUrl": "headshots/Pari_Vyas.jpg"
   },
   {
     "name": "Ro Diaz",
     "role": "UIUX Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Designs the user experience and interface on Figma.",
     "imageUrl": "headshots/Ro_Diaz.jpeg"
   },
   {
     "name": "Saaketh Kesireddy",
     "role": "Backend Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Saaketh_Kesireddy.jpeg"
   },
   {
     "name": "Sharlene Kho",
     "role": "Frontend Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Contributes toward creating frontend features and neccesary API connections.",
     "imageUrl": "headshots/Sharlene_Kho.JPEG"
   },
   {
     "name": "Tanvi Sajja",
     "role": "UIUX Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Designs the user experience and interface on Figma.",
     "imageUrl": "headshots/Tanvi_Sajja.jpg"
   },
   {
     "name": "Thuy Le",
     "role": "SASE Co-Webmaster",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Oversee the SWT Project Team alongside the SASE Website Team.",
     "imageUrl": "headshots/Thuy_Le.JPG"
   },
   {
     "name": "Tyler Bullock",
     "role": "Backend Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
+    "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Tyler_Bullock.jpg"
   },
   {
     "name": "Tyler Dang",
     "role": "Backend Developer",
-    "description": "Reprehenderit in voluptate velit esse cillum dolore. Handles security audits and compliance requirements.",
-    "imageUrl": "headshots/Tyler_Dang.jpg"
+    "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
+    "imageUrl": "headshots/Tyler_Dang.jpeg"
   }
 ]
