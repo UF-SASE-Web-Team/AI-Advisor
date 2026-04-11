@@ -23,16 +23,6 @@ load_dotenv()
 #   base_url="https://openrouter.ai/api/v1"
 # )
 
-# Use your Supabase connection string
-DB_URI = "postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
-
-with PostgresSaver.from_conn_string(DB_URI) as checkpointer:
-    # Create the necessary tables in Supabase (first time only)
-    checkpointer.setup()
-
-    # Compile your graph with the persistent checkpointer
-    graph = builder.compile(checkpointer=checkpointer)
-
 llm = ChatOpenAI(
     model="gpt-oss-120b",
     reasoning_effort="low",
@@ -55,7 +45,6 @@ agent = create_agent(llm, tools=[
 
 config = {"configurable": {"thread_id": "student_session_1"}}
 
-# llm.invoke("test")
 def ask(prompt: str, llm: Any):
   res = agent.invoke(
       {"messages": [

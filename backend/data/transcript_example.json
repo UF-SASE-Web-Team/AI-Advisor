@@ -1,0 +1,310 @@
+{
+    "Fall 2025": [
+        {
+            "course": "AMH 2010",
+            "name": "United States to 1877",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "AMH 2020",
+            "name": "US Since 1877",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "CGS L000",
+            "name": "Transfer CGS Course",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "CIS L000",
+            "name": "Transfer CIS Course",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "CPO 2001",
+            "name": "Comparative Politics",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "ECO 2013",
+            "name": "Prin Macroeconomics",
+            "grade": "P",
+            "credit_attempted": "4.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "ENC 1101",
+            "name": "Expos and Argu Writing",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "ENC 1102",
+            "name": "Argument and Persuasion",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "ENC 1101",
+            "name": "Expos and Argu Writing R",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "GEO 2420",
+            "name": "People, Place, Culture",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "IDS L000",
+            "name": "Transfer IDS Course",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "ISC L000",
+            "name": "Transfer ISC Course",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "ISS L000",
+            "name": "Transfer ISS Course",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "LIT 2120",
+            "name": "World Lit 17 C to Mod",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "MAC 2311",
+            "name": "Analyt Geom and Calc 1 R",
+            "grade": "P",
+            "credit_attempted": "4.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "MAC 2311",
+            "name": "Analyt Geom and Calc 1 R",
+            "grade": "P",
+            "credit_attempted": "4.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "MAC 2311",
+            "name": "Analyt Geom and Calc 1",
+            "grade": "P",
+            "credit_attempted": "4.00",
+            "earned_hours": "4.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "MAC 2312",
+            "name": "Analyt Geom and Calc 2",
+            "grade": "P",
+            "credit_attempted": "4.00",
+            "earned_hours": "4.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "PHY 2053",
+            "name": "Physics 1 R",
+            "grade": "P",
+            "credit_attempted": "4.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "PHY 2053L",
+            "name": "Lab for PHY 2053 R",
+            "grade": "P",
+            "credit_attempted": "1.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "PHY 2053",
+            "name": "Physics 1",
+            "grade": "P",
+            "credit_attempted": "4.00",
+            "earned_hours": "4.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "PHY 2053L",
+            "name": "Lab for PHY 2053",
+            "grade": "P",
+            "credit_attempted": "1.00",
+            "earned_hours": "1.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "PHY 2054",
+            "name": "Physics 2",
+            "grade": "P",
+            "credit_attempted": "4.00",
+            "earned_hours": "4.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "PHY 2054L",
+            "name": "Lab for PHY 2054",
+            "grade": "P",
+            "credit_attempted": "1.00",
+            "earned_hours": "1.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "POS 2041",
+            "name": "American Federal Govt",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "PSY 2012",
+            "name": "General Psychology",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "STA 2023",
+            "name": "Intro to Statistics 1",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "WOH L000",
+            "name": "Transfer WOH Course",
+            "grade": "P",
+            "credit_attempted": "3.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "COP 3504C",
+            "name": "Adv Prog Fundamentals",
+            "grade": "A",
+            "credit_attempted": "4.00",
+            "earned_hours": "4.00",
+            "carried_hours": "4.00"
+        },
+        {
+            "course": "COT 3100",
+            "name": "Appli Discrete Struc",
+            "grade": "A",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "3.00"
+        },
+        {
+            "course": "EGN 4912",
+            "name": "Engineering Research",
+            "grade": "S",
+            "credit_attempted": "0.00",
+            "earned_hours": "0.00",
+            "carried_hours": "0.00"
+        },
+        {
+            "course": "MAC 2313",
+            "name": "Analyt Geom and Calc 3",
+            "grade": "A",
+            "credit_attempted": "4.00",
+            "earned_hours": "4.00",
+            "carried_hours": "4.00"
+        },
+        {
+            "course": "REL 1411",
+            "name": "Why is Evil in the World?",
+            "grade": "A",
+            "credit_attempted": "3.00",
+            "earned_hours": "3.00",
+            "carried_hours": "3.00"
+        }
+    ],
+    "Spr 2026": [
+        {
+            "course": "CDA 3101",
+            "name": "Intro to Compu Orgnzn",
+            "grade": null,
+            "credit_attempted": "3.00",
+            "earned_hours": null,
+            "carried_hours": null
+        },
+        {
+            "course": "CIS 4301",
+            "name": "Info and Database Sys 1",
+            "grade": null,
+            "credit_attempted": "3.00",
+            "earned_hours": null,
+            "carried_hours": null
+        },
+        {
+            "course": "COP 3530",
+            "name": "Data Struc/Algorithms",
+            "grade": null,
+            "credit_attempted": "3.00",
+            "earned_hours": null,
+            "carried_hours": null
+        },
+        {
+            "course": "EDG 4910",
+            "name": "Educ Undergrad Rsrch",
+            "grade": null,
+            "credit_attempted": "0.00",
+            "earned_hours": null,
+            "carried_hours": null
+        },
+        {
+            "course": "MAS 3114",
+            "name": "Computatnl Linear Alg",
+            "grade": null,
+            "credit_attempted": "3.00",
+            "earned_hours": null,
+            "carried_hours": null
+        }
+    ]
+}

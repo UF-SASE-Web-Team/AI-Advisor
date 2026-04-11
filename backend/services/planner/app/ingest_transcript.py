@@ -29,3 +29,6 @@ def load_json(path: str, id: str):
 def upload_transcript(rows: list[dict]):
     response = sb.table("transcript").insert(rows).execute()
     print(response)
+
+# if __name__ == "__main__":
+#     load_json("uf-transcript-spring-2026.pdf", )
