@@ -7,10 +7,7 @@ from langchain.tools import tool
 from typing import Any
 import json
 import re
-from sentence_transformers import SentenceTransformer, util
-from langgraph.checkpoint.postgres import PostgresSaver
 from supabase import create_client, Client
-from langgraph.checkpoint.memory import MemorySaver
 from timeit import timeit
 from react_tools import *
 # from tools.core import parse_class_code, get_class_times, get_reqs_filled, get_reqs_needed
@@ -24,14 +21,12 @@ load_dotenv()
 # )
 
 llm = ChatOpenAI(
-    model="gpt-oss-120b",
-    reasoning_effort="low",
+    model="gpt-oss-20b",
+    # reasoning_effort="low",
     max_retries=2,
     api_key=os.getenv("LLM_API_KEY"), # type: ignore
     base_url="https://api.ai.it.ufl.edu",
 )
-
-memory = MemorySaver()
 
 agent = create_agent(llm, tools=[
   get_professor_rating,
@@ -41,29 +36,39 @@ agent = create_agent(llm, tools=[
   # get_class_times,
   # get_reqs_filled,
   # get_reqs_needed
-], checkpointer=memory)
+])
 
-config = {"configurable": {"thread_id": "student_session_1"}}
+def ask(prompt: str, session_id: str):
 
-def ask(prompt: str, llm: Any):
-  res = agent.invoke(
-      {"messages": [
-         {"role": "system", "content": """
-          Make sure to use the tools strictly and use only data from there. Do not hallucinate data or use other info.
-          Only answer academic inquiries.
-          Some basic info about user is:
-            STUDENT UNIVERSITY: University of Florida
-          """}, 
-         {"role": "user", "content": prompt}
-      ]}, config=config
+  # Update history and get history
+  update_conversation_history(
+      session_id=session_id,
+      role="user",
+      content=prompt
   )
+  history = get_conversation_history(
+      session_id=session_id)
+  
+  # Prompt agent
+  res = agent.invoke({
+      "prompt": prompt, 
+      "messages": history
+  })
   tools_used: list[str] = []
   for message in res["messages"]:
       try:
           tools_used += message.tool_calls
       except:
           pass
-  return tools_used, res["messages"][-1].content
+      
+  # Update history
+  llm_res = res["messages"][-1].content
+  update_conversation_history(
+      session_id=session_id,
+      role="assistant",
+      content=llm_res
+  )
+  return tools_used, llm_res
 
 def parse_tool_call(tool_call: dict):
     function_call: str = f"{tool_call["name"]}("
@@ -79,9 +84,17 @@ def parse_tool_calls(calls: list[dict]):
     return ", ".join(tool_calls)
 
 def run_ask_loop():
+    example_user = "56d89bb8-a856-4939-81bd-43bb6f2380a8"
+    example_session = create_session(
+        user_id=example_user,
+        title="test convo"
+    )
+    session_id = example_session.data[0]['id']
     while True:
         prompt = input("Prompt: ")
-        tools, response = ask(prompt=prompt, llm=llm)
+        tools, response = ask(
+            prompt=prompt, 
+            session_id=session_id)
         print("Tools Called:")
         for tool in tools:
             print(parse_tool_call(tool))
