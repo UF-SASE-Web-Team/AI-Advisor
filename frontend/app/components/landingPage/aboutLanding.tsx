@@ -19,17 +19,51 @@ export function AboutLanding() {
             <div className="max-w-2xl w-full space-y-3 mx-auto">
               <div>
                 <h3 className="text-black text-lg lg:text-xl font-semibold font-mono mb-2">
-                  Subsection #1
+                  About:
                 </h3>
                 <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
-                  {LOREM}
+                  AI Advisor is designed to help students plan their future semesters by turning transcripts into clear, personalized pathways.
                   <br />
                   <br />
-                  {LOREM}
+                  Not sure what classes to take or how heavy coursework will be? The AI Advisor helps you understand your progress, suggests courses, and guides you towards a balanced schedule.
+                  <br />
+                  <br />
+                    By analyzing your transcript, the AI Advisor identifies your strengths and weaknesses, and recommends courses that align with your goals and interests. It also helps you plan a balanced schedule by suggesting a mix of challenging and manageable courses each semester.
+                  <br />
+                  <br />
+                </p>
+                <h3 className="text-black text-lg lg:text-xl font-semibold font-mono mb-2">
+                  What it does:
+                </h3>
+                <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Shows degree progress</li>
+                    <li>Suggest classes for upcoming semesters</li>
+                    <li>Helps build a balanced workload</li>
+                    <li>Give insight on class difficulty and time commitment</li>
+                  </ul>
+                  <br />
+                </p>
+                <h3 className="text-black text-lg lg:text-xl font-semibold font-mono mb-2">
+                  How it works:
+                </h3>
+                <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
+                  <ol className="list-disc list-inside space-y-1">
+                    <li>Upload your transcript</li>
+                    <li>Ask questions</li>
+                    <li>Get personalized recommendations</li>
+                  </ol>
+                  <br />
+                </p>
+                <h3 className="text-black text-lg lg:text-xl font-semibold font-mono mb-2">
+                  Built to Support your Decisions 
+                </h3>
+                <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
+                  The AI Advisor was built to guide your decisions, not fully make them for you. The advisor provides helpful academic advice, but should not overrule degree requirements and advice academic advisors provide.
                 </p>
               </div>
               <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
-                {LOREM}
+                {/*LOREM*/}
               </p>
             </div>
           </div>
@@ -44,10 +78,8 @@ export function AboutLanding() {
           <div className="flex-1 flex justify-center px-6 sm:px-8 min-w-0 order-first lg:order-none">
             <div className="max-w-2xl w-full mx-auto">
               <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
-                {LOREM}
+                This app was developed by the UF SASE Web Dev Semester Project Team! The Projects was run by our webmasters Thuy Le and Lynette Hemingway! Our backend leads are Jonathan Tang and Nathan (?). Our frontend leads are Helen Zou and Kenzo Fukuda. Lastly, our UI/UX lead is Grace Zhao. All of our leads guided the team members to complete the tasks that helped create the AI Advisor!
                 <br />
-                <br />
-                {LOREM}
               </p>
             </div>
           </div>
