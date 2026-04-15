@@ -2,7 +2,6 @@ import { DegreeAudit } from "~/components/DegreeAudit";
 import { Calendar } from "~/components/Calendar";
 import { SelectPlan } from "~/components/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
-import { TempButton } from "~/components/temp_upload";
 
 export default function Dashboard() {
   // TODO: redirect to login page if user isn't logged in
@@ -23,7 +22,6 @@ export default function Dashboard() {
       >
         <SelectPlan />
         <Calendar />
-        <TempButton />
       </div>
     </div>
   );
