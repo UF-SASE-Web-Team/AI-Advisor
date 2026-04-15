@@ -11,7 +11,7 @@ profListFile = "profList.json"
 
 
 def getProfessors():
-    coursesJson = "s26.json"
+    coursesJson = "../data/courses.json"
     targetDept = "Computer & Information Science & Engineering"
     profList = set()
 

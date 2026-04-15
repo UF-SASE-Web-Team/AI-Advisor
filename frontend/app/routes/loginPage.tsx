@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Route } from "./+types/loginPage";
 import { supabase } from "../../supabase";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "Login | AI Advisor" },
     { name: "description", content: "Log in to AI Advisor." },
@@ -29,15 +29,16 @@ export default function LoginPage() {
 
   async function onGoogleLogin() {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
+      provider: "google"
     });
 
+    // TODO: replace with proper error page
     if (error) {
       console.error("Google sign-in error:", error.message);
+      return;
     }
+
+    window.location.replace(window.location.origin + "/dashboard");
   }
 
   return (
