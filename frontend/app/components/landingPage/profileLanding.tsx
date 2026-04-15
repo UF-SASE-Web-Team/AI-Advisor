@@ -1,7 +1,7 @@
-import { useRef, useState, useEffect } from "react";
-import teamMembers from "./teamMembers.json";
+import { useRef, useState } from "react";
+import teamMembers from "../../data/teamMembers.json";
 
-type TeamMember = { name: string; role: string; description: string };
+type TeamMember = { name: string; role: string; description: string, imageUrl: string };
 const TEAM_MEMBERS = teamMembers as TeamMember[];
 
 const GAP = 24;
@@ -31,13 +31,16 @@ export function ProfileLanding() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selected = TEAM_MEMBERS[selectedIndex ?? 0];
 
-  useEffect(() => {
+  function onCarouselWheel(e: React.WheelEvent<HTMLDivElement>) {
     const el = scrollRef.current;
     if (!el) return;
-    const stopWheel = (e: WheelEvent) => e.preventDefault();
-    el.addEventListener("wheel", stopWheel, { passive: false });
-    return () => el.removeEventListener("wheel", stopWheel);
-  }, []);
+
+    // Map vertical wheel movement to horizontal carousel scrolling.
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+  }
 
   function scrollLeft() {
     const el = scrollRef.current;
@@ -78,6 +81,7 @@ export function ProfileLanding() {
           </button>
           <div
             ref={scrollRef}
+            onWheel={onCarouselWheel}
             className="flex flex-1 min-w-0 overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-hide p-1 pb-4"
             style={{ gap: GAP, maxWidth: CAROUSEL_WIDTH }}
           >
@@ -86,7 +90,7 @@ export function ProfileLanding() {
                 key={i}
                 type="button"
                 onClick={() => setSelectedIndex(i)}
-                className={`flex-shrink-0 text-left transition rounded ${
+                className={`flex-shrink-0 text-left transition rounded p-2 overflow-hidden ${
                   selectedIndex !== null && selectedIndex === i
                     ? "ring-2 ring-black ring-offset-1"
                     : ""
@@ -94,11 +98,16 @@ export function ProfileLanding() {
                 style={{ width: CARD_WIDTH }}
               >
                 <div
-                  className="bg-zinc-300 rounded aspect-square"
-                  style={{ width: CARD_WIDTH }}
-                />
+                  className="w-full rounded aspect-square overflow-hidden bg-zinc-300"
+                >
+                  <img
+                    src={member.imageUrl}
+                    alt={member.name}
+                    className="block w-full h-full object-cover"
+                  />
+                </div>                
                 <p className="mt-3 text-black text-[10px] font-normal font-tenor leading-4">
-                  {member.name},
+                  {member.name}
                   <br />
                   {member.role}
                 </p>
@@ -116,7 +125,13 @@ export function ProfileLanding() {
         </div>
 
         <div className="mt-16 flex flex-col md:flex-row gap-8 items-start">
-          <div className="w-56 h-56 flex-shrink-0 bg-zinc-300 rounded" />
+          <div className="w-56 h-56 flex-shrink-0 rounded overflow-hidden bg-zinc-300">
+            <img
+              src={selected.imageUrl}
+              alt={selected.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
           <div>
             <h3 className="text-black text-2xl font-semibold font-mono">
               {selected.name}
