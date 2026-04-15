@@ -88,11 +88,6 @@ type MeetingTime struct {
 	Room      string   `json:"room"`
 }
 
-type TestResponse struct {
-	Message  string      `json:"message"`
-	Received interface{} `json:"received,omitempty"`
-}
-
 var (
 	savedPref     UserPreference
 	plannerClient plannerpb.PlannerServiceClient
@@ -128,39 +123,6 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		next(w, r)
-	}
-}
-
-func handleTestEndpoint(message string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet && r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		resp := TestResponse{Message: message}
-
-		if r.Method == http.MethodPost {
-			body, err := io.ReadAll(r.Body)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "failed to read request body")
-				return
-			}
-
-			if len(body) > 0 {
-				var payload interface{}
-				if err := json.Unmarshal(body, &payload); err != nil {
-					w.WriteHeader(http.StatusBadRequest)
-					fmt.Fprintln(w, "invalid request body")
-					return
-				}
-				resp.Received = payload
-			}
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
 	}
 }
 
@@ -202,10 +164,6 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "hello from api-gateway")
 	})
-
-	// Test endpoints for frontend integration
-	http.HandleFunc("/api/chatbot/", enableCORS(handleTestEndpoint("chatbot test")))
-	http.HandleFunc("/api/schedule-generation/", enableCORS(handleTestEndpoint("schedule generation test")))
 
 	// User preference endpoint
 	http.HandleFunc("/api/userpreference/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
