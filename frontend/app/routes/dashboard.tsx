@@ -1,11 +1,29 @@
-import { DegreeAudit } from "~/components/DegreeAudit";
-import { Calendar } from "~/components/Calendar";
-import { SelectPlan } from "~/components/SelectPlan";
+import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
+import { Calendar } from "~/components/dashboard/Calendar";
+import { SelectPlan } from "~/components/dashboard/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
-import { TempButton } from "~/components/temp_upload";
+import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "supabase";
+import { TempButton } from "~/components/dashboard/temp_upload";
 
 export default function Dashboard() {
-  // TODO: redirect to login page if user isn't logged in
+  const [renderDash, setRender] = useState(false);
+  // Redirect user if not logged in
+  const navigate = useNavigate();
+  useEffect(() => {
+    const checkAuth = async () => {
+      // TODO: At this point, only google login is implemented and populates the session var
+      // Manual login might need a different check
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { navigate("/login"); }
+      else { setRender(true); }
+    };
+    checkAuth();
+  }, [navigate]);
+
+  // Dashboard page
+  if (!renderDash) return null;
   return (
     <div className="grid grid-cols-[min-content_1fr] h-screen">
       <div

@@ -1,5 +1,5 @@
 import { useState, useEffect, Fragment } from "react";
-import { supabase } from "../../supabase";
+import { supabase } from "../../../supabase";
 import { API_URL } from "~/config";
 import { fetchSchedule } from "~/apis/scheduleConfig";
 
@@ -189,7 +189,7 @@ export function ScheduleCalendar() {
                             course_name: c.course_name,
                             credits: c.credits,
                             course_type: c.course_type,
-                            slots: [] 
+                            slots: []
                         });
                     }
                     groupedMap.get(c.course_id)!.slots.push({
@@ -239,11 +239,11 @@ export function ScheduleCalendar() {
                         ].map((field) => (
                             <div key={field.name} className="flex flex-col gap-1">
                                 <label className="text-white text-sm opacity-90">{field.label}</label>
-                                <input 
-                                    type="number" 
-                                    name={field.name} 
-                                    value={(formData as any)[field.name]} 
-                                    onChange={handleInputChange} 
+                                <input
+                                    type="number"
+                                    name={field.name}
+                                    value={(formData as any)[field.name]}
+                                    onChange={handleInputChange}
                                     min={0}
                                     className="p-2 w-24 rounded-xl border-2 border-[#2E3A3A] bg-[#E1EABB] text-[#2E3A3A] font-bold focus:outline-none focus:ring-2 focus:ring-white"
                                 />
@@ -260,7 +260,7 @@ export function ScheduleCalendar() {
 
                     <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-2">
                         {/* Header Row */}
-                        <div></div> 
+                        <div></div>
                         {DAYS.map(d => (
                             <div key={d} className="text-center font-bold text-[#2E3A3A] py-2 bg-[#6A8A83]/20 rounded-lg">
                                 {d}
@@ -274,13 +274,13 @@ export function ScheduleCalendar() {
                                 {DAYS.map(d => {
                                     const isBlocked = blacklist[d]?.includes(p);
                                     return (
-                                        <div 
-                                            key={`${d}-${p}`} 
+                                        <div
+                                            key={`${d}-${p}`}
                                             onClick={() => togglePeriod(d, p)}
                                             className={`
                                                 h-10 rounded-lg cursor-pointer transition-all duration-200 border-2
-                                                ${isBlocked 
-                                                    ? 'bg-[#2E3A3A] border-[#2E3A3A]' 
+                                                ${isBlocked
+                                                    ? 'bg-[#2E3A3A] border-[#2E3A3A]'
                                                     : 'bg-white border-transparent hover:border-[#6A8A83] hover:bg-white/80'}
                                             `}
                                             title={`Toggle ${d} Period ${p}`}
@@ -294,14 +294,14 @@ export function ScheduleCalendar() {
 
                 {/* Actions */}
                 <div className="flex gap-4">
-                    <button 
-                        onClick={handleSave} 
+                    <button
+                        onClick={handleSave}
                         className="bg-[#2E3A3A] hover:bg-[#1a2222] text-white px-6 py-3 rounded-full font-bold transition-colors shadow-sm"
                     >
                         Save Preferences
                     </button>
-                    <button 
-                        onClick={handleGenerate} 
+                    <button
+                        onClick={handleGenerate}
                         disabled={loading}
                         className={`
                             px-6 py-3 rounded-full font-bold transition-colors shadow-sm text-white
@@ -314,11 +314,10 @@ export function ScheduleCalendar() {
 
                 {/* Status Message */}
                 {status.msg && (
-                    <div className={`p-4 rounded-xl font-bold border-2  mt-4 ${
-                        status.type === 'success' ? 'bg-[#d4edda] text-[#155724] border-[#c3e6cb]' :
-                        status.type === 'error' ? 'bg-[#f8d7da] text-[#721c24] border-[#f5c6cb]' :
-                        'bg-[#fff3cd] text-[#856404] border-[#ffeeba]'
-                    }`}>
+                    <div className={`p-4 rounded-xl font-bold border-2  mt-4 ${status.type === 'success' ? 'bg-[#d4edda] text-[#155724] border-[#c3e6cb]' :
+                            status.type === 'error' ? 'bg-[#f8d7da] text-[#721c24] border-[#f5c6cb]' :
+                                'bg-[#fff3cd] text-[#856404] border-[#ffeeba]'
+                        }`}>
                         {status.msg}
                     </div>
                 )}
