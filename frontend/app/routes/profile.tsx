@@ -1,9 +1,9 @@
-import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
-import { Calendar } from "~/components/dashboard/Calendar";
-import { SelectPlan } from "~/components/dashboard/SelectPlan";
+import { DegreeAudit } from "~/components/DegreeAudit";
+import { Calendar } from "~/components/Calendar";
+import { SelectPlan } from "~/components/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
-import { TempButton } from "~/components/dashboard/temp_upload";
-import { Widget } from "~/components/dashboard/Widget";
+import { TempButton } from "~/components/temp_upload";
+import { Widget } from "~/components/Widget";
 import { useState } from "react";
 
 const semesters = ["Summer", "Fall", "Spring"] as const;
