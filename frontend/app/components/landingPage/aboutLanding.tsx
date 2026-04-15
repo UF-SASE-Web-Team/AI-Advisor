@@ -78,7 +78,7 @@ export function AboutLanding() {
           <div className="flex-1 flex justify-center px-6 sm:px-8 min-w-0 order-first lg:order-none">
             <div className="max-w-2xl w-full mx-auto">
               <p className="text-black text-sm lg:text-base font-normal font-tenor leading-6 lg:leading-7">
-                This app was developed by the UF SASE Web Dev Semester Project Team! The Projects was run by our webmasters Thuy Le and Lynette Hemingway! Our backend leads are Jonathan Tang and Nathan (?). Our frontend leads are Helen Zou and Kenzo Fukuda. Lastly, our UI/UX lead is Grace Zhao. All of our leads guided the team members to complete the tasks that helped create the AI Advisor!
+                This app was developed by the UF SASE Web Dev Semester Project Team! The Projects was run by our webmasters Thuy Le and Lynette Hemingway! Our backend leads are Jonathan Tang and Nathan Kim. Our frontend leads are Helen Zou and Kenzo Fukuda. Lastly, our UI/UX lead is Grace Zhao. All of our leads guided the team members to complete the tasks that helped create the AI Advisor!
                 <br />
               </p>
             </div>
