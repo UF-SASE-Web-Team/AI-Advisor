@@ -15,8 +15,17 @@ export default function Dashboard() {
     const checkAuth = async () => {
       // TODO: At this point, only google login is implemented and populates the session var
       // Manual login might need a different check
+      
+      // Check if returning from OAuth callback
+      const isOAuthReturn = new URLSearchParams(window.location.search).get("from") === "oauth";
+      
+      // Give OAuth session a moment to settle
+      if (isOAuthReturn) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate("/login"); }
+      if (!session) { navigate("/login?redirected=true"); }
       else { setRender(true); }
     };
     checkAuth();

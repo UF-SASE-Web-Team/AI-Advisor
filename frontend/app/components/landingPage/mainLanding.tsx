@@ -1,6 +1,25 @@
 import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "../../../supabase";
 
 export function mainLanding() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+      setLoading(false);
+    };
+    checkSession();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+  };
+
   return (
     <div className="w-full min-h-screen bg-[#F6F8FF]">
       <div className="overflow-x-clip">
@@ -22,12 +41,23 @@ export function mainLanding() {
           Made By UF SASE
         </span>
 
-        <Link
-          to="/login"
-          className="ml-auto px-4 py-2 rounded-xl bg-[#C7D964] text-[#F9FFD5] font-semibold font-mono transition-transform duration-200 hover:scale-105"
-        >
-          Log In
-        </Link>
+        {!loading && (
+          isLoggedIn ? (
+            <button
+              onClick={handleSignOut}
+              className="ml-auto px-4 py-2 rounded-xl bg-[#C7D964] text-[#F9FFD5] font-semibold font-mono transition-transform duration-200 hover:scale-105"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="ml-auto px-4 py-2 rounded-xl bg-[#C7D964] text-[#F9FFD5] font-semibold font-mono transition-transform duration-200 hover:scale-105"
+            >
+              Log In
+            </Link>
+          )
+        )}
       </nav>
 
       {/* HERO */}
@@ -67,8 +97,8 @@ export function mainLanding() {
           </div>
 
           {/* RIGHT IMAGE PLACEHOLDER */}
-          <div className="w-full h-64 sm:h-72 bg-zinc-300 flex items-center justify-center text-black text-sm sm:text-base font-mono font-semibold">
-            photo of happy people using the site
+          <div className="w-full h-64 sm:h-72 rounded flex items-center justify-center text-black text-sm sm:text-base font-mono font-semibold">
+            <img src="/happy_people.JPG"></img>
           </div>
         </div>
       </section>
