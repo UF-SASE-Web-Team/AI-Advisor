@@ -199,81 +199,35 @@ func getAuthenticatedUserID(r *http.Request) (string, int, string) {
 	return user.ID, http.StatusOK, ""
 }
 
-func handleTestEndpoint(message string) http.HandlerFunc {
+func withAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "missing or invalid authorization header"})
-			return
-		}
-
-		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
-		if token == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "missing bearer token"})
-			return
-		}
-
-		if supabase.URL == "" || supabase.Key == "" {
-			log.Printf("auth failed: supabase configuration missing")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "supabase configuration missing"})
-			return
-		}
-
-		req, err := http.NewRequest(http.MethodGet, supabase.URL+"/auth/v1/user", nil)
-		if err != nil {
-			log.Printf("auth failed: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create auth request"})
-			return
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		req.Header.Set("apikey", supabase.Key)
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Printf("auth failed: %v", err)
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "invalid or expired token"})
-			return
-		}
-		defer resp.Body.Close()
-
-		respBody, readErr := io.ReadAll(resp.Body)
-		if readErr != nil {
-			log.Printf("auth failed reading response: %v", readErr)
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "invalid or expired token"})
-			return
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			log.Printf("auth failed: supabase status %d", resp.StatusCode)
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "invalid or expired token"})
-			return
-		}
-
-		var user map[string]interface{}
-		if err := json.Unmarshal(respBody, &user); err != nil {
-			log.Printf("auth failed decoding response: %v", err)
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "invalid or expired token"})
-			return
-		}
-
-		userID, ok := user["id"].(string)
-		if !ok || userID == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "user id not found in token"})
+		userID, statusCode, message := getAuthenticatedUserID(r)
+		if statusCode != http.StatusOK {
+			w.WriteHeader(statusCode)
+			json.NewEncoder(w).Encode(map[string]string{"error": message})
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), userIDContextKey, userID)
 		next(w, r.WithContext(ctx))
 	}
+}
+
+func GetUserWithAuth(_ *Supabase, next http.HandlerFunc) http.HandlerFunc {
+	return withAuthenticatedUser(next)
+}
+
+func handleTestEndpoint(message string) http.HandlerFunc {
+	return withAuthenticatedUser(func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := userIDFromContext(r.Context())
+		resp := TestResponse{Message: message}
+		if userID != "" {
+			resp.Received = map[string]string{"user_id": userID}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	})
 }
 
 func userIDFromContext(ctx context.Context) (string, bool) {
@@ -548,10 +502,10 @@ func main() {
 			return
 		}
 
-		userID, statusCode, message := getAuthenticatedUserID(r)
-		if statusCode != http.StatusOK {
-			w.WriteHeader(statusCode)
-			json.NewEncoder(w).Encode(map[string]string{"error": message})
+		userID, ok := userIDFromContext(r.Context())
+		if !ok || userID == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
 			return
 		}
 
