@@ -129,16 +129,8 @@ export function ProfileLanding() {
             </p>
           </div>
         </div>
-
-        <div className="mt-20 w-full h-96 bg-zinc-300 rounded flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-black text-xs font-semibold font-mono">
-              big team photo
-            </p>
-            <p className="text-black text-xs font-semibold font-mono mt-1">
-              can also be a collage of different photos
-            </p>
-          </div>
+        <div className="mt-20 w-full h-96 rounded flex items-center justify-center">
+          <img src="/group_pic.JPG"></img>
         </div>
       </section>
     </div>

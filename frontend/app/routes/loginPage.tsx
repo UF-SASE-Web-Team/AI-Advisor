@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useLocation } from "react-router";
 import type { Route } from "./+types/loginPage";
 import { supabase } from "../../supabase";
 
@@ -15,7 +16,9 @@ type LoginFormState = {
 };
 
 export default function LoginPage() {
+  const location = useLocation();
   const [form, setForm] = React.useState<LoginFormState>({ email: "", password: "" });
+  const cameFromRedirect = new URLSearchParams(location.search).get("redirected") === "true";
 
   function onChange<K extends keyof LoginFormState>(key: K, value: LoginFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -31,7 +34,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: window.location.origin + "/dashboard?from=oauth",
       },
     });
 
@@ -41,7 +44,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen w-full bg-slate-100 p-4 sm:p-8">
+    <main className="flex min-h-screen w-full items-center justify-center bg-slate-100 p-4 sm:p-8">
       <section className="relative mx-auto flex w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-lg">
         <CornerAccent />
 
@@ -56,61 +59,16 @@ export default function LoginPage() {
           </h1>
         </aside>
 
-        <div className="flex flex-1 flex-col px-10 py-12 sm:px-14 sm:py-16">
+        <div className="flex flex-1 flex-col px-10 py-12 sm:px-14 sm:py-16 justify-center">
           <form onSubmit={onSubmit} className="w-full max-w-2xl">
             <div className="space-y-10">
-              <TextField
-                label="Username"
-                name="email"
-                type="email"
-                placeholder="jane.doe@ufl.edu"
-                autoComplete="email"
-                value={form.email}
-                onChange={(v) => onChange("email", v)}
-              />
-
-              <div>
-                <TextField
-                  label="Password"
-                  name="password"
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  value={form.password}
-                  onChange={(v) => onChange("password", v)}
-                />
-                <div className="mt-3">
-                  <a
-                    href="#"
-                    className="text-sm text-blue-600 underline underline-offset-2 hover:text-blue-700"
-                  >
-                    Forgot password?
-                  </a>
+              {cameFromRedirect && (
+                <div className="mx-auto p-6 w-full max-w-xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-800">
+                  Please sign in before proceeding to the dashboard :)
                 </div>
-              </div>
+              )}
 
-              <div className="flex flex-wrap items-center gap-10">
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-3 rounded-xl bg-blue-600 px-7 py-4 text-lg font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
-                >
-                  <span className="text-xl leading-none" aria-hidden="true">
-                    ➜
-                  </span>
-                  Log In
-                </button>
-
-                <a
-                  href="#"
-                  className="text-base text-blue-600 underline underline-offset-2 hover:text-blue-700"
-                >
-                  Create an Account
-                </a>
-              </div>
-
-              <hr className="border-slate-200" />
-
-              <div className="pt-2">
+              <div className="pt-2 justify-center">
                 <button
                   type="button"
                   onClick={onGoogleLogin}
