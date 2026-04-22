@@ -89,6 +89,15 @@ type MeetingTime struct {
 	Room      string   `json:"room"`
 }
 
+type TestResponse struct {
+	Message  string      `json:"message"`
+	Received interface{} `json:"received,omitempty"`
+}
+
+type supabaseUserResponse struct {
+	ID string `json:"id"`
+}
+
 var (
 	savedPref     UserPreference
 	plannerClient plannerpb.PlannerServiceClient
@@ -144,7 +153,53 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func GetUserWithAuth(supabase *Supabase, next http.HandlerFunc) http.HandlerFunc {
+func getAuthenticatedUserID(r *http.Request) (string, int, string) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", http.StatusUnauthorized, "missing or invalid authorization header"
+	}
+
+	token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if token == "" {
+		return "", http.StatusUnauthorized, "missing bearer token"
+	}
+
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if supabaseURL == "" || serviceRoleKey == "" {
+		return "", http.StatusInternalServerError, "supabase configuration missing"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, supabaseURL+"/auth/v1/user", nil)
+	if err != nil {
+		return "", http.StatusInternalServerError, "failed to create auth request"
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("apikey", serviceRoleKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", http.StatusUnauthorized, "invalid or expired token"
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", http.StatusUnauthorized, "invalid or expired token"
+	}
+
+	var user supabaseUserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return "", http.StatusUnauthorized, "invalid or expired token"
+	}
+
+	if user.ID == "" {
+		return "", http.StatusUnauthorized, "user id not found in token"
+	}
+
+	return user.ID, http.StatusOK, ""
+}
+
+func handleTestEndpoint(message string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -493,10 +548,10 @@ func main() {
 			return
 		}
 
-		userID, ok := userIDFromContext(r.Context())
-		if !ok || userID == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+		userID, statusCode, message := getAuthenticatedUserID(r)
+		if statusCode != http.StatusOK {
+			w.WriteHeader(statusCode)
+			json.NewEncoder(w).Encode(map[string]string{"error": message})
 			return
 		}
 

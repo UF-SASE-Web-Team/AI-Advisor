@@ -1,22 +1,35 @@
 import React from "react";
+import { supabase } from "../../../supabase";
 import { API_URL } from "~/config";
 
 export function TempButton() {
-    const upload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+    const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            const file = event.target.files?.[0];
+            if (!file) return;
 
-        const formData = new FormData();
-        formData.append("transcript", file);
-        formData.append("userID", "AnyUserIDYouWant");
+            const { data: { session } } = await supabase.auth.getSession();
+            const accessToken = session?.access_token;
+            if (!accessToken) {
+                throw new Error("You must be logged in to upload a transcript.");
+            }
 
-        fetch(`${API_URL}/api/v2/transcript/upload/`, {
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => console.log(data))
-        .catch(error => console.error('Error:', error));
+            const formData = new FormData();
+            formData.append("transcript", file);
+
+            const response = await fetch(`${API_URL}/api/v2/transcript/upload/`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                body: formData,
+            });
+
+            const data = await response.json();
+            console.log(data);
+        } catch (error) {
+            console.error("Error:", error);
+        }
     };
 
 
