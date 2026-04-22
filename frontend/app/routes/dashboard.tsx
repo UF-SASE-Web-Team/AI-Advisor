@@ -2,9 +2,9 @@ import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
 import { Calendar } from "~/components/dashboard/Calendar";
 import { SelectPlan } from "~/components/dashboard/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
-import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "supabase";
+import { useNavigate } from "react-router";
+import { supabase } from "../../supabase";
 import { TempButton } from "~/components/dashboard/temp_upload";
 
 export default function Dashboard() {
@@ -50,7 +50,9 @@ export default function Dashboard() {
       >
         <SelectPlan />
         <Calendar />
-        <TempButton />
+        <div className="p-4">
+          <TempButton />
+        </div>
       </div>
     </div>
   );
