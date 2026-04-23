@@ -33,7 +33,7 @@ export default function Dashboard() {
   // Dashboard page
   if (!renderDash) return null;
   return (
-    <div className="grid grid-cols-[min-content_1fr] h-screen">
+    <div className="grid grid-cols-[min-content_1fr] h-screen p-4 gap-4">
       <div
         style={{ width: "30vw" }}
         className="flex flex-col
@@ -42,7 +42,6 @@ export default function Dashboard() {
         <ChatContainer />
       </div>
 
-      {/* primary widget */}
       <div
         className="
         flex-row"
