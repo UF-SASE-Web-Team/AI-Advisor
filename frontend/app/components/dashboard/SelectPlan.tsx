@@ -24,7 +24,8 @@ export function SelectPlan() {
     <Widget title="Semester Plan Selection">
       <div className="m-3 gap-4 min-h-0
       flex flex-row flex-1
-      relative">
+      relative
+      h-1/2">
         {/* Left col */}
         <div className="flex-1 relative min-h-0">
           {/* Scrollable area*/}
@@ -69,7 +70,7 @@ const ClassItem = ({ title, credits, days }: ClassObj) => {
       className="
     bg-class-item
     border-1 border-class-item-border
-    rounded-md px-3 py-2 shadow-sm h-full flex flex-col"
+    rounded-md px-3 py-2 shadow-sm flex flex-col"
     >
       <strong className="block font-bold text-gray-700 mb-1">{title}</strong>
       <p className="text-xs text-gray-600 mb-1">Credits: {credits}</p>
@@ -80,7 +81,7 @@ const ClassItem = ({ title, credits, days }: ClassObj) => {
 
 const SemPlanControls = () => {
   return (
-    <div className="flex flex-col justify-center gap-2 w-full h-full">
+    <div className="flex flex-col justify-center gap-2">
       <div className="relative w-full">
         <select className="w-full appearance-none bg-white border border-widget-border rounded-full py-1.5 pl-4 pr-10 text-gray-700 font-bold focus:outline-none cursor-pointer text-sm">
           <option>Semester 1</option>
@@ -102,7 +103,7 @@ const SemPlanControls = () => {
 
 const Invis2RowHeightBlock = ({ classItem }: any) => {
   return (
-    <div className="invisible pointer-events-none" aria-hidden="true">
+    <div className="invisible pointer-events-none hidden">
       <div className="grid grid-cols-1 gap-3">
         <ClassItem {...classItem} />
         <ClassItem {...classItem} />

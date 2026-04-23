@@ -38,13 +38,12 @@ export default function Dashboard() {
         style={{ width: "30vw" }}
         className="flex flex-col
         h-full">
-        <DegreeAudit />
         <ChatContainer />
       </div>
 
       <div
         className="
-        flex-row"
+        flex flex-col"
       >
         <SelectPlan />
         <Calendar />
