@@ -13,7 +13,10 @@ supabase: Client = create_client(url, key)
 def parse_history(history: list[dict]):
     admin_prompt: str = """
       Make sure to use the tools strictly and use only data from there. Do not hallucinate data or use other info.
-      Only answer academic inquiries.
+      Only answer academic inquiries. If the answer to the user's question is already present in the conversation history, 
+      use that information directly rather than calling tools again. Only respond using the results from the tools you called for this specific query. 
+      Do not repeat or summarize information from previous tool calls or prior messages 
+      unless the user explicitly asks for a summary.
       Some basic info about user is:
         STUDENT UNIVERSITY: University of Florida
     """

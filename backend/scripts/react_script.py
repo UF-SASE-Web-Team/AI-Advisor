@@ -40,34 +40,31 @@ agent = create_agent(llm, tools=[
 
 def ask(prompt: str, session_id: str):
 
-  # Update history and get history
   update_conversation_history(
       session_id=session_id,
       role="user",
       content=prompt
   )
-  history = get_conversation_history(
-      session_id=session_id)
-  
-  # Prompt agent
+
+  history = get_conversation_history(session_id=session_id)
+
   res = agent.invoke({
-      "prompt": prompt, 
       "messages": history
   })
-  tools_used: list[str] = []
+
+  tools_used = []
   for message in res["messages"]:
-      try:
-          tools_used += message.tool_calls
-      except:
-          pass
-      
-  # Update history
+      if hasattr(message, "tool_calls"):
+          tools_used.extend(message.tool_calls)
+
   llm_res = res["messages"][-1].content
+
   update_conversation_history(
       session_id=session_id,
       role="assistant",
       content=llm_res
   )
+
   return tools_used, llm_res
 
 def parse_tool_call(tool_call: dict):
