@@ -20,44 +20,15 @@ const EMPTY_BLACKLIST: Record<DayKey, number[]> = {
   F: [],
 };
 
-export function Calendar() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [blacklist, setBlacklist] = useState<Record<DayKey, number[]>>(EMPTY_BLACKLIST);
+interface CalendarProps {
+  blacklist: Record<DayKey, number[]>;
+  setBlacklist: (blacklist: Record<DayKey, number[]>) => void;
+  userId: string | null;
+}
+
+export function Calendar({ blacklist, setBlacklist, userId }: CalendarProps) {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    supabase
-      .from("user_preferences")
-      .select("blacklist_slots")
-      .eq("user_id", userId)
-      .single()
-      .then(({ data }) => {
-        const next: Record<DayKey, number[]> = { ...EMPTY_BLACKLIST };
-        const slots = (data?.blacklist_slots ?? []) as BlacklistSlot[];
-
-        slots.forEach((slot) => {
-          if (next[slot.day]) {
-            next[slot.day] = [...next[slot.day], slot.period].sort((a, b) => a - b);
-          }
-        });
-
-        setBlacklist(next);
-      });
-  }, [userId]);
 
   const blacklistSlots = useMemo(
     () =>

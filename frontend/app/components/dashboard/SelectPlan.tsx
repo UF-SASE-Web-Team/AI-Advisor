@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Widget } from "./Widget";
+import { EditSemesterModal } from "./EditSemesterModal";
 
 interface ClassObj {
   title: string;
@@ -6,7 +8,18 @@ interface ClassObj {
   days: string;
 }
 
-export function SelectPlan() {
+type DayKey = "M" | "T" | "W" | "R" | "F";
+
+interface SelectPlanProps {
+  blacklist: Record<DayKey, number[]>;
+  setBlacklist: (blacklist: Record<DayKey, number[]>) => void;
+  userId: string | null;
+}
+
+export function SelectPlan({ blacklist, setBlacklist, userId }: SelectPlanProps) {
+  const [editingSemester, setEditingSemester] = useState<string | null>(null);
+  const [selectedSemester, setSelectedSemester] = useState("Semester 1");
+
   const placeholderClasses = [
     {
       title: "ECO2021",
@@ -42,10 +55,24 @@ export function SelectPlan() {
 
         {/* Right col */}
         <div className="flex-none w-[160px] md:w-[200px]">
-          <SemPlanControls />
+          <SemPlanControls 
+            selectedSemester={selectedSemester}
+            onSelectSemester={setSelectedSemester}
+            onEditClick={() => setEditingSemester(selectedSemester)}
+          />
           <Invis2RowHeightBlock />
         </div>
       </div>
+      
+      {editingSemester && (
+        <EditSemesterModal
+          semester={editingSemester}
+          onClose={() => setEditingSemester(null)}
+                  blacklist={blacklist}
+                  setBlacklist={setBlacklist}
+                  userId={userId}
+        />
+      )}
     </Widget >
   );
 }
@@ -78,11 +105,23 @@ const ClassItem = ({ title, credits, days }: ClassObj) => {
   );
 };
 
-const SemPlanControls = () => {
+const SemPlanControls = ({ 
+  selectedSemester, 
+  onSelectSemester,
+  onEditClick 
+}: {
+  selectedSemester: string;
+  onSelectSemester: (semester: string) => void;
+  onEditClick: () => void;
+}) => {
   return (
     <div className="flex flex-col justify-center gap-2 w-full h-full">
       <div className="relative w-full">
-        <select className="w-full appearance-none bg-white border border-widget-border rounded-full py-1.5 pl-4 pr-10 text-gray-700 font-bold focus:outline-none cursor-pointer text-sm">
+        <select 
+          value={selectedSemester}
+          onChange={(e) => onSelectSemester(e.target.value)}
+          className="w-full appearance-none bg-white border border-widget-border rounded-full py-1.5 pl-4 pr-10 text-gray-700 font-bold focus:outline-none cursor-pointer text-sm"
+        >
           <option>Semester 1</option>
           <option>Semester 2</option>
           <option>Semester 3</option>
@@ -93,7 +132,10 @@ const SemPlanControls = () => {
           </svg>
         </div>
       </div>
-      <button className="w-full bg-white border border-widget-border rounded-full py-1.5 px-4 text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">
+      <button 
+        onClick={onEditClick}
+        className="w-full bg-white border border-widget-border rounded-full py-1.5 px-4 text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm"
+      >
         Edit
       </button>
     </div>
