@@ -16,7 +16,11 @@ export default function UserProfile() {
 
                     <div className="flex gap-2">
                         <UploadTranscript />
-                        <button className="px-2 py-1 rounded-full bg-[#c8e6a0] border border-[#a8cc70] text-xs font-medium text-green-900">
+                        <button className="
+                px-2 py-1 rounded-full 
+                bg-[#c8e6a0] border border-[#a8cc70] text-green-900
+                text-xs font-medium
+                cursor-pointer">
                             Delete Old Transcript
                         </button>
                     </div>
