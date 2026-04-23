@@ -1,7 +1,7 @@
 import React from "react";
 import { API_URL } from "~/config";
 
-export function TempButton() {
+export function UploadTranscript() {
     const upload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -14,9 +14,9 @@ export function TempButton() {
             method: "POST",
             body: formData
         })
-        .then(response => response.json())
-        .then(data => console.log(data))
-        .catch(error => console.error('Error:', error));
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
     };
 
 

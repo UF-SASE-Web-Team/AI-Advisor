@@ -2,7 +2,7 @@ import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
 import { Calendar } from "~/components/dashboard/Calendar";
 import { SelectPlan } from "~/components/dashboard/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
-import { TempButton } from "~/components/dashboard/temp_upload";
+import { UploadTranscript } from "~/components/dashboard/UploadTranscript";
 import { Widget } from "~/components/dashboard/Widget";
 import { useState } from "react";
 
@@ -20,8 +20,8 @@ interface Course {
 const mockData = {
     Summer: [],
     Fall: [
-        { code: "COP3502C", credits: 4, grade: "A-", format: "In-Person", meetingInfo: "T 1:55 - 2:45 PM / R 3:15 - 4:05 PM"},
-        { code: "ECO2021", credits: 3, grade: "B", format: "Online", meetingInfo: "Online"},
+        { code: "COP3502C", credits: 4, grade: "A-", format: "In-Person", meetingInfo: "T 1:55 - 2:45 PM / R 3:15 - 4:05 PM" },
+        { code: "ECO2021", credits: 3, grade: "B", format: "Online", meetingInfo: "Online" },
     ],
     Spring: [],
 };
@@ -29,7 +29,7 @@ const mockData = {
 const years = ["Year 1", "Year 2", "Year 3", "Year 4"];
 
 export async function loader() {
-  return {};
+    return {};
 }
 
 export function TranscriptWidget() {
@@ -57,15 +57,15 @@ export function TranscriptWidget() {
     const handleCourseChange = (index: number, field: keyof Course, value: string | number) => {
         setCourses((prev) => {
             const updated = [...prev[activeSemester]];
-            updated[index] = {...updated[index], [field]: value};
-            return {...prev, [activeSemester]: updated} ;
+            updated[index] = { ...updated[index], [field]: value };
+            return { ...prev, [activeSemester]: updated };
         });
     };
 
     const handleDeleteCourse = (index: number) => {
         setCourses((prev) => {
             const updated = prev[activeSemester].filter((_, i) => i !== index);
-            return {...prev, [activeSemester]: updated };
+            return { ...prev, [activeSemester]: updated };
         });
     };
 
@@ -78,11 +78,11 @@ export function TranscriptWidget() {
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
                         className="appearance-none pl-3 pr-8 py-1.5 rounded-full border border-gray-400 text-sm bg-white cursor-pointer focus:outline-none">
-                            {years.map((y) => (
-                                <option key={y}>{y}</option>
-                            ))}
-                        </select>
-                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-green-600">▾</span>
+                        {years.map((y) => (
+                            <option key={y}>{y}</option>
+                        ))}
+                    </select>
+                    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-green-600">▾</span>
                 </div>
 
                 {semesters.map((sem) => (
@@ -165,10 +165,10 @@ export function TranscriptWidget() {
                                                 className="border border-gray-300 rounded px-2 py-0.5 text-sm"
                                                 value={course.format}
                                                 onChange={(e) => handleCourseChange(i, "format", e.target.value)}>
-                                                    <option>In Person</option>
-                                                    <option>Online</option>
-                                                    <option>Hybrid</option>
-                                                </select>
+                                                <option>In Person</option>
+                                                <option>Online</option>
+                                                <option>Hybrid</option>
+                                            </select>
                                         ) : course.format}
                                     </td>
                                     <td className="px-4 py-3 text-center whitespace-pre-line">
@@ -199,35 +199,30 @@ export function TranscriptWidget() {
 
 
 export default function UserProfile() {
-  return (
-    <div className="flex h-screen p-4 gap-4 box-border">
+    return (
+        <div className="flex flex-row h-screen p-4 gap-4">
 
-      <div className="w-[420px] shrink-0" />
+            <Widget title="Upload Transcript">
+                <div className="flex flex-col gap-2 p-2">
 
-      <div className="flex-1 min-h-0" style={{ height: "calc(100vh - 2rem)" }}>
-        <Widget title="Transcript Manual Input">
-          <TranscriptWidget />
-        </Widget>
-      </div>
+                    <div className="flex gap-2">
+                        <UploadTranscript />
+                        <button className="px-2 py-1 rounded-full bg-[#c8e6a0] border border-[#a8cc70] text-xs font-medium text-green-900">
+                            Delete Old Transcript
+                        </button>
+                    </div>
 
-      <div className="fixed bottom-4 left-4 w-[420px] z-50">
-        <Widget title="Upload Transcript">
-          <div className="flex flex-col gap-2 p-2">
-            <div className="flex gap-2">
-              <button className="px-2 py-1 rounded-full bg-[#c8e6a0] border border-[#a8cc70] text-xs font-medium text-green-900">
-                Upload New Transcript
-              </button>
-              <button className="px-2 py-1 rounded-full bg-[#c8e6a0] border border-[#a8cc70] text-xs font-medium text-green-900">
-                Delete Old Transcript
-              </button>
-            </div>
-            <div className="bg-white rounded border border-gray-300 h-[280px] flex items-center justify-center text-gray-400 text-xs font-mono">
-              (Pdf viewer)
-            </div>
-          </div>
-        </Widget>
-      </div>
+                    <div className="bg-white rounded border border-gray-300 h-[280px] flex items-center justify-center text-gray-400 text-xs font-mono">
+                        (Pdf viewer)
+                    </div>
+                </div>
+            </Widget>
 
-    </div>
-  );
+            <Widget title="Transcript Manual Input">
+                <TranscriptWidget />
+            </Widget>
+
+
+        </div >
+    );
 }
