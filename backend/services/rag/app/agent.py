@@ -71,6 +71,7 @@ Rules:
 use that information directly rather than calling tools again.
 - Only respond using the results from the tools you called for this specific query. \
 - Ensure response is sufficient but as concise as possible. \
+- Ensure response does not return tables or headers. Instead return bullet points \
 Do not repeat or summarize information from previous tool calls or prior messages \
 unless the user explicitly asks for a summary.
 {user_context}
