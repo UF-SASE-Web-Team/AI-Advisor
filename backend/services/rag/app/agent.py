@@ -50,6 +50,7 @@ def init_agent():
         get_course_info,
         get_reddit_data_professor,
         get_reddit_data_topics,
+        get_transcript,
     ])
 
     logger.info("ReAct agent initialized (model=gpt-oss-120b)")
@@ -59,7 +60,7 @@ def init_agent():
 # Chat history helpers
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """\
+SYSTEM_PROMPT_TEMPLATE = """\
 You are an academic advisor at the University of Florida.
 
 Rules:
@@ -68,12 +69,20 @@ Rules:
 - Only answer questions related to academics, courses, professors, or degree planning at UF.
 - If the answer to the user's question is already present in the conversation history, \
 use that information directly rather than calling tools again.
+- Only respond using the results from the tools you called for this specific query. \
+Do not repeat or summarize information from previous tool calls or prior messages \
+unless the user explicitly asks for a summary.
+{user_context}
 """
 
 
-def _parse_history(raw_rows: list[dict]) -> list:
+def _parse_history(raw_rows: list[dict], user_id: str | None = None) -> list:
     """Convert Supabase chat_messages rows into LangChain message objects."""
-    messages = [SystemMessage(content=SYSTEM_PROMPT)]
+    user_context = ""
+    if user_id:
+        user_context = f"\nSome basic info about the user:\n  STUDENT USER ID: {user_id}\n  STUDENT UNIVERSITY: University of Florida"
+    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(user_context=user_context)
+    messages = [SystemMessage(content=system_prompt)]
     for row in raw_rows:
         role = row.get("role", "")
         content = row.get("content", "")
@@ -206,17 +215,32 @@ def get_reddit_data_topics(topic: str):
     return resp.data
 
 
+def get_transcript(user_id: str):
+    """Get a user's transcript complete with course data relevant to that user."""
+    sb = _get_supabase()
+    resp = (
+        sb.table("transcript")
+        .select("*")
+        .eq("id", user_id)
+        .execute()
+    )
+    if not resp.data:
+        return "No transcript found for this user"
+    return resp.data
+
+
 # ---------------------------------------------------------------------------
 # Main entry point — called by gRPC handler
 # ---------------------------------------------------------------------------
 
-def ask(question: str, session_id: str | None = None) -> tuple[str, str, str]:
+def ask(question: str, session_id: str | None = None, user_id: str | None = None) -> tuple[str, str, str]:
     """
     Ask the ReAct agent a question.
 
     Args:
         question: The user's question.
         session_id: Optional chat session ID for history persistence.
+        user_id: Optional user ID for transcript lookups and context.
 
     Returns:
         (answer_text, status, session_id) tuple.
@@ -232,7 +256,7 @@ def ask(question: str, session_id: str | None = None) -> tuple[str, str, str]:
 
         # Fetch full history (includes the message we just saved)
         raw_history = _fetch_history(sid)
-        messages = _parse_history(raw_history)
+        messages = _parse_history(raw_history, user_id=user_id)
 
         # Invoke agent
         res = _agent.invoke({"messages": messages})

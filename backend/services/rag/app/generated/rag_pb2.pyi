@@ -7,14 +7,16 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class QueryRequest(_message.Message):
-    __slots__ = ("question", "max_results", "session_id")
+    __slots__ = ("question", "max_results", "session_id", "user_id")
     QUESTION_FIELD_NUMBER: _ClassVar[int]
     MAX_RESULTS_FIELD_NUMBER: _ClassVar[int]
     SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
     question: str
     max_results: int
     session_id: str
-    def __init__(self, question: _Optional[str] = ..., max_results: _Optional[int] = ..., session_id: _Optional[str] = ...) -> None: ...
+    user_id: str
+    def __init__(self, question: _Optional[str] = ..., max_results: _Optional[int] = ..., session_id: _Optional[str] = ..., user_id: _Optional[str] = ...) -> None: ...
 
 class QueryResponse(_message.Message):
     __slots__ = ("answer", "sources", "error_message", "session_id")
