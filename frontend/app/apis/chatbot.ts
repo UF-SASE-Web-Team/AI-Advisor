@@ -10,6 +10,7 @@ export interface AdvisorSource {
 export interface QueryAdvisorRequest {
   question: string;
   session_id?: string;
+  user_id?: string;
   max_results?: number;
 }
 
