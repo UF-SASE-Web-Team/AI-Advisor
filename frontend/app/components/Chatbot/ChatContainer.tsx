@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
 import { createAdvisorSession, queryAdvisor } from "~/apis/chatbot";
@@ -61,11 +61,6 @@ export function ChatContainer() {
       }
     })();
   }, []);
-
-  const userMessageCount = useMemo(
-    () => msgHistory.filter((msg) => msg.sender === "user").length,
-    [msgHistory],
-  );
 
   const getUserId = async () => {
     if (userId) return userId;
@@ -280,26 +275,51 @@ export function ChatContainer() {
   return (
     <Widget title="AI Advisor" className="flex-1 min-h-0" titleClassName="text-xl">
       <div className="flex items-center justify-between gap-2 border-b border-widget-border px-3 py-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={openHistory}
-            className="rounded-full border border-widget-border bg-white px-3 py-1 text-sm font-medium text-gray-800 shadow-sm hover:bg-blue-50"
+        <button
+          type="button"
+          onClick={openHistory}
+          aria-label={historyOpen ? "Close chat history" : "Open chat history"}
+          title={historyOpen ? "Close chat history" : "Open chat history"}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-widget-border bg-white text-gray-800 shadow-sm hover:bg-blue-50"
+        >
+          <svg
+            aria-hidden="true"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
           >
-            History
-          </button>
-          <button
-            type="button"
-            onClick={startNewChat}
-            disabled={isStartingNewChat}
-            className="rounded-full border border-widget-border bg-white px-3 py-1 text-sm font-medium text-gray-800 shadow-sm hover:bg-blue-50 disabled:opacity-60"
+            <path d="M3 12a9 9 0 1 0 3-6.7" />
+            <path d="M3 4v5h5" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={startNewChat}
+          disabled={isStartingNewChat}
+          aria-label="Start new chat"
+          title="Start new chat"
+          className="ml-auto flex h-9 items-center gap-2 rounded-full border border-widget-border bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-blue-50 disabled:opacity-60"
+        >
+          <svg
+            aria-hidden="true"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
           >
-            {isStartingNewChat ? "Starting..." : "New Chat"}
-          </button>
-        </div>
-        <span className="text-xs text-gray-600">
-          {userMessageCount > 0 ? `${userMessageCount} sent` : "No active chat"}
-        </span>
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+          <span>Add new chat</span>
+        </button>
       </div>
       {historyOpen && (
         <div className="max-h-52 overflow-y-auto border-b border-widget-border bg-white/70 p-2">
