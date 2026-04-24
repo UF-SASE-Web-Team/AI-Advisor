@@ -31,6 +31,17 @@ function expandDays(course) {
   }));
 }
 
+function periodRange(course) {
+  const start = Number(course.period);
+  const rawEnd = course.period_end ?? course.period;
+  const end = Number(rawEnd);
+  if (Number.isNaN(start)) return [];
+  const normalizedEnd = Number.isNaN(end) ? start : end;
+  const from = Math.min(start, normalizedEnd);
+  const to = Math.max(start, normalizedEnd);
+  return Array.from({ length: to - from + 1 }, (_, i) => from + i);
+}
+
 function buildGrid(courses) {
   const grid = {};
 
@@ -43,7 +54,11 @@ function buildGrid(courses) {
 
   courses.forEach(course => {
     expandDays(course).forEach(c => {
-      grid[c.day][c.period] = c;
+      periodRange(c).forEach((p) => {
+        if (grid[c.day] && p in grid[c.day]) {
+          grid[c.day][p] = c;
+        }
+      });
     });
   });
 

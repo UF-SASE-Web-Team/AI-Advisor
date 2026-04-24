@@ -238,6 +238,7 @@ const SemesterParameters = ({
         const mt = meetTimes[0];
         const days = mt.meetDays || [];
         const period = parseInt(mt.meetPeriodBegin || 1);
+        const periodEnd = parseInt(mt.meetPeriodEnd || mt.meetPeriodBegin || 1);
 
         if (days.length === 0) return null;
 
@@ -245,6 +246,7 @@ const SemesterParameters = ({
           course_id: course.title,
           day: days.join(""),
           period: period,
+          period_end: periodEnd,
         };
       }).filter(Boolean);
 
