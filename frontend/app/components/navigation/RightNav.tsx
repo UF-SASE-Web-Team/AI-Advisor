@@ -3,8 +3,8 @@ import { supabase } from "../../../supabase";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/profile", label: "Profile" },
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export default function RightNav() {
@@ -135,12 +135,10 @@ function getIcon(name: string) {
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 10L12 3l9 7v10a1 1 0 01-1 1h-6v-6H10v6H4a1 1 0 01-1-1V10z"
-          />
+          <rect x="3" y="3" width="7.5" height="7.5" rx="1" strokeWidth={2} />
+          <rect x="13.5" y="3" width="7.5" height="7.5" rx="1" strokeWidth={2} />
+          <rect x="3" y="13.5" width="7.5" height="7.5" rx="1" strokeWidth={2} />
+          <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1" strokeWidth={2} />
         </svg>
       );
 
