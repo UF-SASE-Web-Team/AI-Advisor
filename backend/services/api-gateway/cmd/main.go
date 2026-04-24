@@ -8,7 +8,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	plannerpb "github.com/UF-SASE-Web-Team/AI-Advisor/backend/services/api-gateway/proto/planner"
@@ -49,6 +54,7 @@ type RAGQueryRequest struct {
 	Question   string `json:"question"`
 	MaxResults int    `json:"max_results,omitempty"`
 	SessionID  string `json:"session_id,omitempty"`
+	UserID     string `json:"user_id,omitempty"`
 }
 
 type RAGQueryResponse struct {
@@ -95,11 +101,42 @@ type TestResponse struct {
 	Received interface{} `json:"received,omitempty"`
 }
 
+type TranscriptRow struct {
+	ID              string   `json:"id"`
+	Term            string   `json:"term,omitempty"`
+	Course          string   `json:"course"`
+	Name            string   `json:"name"`
+	CreditAttempted *float64 `json:"credit_attempted"`
+	EarnedHours     *float64 `json:"earned_hours"`
+	CarriedHours    *float64 `json:"carried_hours"`
+	Grade           string   `json:"grade,omitempty"`
+}
+
+type supabaseUserResponse struct {
+	ID string `json:"id"`
+}
+
 var (
 	savedPref     UserPreference
 	plannerClient plannerpb.PlannerServiceClient
 	ragClient     ragpb.RAGServiceClient
 )
+
+type Supabase struct {
+	URL string
+	Key string
+}
+
+type contextKey string
+
+const userIDContextKey contextKey = "user_id"
+
+func NewSupabase() *Supabase {
+	return &Supabase{
+		URL: os.Getenv("SUPABASE_URL"),
+		Key: os.Getenv("SUPABASE_SERVICE_ROLE_KEY"),
+	}
+}
 
 func getPlannerAddress() string {
 	if addr := os.Getenv("PLANNER_GRPC_ADDR"); addr != "" {
@@ -133,40 +170,258 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func handleTestEndpoint(message string) http.HandlerFunc {
+func getAuthenticatedUserID(r *http.Request) (string, int, string) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", http.StatusUnauthorized, "missing or invalid authorization header"
+	}
+
+	token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if token == "" {
+		return "", http.StatusUnauthorized, "missing bearer token"
+	}
+
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	if supabaseURL == "" || serviceRoleKey == "" {
+		return "", http.StatusInternalServerError, "supabase configuration missing"
+	}
+
+	req, err := http.NewRequest(http.MethodGet, supabaseURL+"/auth/v1/user", nil)
+	if err != nil {
+		return "", http.StatusInternalServerError, "failed to create auth request"
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("apikey", serviceRoleKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", http.StatusUnauthorized, "invalid or expired token"
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", http.StatusUnauthorized, "invalid or expired token"
+	}
+
+	var user supabaseUserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return "", http.StatusUnauthorized, "invalid or expired token"
+	}
+
+	if user.ID == "" {
+		return "", http.StatusUnauthorized, "user id not found in token"
+	}
+
+	return user.ID, http.StatusOK, ""
+}
+
+func withAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet && r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
+		userID, statusCode, message := getAuthenticatedUserID(r)
+		if statusCode != http.StatusOK {
+			w.WriteHeader(statusCode)
+			json.NewEncoder(w).Encode(map[string]string{"error": message})
 			return
 		}
 
+		ctx := context.WithValue(r.Context(), userIDContextKey, userID)
+		next(w, r.WithContext(ctx))
+	}
+}
+
+func GetUserWithAuth(_ *Supabase, next http.HandlerFunc) http.HandlerFunc {
+	return withAuthenticatedUser(next)
+}
+
+func handleTestEndpoint(message string) http.HandlerFunc {
+	return withAuthenticatedUser(func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := userIDFromContext(r.Context())
 		resp := TestResponse{Message: message}
-
-		if r.Method == http.MethodPost {
-			body, err := io.ReadAll(r.Body)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "failed to read request body")
-				return
-			}
-
-			if len(body) > 0 {
-				var payload interface{}
-				if err := json.Unmarshal(body, &payload); err != nil {
-					w.WriteHeader(http.StatusBadRequest)
-					fmt.Fprintln(w, "invalid request body")
-					return
-				}
-				resp.Received = payload
-			}
+		if userID != "" {
+			resp.Received = map[string]string{"user_id": userID}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)
+	})
+}
+
+func userIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(userIDContextKey).(string)
+	return userID, ok
+}
+
+func fileExists(path string) bool {
+	if path == "" {
+		return false
 	}
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func resolveParserCommand() (string, string, error) {
+	pythonCandidates := []string{}
+	if envPython := strings.TrimSpace(os.Getenv("TRANSCRIPT_PARSER_PYTHON")); envPython != "" {
+		pythonCandidates = append(pythonCandidates, envPython)
+	}
+	pythonCandidates = append(pythonCandidates,
+		"/usr/local/bin/python3",
+		"/usr/bin/python3",
+		"scripts/venv/Scripts/python.exe",
+		"backend/scripts/venv/Scripts/python.exe",
+		"../scripts/venv/Scripts/python.exe",
+		"../../scripts/venv/Scripts/python.exe",
+		"../../../scripts/venv/Scripts/python.exe",
+		"python3",
+		"python",
+	)
+
+	scriptCandidates := []string{}
+	if envScript := strings.TrimSpace(os.Getenv("TRANSCRIPT_PARSER_SCRIPT")); envScript != "" {
+		scriptCandidates = append(scriptCandidates, envScript)
+	}
+	scriptCandidates = append(scriptCandidates,
+		"/opt/transcript-parser.py",
+		"scripts/transcript-parser.py",
+		"backend/scripts/transcript-parser.py",
+		"../scripts/transcript-parser.py",
+		"../../scripts/transcript-parser.py",
+		"../../../scripts/transcript-parser.py",
+	)
+
+	var parserScript string
+	for _, candidate := range scriptCandidates {
+		clean := filepath.Clean(candidate)
+		if fileExists(clean) {
+			parserScript = clean
+			break
+		}
+	}
+	if parserScript == "" {
+		return "", "", fmt.Errorf("transcript parser script not found")
+	}
+
+	for _, candidate := range pythonCandidates {
+		clean := filepath.Clean(candidate)
+		if strings.Contains(clean, "/") || strings.Contains(clean, "\\") {
+			if fileExists(clean) {
+				return clean, parserScript, nil
+			}
+			continue
+		}
+
+		if resolved, err := exec.LookPath(clean); err == nil {
+			return resolved, parserScript, nil
+		}
+	}
+
+	return "", "", fmt.Errorf("python runtime for transcript parser not found")
+}
+
+func parseTranscriptToJSON(pdfBytes []byte) ([]byte, int, error) {
+	pythonCmd, parserScript, err := resolveParserCommand()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	tmpDir, err := os.MkdirTemp("", "transcript-parse-*")
+	if err != nil {
+		return nil, 0, err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	pdfPath := filepath.Join(tmpDir, "transcript.pdf")
+	if err := os.WriteFile(pdfPath, pdfBytes, 0600); err != nil {
+		return nil, 0, err
+	}
+
+	cmd := exec.Command(pythonCmd, parserScript, pdfPath, "--stdout")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, 0, fmt.Errorf("parser execution failed: %v: %s", err, string(out))
+	}
+
+	parsedJSON := bytes.TrimSpace(out)
+	if !json.Valid(parsedJSON) {
+		return nil, 0, fmt.Errorf("parser output is not valid json")
+	}
+
+	var parsed map[string][]map[string]string
+	if err := json.Unmarshal(parsedJSON, &parsed); err != nil {
+		return nil, 0, fmt.Errorf("failed to decode parsed transcript json")
+	}
+
+	courseCount := 0
+	for _, courses := range parsed {
+		for _, course := range courses {
+			if course["course"] == "" || course["name"] == "" {
+				continue
+			}
+			courseCount++
+		}
+	}
+
+	if courseCount == 0 {
+		return nil, 0, fmt.Errorf("no courses extracted from transcript")
+	}
+
+	return parsedJSON, courseCount, nil
+}
+
+func parseNullableFloat(value string) *float64 {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" || trimmed == "--" {
+		return nil
+	}
+
+	parsed, err := strconv.ParseFloat(trimmed, 64)
+	if err != nil {
+		return nil
+	}
+	return &parsed
+}
+
+func transcriptRowsFromParsedJSON(parsedTranscript []byte, userID string) ([]TranscriptRow, error) {
+	var parsed map[string][]map[string]string
+	if err := json.Unmarshal(parsedTranscript, &parsed); err != nil {
+		return nil, fmt.Errorf("failed to decode parsed transcript json")
+	}
+
+	rows := make([]TranscriptRow, 0)
+	for term, courses := range parsed {
+		for _, course := range courses {
+			courseCode := strings.TrimSpace(course["course"])
+			courseName := strings.TrimSpace(course["name"])
+			if courseCode == "" || courseName == "" {
+				continue
+			}
+
+			row := TranscriptRow{
+				ID:              userID,
+				Term:            strings.TrimSpace(term),
+				Course:          courseCode,
+				Name:            courseName,
+				CreditAttempted: parseNullableFloat(course["credit_attempted"]),
+				EarnedHours:     parseNullableFloat(course["earned_hours"]),
+				CarriedHours:    parseNullableFloat(course["carried_hours"]),
+				Grade:           strings.TrimSpace(course["grade"]),
+			}
+
+			rows = append(rows, row)
+		}
+	}
+
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("no transcript rows were generated")
+	}
+
+	return rows, nil
 }
 
 func main() {
+	supabase := NewSupabase()
+
 	// Connect to planner gRPC service
 	plannerAddr := getPlannerAddress()
 	plannerConn, err := grpc.NewClient(
@@ -204,10 +459,6 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "hello from api-gateway")
 	})
-
-	// Test endpoints for frontend integration
-	http.HandleFunc("/api/chatbot/", enableCORS(handleTestEndpoint("chatbot test")))
-	http.HandleFunc("/api/schedule-generation/", enableCORS(handleTestEndpoint("schedule generation test")))
 
 	// User preference endpoint
 	http.HandleFunc("/api/userpreference/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
@@ -332,6 +583,7 @@ func main() {
 			Question:   reqBody.Question,
 			MaxResults: maxResults,
 			SessionId:  reqBody.SessionID,
+			UserId:     reqBody.UserID,
 		})
 		if err != nil {
 			log.Printf("Failed to call RAG service: %v", err)
@@ -549,17 +801,17 @@ func main() {
 	}))
 
 	// Transcript PDF upload endpoint
-	http.HandleFunc("/api/v2/transcript/upload/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/v2/transcript/upload/", enableCORS(GetUserWithAuth(supabase, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
-		userID := r.FormValue("userID") // from the request body
-		if userID == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{"error": "userID is required"})
+		userID, ok := userIDFromContext(r.Context())
+		if !ok || userID == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
 			return
 		}
 
@@ -570,6 +822,11 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{"error": "file is too big or not pdf"})
 			return
 		}
+		defer func() {
+			if r.MultipartForm != nil {
+				_ = r.MultipartForm.RemoveAll()
+			}
+		}()
 
 		file, header, err := r.FormFile("transcript") // where the pdf file is sent in
 		if err != nil {
@@ -580,7 +837,8 @@ func main() {
 		defer file.Close()
 
 		// ensures only pdfs are uploaded - the supabase bucket also checks
-		if header.Header.Get("Content-Type") != "application/pdf" {
+		contentType := strings.ToLower(header.Header.Get("Content-Type"))
+		if !strings.Contains(contentType, "application/pdf") {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": "only PDF files are accepted"})
 			return
@@ -592,8 +850,21 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{"error": "failed to read file"})
 			return
 		}
-		// creates filename, just userID_transcript
-		filename := fmt.Sprintf("%s_transcript.pdf", userID)
+		parsedTranscript, courseCount, err := parseTranscriptToJSON(fileBytes)
+		if err != nil {
+			log.Printf("Transcript parse error: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to parse transcript pdf"})
+			return
+		}
+
+		rows, err := transcriptRowsFromParsedJSON(parsedTranscript, userID)
+		if err != nil {
+			log.Printf("Transcript row mapping error: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to map parsed transcript data"})
+			return
+		}
 
 		// grabbing supabase credentials from .env
 		// make sure you have a .env in the backend folder
@@ -605,42 +876,129 @@ func main() {
 			return
 		}
 
-		uploadURL := supabaseURL + "/storage/v1/object/student-transcripts/" + filename
-		req, err := http.NewRequest(http.MethodPost, uploadURL, bytes.NewReader(fileBytes))
+		existingURL := fmt.Sprintf("%s/rest/v1/transcript?id=eq.%s&select=id,course,name", supabaseURL, url.QueryEscape(userID))
+		existingReq, err := http.NewRequest(http.MethodGet, existingURL, nil)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create upload request"})
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create transcript lookup request"})
+			return
+		}
+
+		existingReq.Header.Set("Authorization", "Bearer "+serviceRoleKey)
+		existingReq.Header.Set("apikey", serviceRoleKey)
+		existingReq.Header.Set("Accept", "application/json")
+
+		httpClient := &http.Client{}
+		existingResp, err := httpClient.Do(existingReq)
+		if err != nil {
+			log.Printf("Supabase transcript lookup error: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to load existing transcript rows"})
+			return
+		}
+		defer existingResp.Body.Close()
+
+		if existingResp.StatusCode < 200 || existingResp.StatusCode >= 300 {
+			body, _ := io.ReadAll(existingResp.Body)
+			log.Printf("Supabase transcript lookup returned error %d: %s", existingResp.StatusCode, string(body))
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to load existing transcript rows"})
+			return
+		}
+
+		var existingRows []map[string]string
+		if err := json.NewDecoder(existingResp.Body).Decode(&existingRows); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to decode existing transcript rows"})
+			return
+		}
+
+		existingKeys := make(map[string]struct{}, len(existingRows))
+		for _, existing := range existingRows {
+			if strings.TrimSpace(existing["id"]) != userID {
+				continue
+			}
+			course := strings.TrimSpace(existing["course"])
+			name := strings.TrimSpace(existing["name"])
+			if course == "" || name == "" {
+				continue
+			}
+			existingKeys[userID+"|"+course+"|"+name] = struct{}{}
+		}
+
+		rowsToInsert := make([]TranscriptRow, 0, len(rows))
+		seenKeys := make(map[string]struct{}, len(existingKeys))
+		for key := range existingKeys {
+			seenKeys[key] = struct{}{}
+		}
+		for _, row := range rows {
+			if strings.TrimSpace(row.ID) != userID {
+				continue
+			}
+			key := userID + "|" + strings.TrimSpace(row.Course) + "|" + strings.TrimSpace(row.Name)
+			if _, exists := seenKeys[key]; exists {
+				continue
+			}
+			seenKeys[key] = struct{}{}
+			rowsToInsert = append(rowsToInsert, row)
+		}
+
+		if len(rowsToInsert) == 0 {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"message":       "no new transcript rows to insert",
+				"user_id":       userID,
+				"course_count":  courseCount,
+				"inserted_rows": 0,
+			})
+			return
+		}
+
+		rowsPayload, err := json.Marshal(rowsToInsert)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to encode transcript rows"})
+			return
+		}
+
+		insertURL := supabaseURL + "/rest/v1/transcript"
+		req, err := http.NewRequest(http.MethodPost, insertURL, bytes.NewReader(rowsPayload))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create transcript insert request"})
 			return
 		}
 
 		req.Header.Set("Authorization", "Bearer "+serviceRoleKey)
-		req.Header.Set("Content-Type", "application/pdf")
-		req.Header.Set("x-upsert", "true") // replaces old transcript if needed
+		req.Header.Set("apikey", serviceRoleKey)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Prefer", "return=minimal")
 
-		httpClient := &http.Client{}
 		resp, err := httpClient.Do(req)
 		if err != nil {
-			log.Printf("Supabase upload error: %v", err)
+			log.Printf("Supabase transcript insert error: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "failed to upload to storage"})
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to insert transcript rows"})
 			return
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			body, _ := io.ReadAll(resp.Body)
 			log.Printf("Supabase returned error %d: %s", resp.StatusCode, string(body))
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "storage upload failed"})
+			json.NewEncoder(w).Encode(map[string]string{"error": "transcript insert failed"})
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message":  "transcript uploaded successfully",
-			"filename": filename,
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message":       "transcript parsed and inserted successfully",
+			"user_id":       userID,
+			"course_count":  courseCount,
+			"inserted_rows": len(rowsToInsert),
 		})
-	}))
+	})))
 
 	log.Println("api-gateway :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

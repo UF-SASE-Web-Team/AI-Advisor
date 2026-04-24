@@ -24,6 +24,7 @@ message QueryRequest {
   string question = 1;
   int32 max_results = 2;  // # of relevant documents to retrieve with default 5
   string session_id = 3;  // optional: reuse an existing chat session
+  string user_id = 4;     // optional: user ID for transcript lookups
 }
 
 message QueryResponse {

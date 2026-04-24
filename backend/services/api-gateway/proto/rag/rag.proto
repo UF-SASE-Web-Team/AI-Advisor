@@ -20,6 +20,7 @@ message QueryRequest {
   string question = 1;
   int32 max_results = 2;
   string session_id = 3;
+  string user_id = 4;
 }
 
 message QueryResponse {

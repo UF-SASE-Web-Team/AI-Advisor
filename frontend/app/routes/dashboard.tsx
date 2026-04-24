@@ -2,9 +2,14 @@ import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
 import Calendar from "~/components/dashboard/Calendar";
 import { SelectPlan } from "~/components/dashboard/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
+<<<<<<< sk-sidenav-sprint
 import RightNav from "~/components/navigation/RightNav";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
+=======
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+>>>>>>> sprint-5
 import { supabase } from "../../supabase";
 
 export default function Dashboard() {
