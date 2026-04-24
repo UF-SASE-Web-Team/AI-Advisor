@@ -13,17 +13,22 @@ service RAGService {
 
   // Recommend courses based on student profile
   rpc Recommend(RecommendRequest) returns (RecommendResponse);
+
+  // Create a new chat session
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
 }
 
 message QueryRequest {
   string question = 1;
   int32 max_results = 2;  // # of relevant documents to retrieve with default 5
+  string session_id = 3;  // optional: reuse an existing chat session
 }
 
 message QueryResponse {
   string answer = 1;
   repeated SourceDocument sources = 2;
   string error_message = 3;
+  string session_id = 4;  // the session used (created or reused)
 }
 
 message SourceDocument {
@@ -62,6 +67,15 @@ message HealthRequest {}
 
 message HealthResponse {
   string status = 1;
+}
+
+message CreateSessionRequest {
+  string title = 1;  // optional title for the session
+}
+
+message CreateSessionResponse {
+  string session_id = 1;
+  string error_message = 2;
 }
 
 // Recommend request with student profile

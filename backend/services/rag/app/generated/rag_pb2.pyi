@@ -7,22 +7,26 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class QueryRequest(_message.Message):
-    __slots__ = ("question", "max_results")
+    __slots__ = ("question", "max_results", "session_id")
     QUESTION_FIELD_NUMBER: _ClassVar[int]
     MAX_RESULTS_FIELD_NUMBER: _ClassVar[int]
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     question: str
     max_results: int
-    def __init__(self, question: _Optional[str] = ..., max_results: _Optional[int] = ...) -> None: ...
+    session_id: str
+    def __init__(self, question: _Optional[str] = ..., max_results: _Optional[int] = ..., session_id: _Optional[str] = ...) -> None: ...
 
 class QueryResponse(_message.Message):
-    __slots__ = ("answer", "sources", "error_message")
+    __slots__ = ("answer", "sources", "error_message", "session_id")
     ANSWER_FIELD_NUMBER: _ClassVar[int]
     SOURCES_FIELD_NUMBER: _ClassVar[int]
     ERROR_MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     answer: str
     sources: _containers.RepeatedCompositeFieldContainer[SourceDocument]
     error_message: str
-    def __init__(self, answer: _Optional[str] = ..., sources: _Optional[_Iterable[_Union[SourceDocument, _Mapping]]] = ..., error_message: _Optional[str] = ...) -> None: ...
+    session_id: str
+    def __init__(self, answer: _Optional[str] = ..., sources: _Optional[_Iterable[_Union[SourceDocument, _Mapping]]] = ..., error_message: _Optional[str] = ..., session_id: _Optional[str] = ...) -> None: ...
 
 class SourceDocument(_message.Message):
     __slots__ = ("course_code", "course_name", "content", "relevance_score")
@@ -89,6 +93,20 @@ class HealthResponse(_message.Message):
     STATUS_FIELD_NUMBER: _ClassVar[int]
     status: str
     def __init__(self, status: _Optional[str] = ...) -> None: ...
+
+class CreateSessionRequest(_message.Message):
+    __slots__ = ("title",)
+    TITLE_FIELD_NUMBER: _ClassVar[int]
+    title: str
+    def __init__(self, title: _Optional[str] = ...) -> None: ...
+
+class CreateSessionResponse(_message.Message):
+    __slots__ = ("session_id", "error_message")
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    ERROR_MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    session_id: str
+    error_message: str
+    def __init__(self, session_id: _Optional[str] = ..., error_message: _Optional[str] = ...) -> None: ...
 
 class RecommendRequest(_message.Message):
     __slots__ = ("completed_courses", "interests", "max_credits", "term", "level")

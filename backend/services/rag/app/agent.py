@@ -183,7 +183,7 @@ def get_reddit_data_topics(topic: str):
 # Main entry point — called by gRPC handler
 # ---------------------------------------------------------------------------
 
-def ask(question: str, session_id: str | None = None) -> tuple[str, str]:
+def ask(question: str, session_id: str | None = None) -> tuple[str, str, str]:
     """
     Ask the ReAct agent a question.
 
@@ -192,7 +192,7 @@ def ask(question: str, session_id: str | None = None) -> tuple[str, str]:
         session_id: Optional chat session ID for history persistence.
 
     Returns:
-        (answer_text, status) where status is "SUCCESS", "FALLBACK", or "ERROR".
+        (answer_text, status, session_id) tuple.
     """
     if _agent is None:
         raise RuntimeError("Agent not initialized — call init_agent() first")
@@ -214,8 +214,8 @@ def ask(question: str, session_id: str | None = None) -> tuple[str, str]:
         # Save assistant response
         _save_message(sid, "assistant", answer)
 
-        return answer, "SUCCESS"
+        return answer, "SUCCESS", sid
 
     except Exception as e:
         logger.error(f"Agent error: {e}", exc_info=True)
-        return f"I encountered an error processing your request: {e}", "ERROR"
+        return f"I encountered an error processing your request: {e}", "ERROR", ""

@@ -5,7 +5,7 @@ import os
 import re
 
 from app.generated import rag_pb2, rag_pb2_grpc
-from app.agent import init_agent, ask, get_course_info as _lookup_course
+from app.agent import init_agent, ask, get_course_info as _lookup_course, _get_or_create_session
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,20 +19,34 @@ class RAGServicer(rag_pb2_grpc.RAGServiceServicer):
 
     def Query(self, request, context):
         question = request.question
-        logger.info(f"Received query: {question}")
+        session_id = request.session_id or None
+        logger.info(f"Received query: {question} (session={session_id})")
 
         try:
-            answer, status = ask(question)
+            answer, status, sid = ask(question, session_id=session_id)
 
             return rag_pb2.QueryResponse(
                 answer=answer,
                 sources=[],
                 error_message="" if status == "SUCCESS" else answer,
+                session_id=sid,
             )
         except Exception as e:
             logger.error(f"Error processing query: {e}", exc_info=True)
             return rag_pb2.QueryResponse(
                 answer="",
+                error_message=str(e),
+            )
+
+    def CreateSession(self, request, context):
+        title = request.title or "New session"
+        logger.info(f"Creating session: {title}")
+        try:
+            sid = _get_or_create_session(None)
+            return rag_pb2.CreateSessionResponse(session_id=sid)
+        except Exception as e:
+            logger.error(f"Error creating session: {e}", exc_info=True)
+            return rag_pb2.CreateSessionResponse(
                 error_message=str(e),
             )
 

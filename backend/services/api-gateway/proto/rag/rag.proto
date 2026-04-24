@@ -10,17 +10,21 @@ service RAGService {
   rpc Health(HealthRequest) returns (HealthResponse);
 
   rpc GetCourseInfo(CourseInfoRequest) returns (CourseInfoResponse);
+
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
 }
 
 message QueryRequest {
   string question = 1;
   int32 max_results = 2;
+  string session_id = 3;
 }
 
 message QueryResponse {
   string answer = 1;
   repeated SourceDocument sources = 2;
   string error_message = 3;
+  string session_id = 4;
 }
 
 message SourceDocument {
@@ -59,4 +63,13 @@ message HealthRequest {}
 
 message HealthResponse {
   string status = 1;
+}
+
+message CreateSessionRequest {
+  string title = 1;
+}
+
+message CreateSessionResponse {
+  string session_id = 1;
+  string error_message = 2;
 }

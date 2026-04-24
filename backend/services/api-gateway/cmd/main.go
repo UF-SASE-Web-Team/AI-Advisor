@@ -48,12 +48,14 @@ type ScheduledCourse struct {
 type RAGQueryRequest struct {
 	Question   string `json:"question"`
 	MaxResults int    `json:"max_results,omitempty"`
+	SessionID  string `json:"session_id,omitempty"`
 }
 
 type RAGQueryResponse struct {
 	Answer       string      `json:"answer"`
 	Sources      []SourceDoc `json:"sources"`
 	ErrorMessage string      `json:"error_message,omitempty"`
+	SessionID    string      `json:"session_id,omitempty"`
 }
 
 type SourceDoc struct {
@@ -294,7 +296,7 @@ func main() {
 	}))
 
 	// RAG query endpoint
-	http.HandleFunc("/api/rag/query/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/advisor/query/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -329,6 +331,7 @@ func main() {
 		resp, err := ragClient.Query(ctx, &ragpb.QueryRequest{
 			Question:   reqBody.Question,
 			MaxResults: maxResults,
+			SessionId:  reqBody.SessionID,
 		})
 		if err != nil {
 			log.Printf("Failed to call RAG service: %v", err)
@@ -354,11 +357,34 @@ func main() {
 			Answer:       resp.Answer,
 			Sources:      sources,
 			ErrorMessage: resp.ErrorMessage,
+			SessionID:    resp.SessionId,
 		})
 	}))
 
+	// Create chat session endpoint
+	http.HandleFunc("/api/advisor/session/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		resp, err := ragClient.CreateSession(ctx, &ragpb.CreateSessionRequest{})
+		if err != nil {
+			log.Printf("Failed to create session: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create session"})
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"session_id": resp.SessionId})
+	}))
+
 	// Course info endpoint
-	http.HandleFunc("/api/rag/course/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/advisor/course/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
