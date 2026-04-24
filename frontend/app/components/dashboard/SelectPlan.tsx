@@ -68,6 +68,39 @@ const catalogRowToPlanShape = (row: any) => ({
   sections: row.sections ?? [],
 });
 
+const TRANSCRIPT_CACHE_KEY = "aiadvisor.transcript-codes";
+const TRANSCRIPT_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+const loadCachedTranscriptCodes = (userId: string): string[] | null => {
+  try {
+    const raw = localStorage.getItem(TRANSCRIPT_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (cached?.userId !== userId) return null;
+    if (typeof cached.ts !== "number") return null;
+    if (Date.now() - cached.ts > TRANSCRIPT_CACHE_TTL_MS) return null;
+    return Array.isArray(cached.codes) ? cached.codes : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveCachedTranscriptCodes = (userId: string, codes: string[]) => {
+  try {
+    localStorage.setItem(
+      TRANSCRIPT_CACHE_KEY,
+      JSON.stringify({ userId, codes, ts: Date.now() }),
+    );
+  } catch {
+    // quota exceeded / disabled — ignore
+  }
+};
+
+// Session-scoped cache for autocomplete queries. Survives across expansions /
+// re-open of the Add dialog within the same page load but not across reloads,
+// because course data can change and we don't want stale dropdowns forever.
+const courseSearchCache = new Map<string, any[]>();
+
 const calendarCoursesFromPlan = (plan: UserPlan | undefined) =>
   rawPlanCourses(plan).flatMap((course: any) => {
     const sections = Array.isArray(course.sections) ? course.sections : [];
@@ -286,17 +319,25 @@ export function SelectPlan() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Fast path: populate from localStorage so the autocomplete can filter
+      // immediately on page load without waiting for the network.
+      const cached = loadCachedTranscriptCodes(user.id);
+      if (cached && !cancelled) {
+        setTakenCodes(new Set(cached));
+      }
+
+      // Refresh in the background and update the cache.
       const { data, error } = await supabase
         .from("transcript")
         .select("course")
         .eq("id", user.id);
       if (cancelled || error) return;
-      const codes = new Set<string>(
-        (data ?? [])
-          .map((r: any) => (r.course ?? "").toString().trim().toUpperCase())
-          .filter(Boolean),
-      );
-      setTakenCodes(codes);
+      const codes = (data ?? [])
+        .map((r: any) => (r.course ?? "").toString().trim().toUpperCase())
+        .filter(Boolean);
+      setTakenCodes(new Set(codes));
+      saveCachedTranscriptCodes(user.id, codes);
     })();
     return () => { cancelled = true; };
   }, []);
@@ -645,9 +686,23 @@ const AddClassRow = ({
       setIsSearching(false);
       return;
     }
+    const safe = trimmed.replace(/[,%]/g, "");
+
+    // Session cache hit → show instantly, still revalidate in background.
+    const cached = courseSearchCache.get(safe.toLowerCase());
+    if (cached) {
+      const filteredCached = cached.filter((r: any) => {
+        const code = (r.course_code ?? "").toString().trim().toUpperCase();
+        return code !== "" && !takenCodes.has(code) && !existingCodes.has(code);
+      });
+      setResults(filteredCached);
+      setHighlighted(0);
+      setIsSearching(false);
+      return;
+    }
+
     setIsSearching(true);
     const handle = setTimeout(async () => {
-      const safe = trimmed.replace(/[,%]/g, "");
       const { data, error } = await supabase
         .from("courses")
         .select("course_code, course_name, credits, sections")
@@ -659,7 +714,9 @@ const AddClassRow = ({
         setResults([]);
         return;
       }
-      const filtered = (data ?? []).filter((r: any) => {
+      const rows = data ?? [];
+      courseSearchCache.set(safe.toLowerCase(), rows);
+      const filtered = rows.filter((r: any) => {
         const code = (r.course_code ?? "").toString().trim().toUpperCase();
         return code !== "" && !takenCodes.has(code) && !existingCodes.has(code);
       });
