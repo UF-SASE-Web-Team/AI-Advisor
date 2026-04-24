@@ -11,6 +11,53 @@ interface UserPlan {
 }
 
 const MAX_PLAN_NAME_LEN = 60;
+const MAX_TOTAL_CREDITS = 21;
+
+// 12 muted, Notion-inspired course-accent colors. Soft desaturated backgrounds +
+// dusty borders + dark text. Elegant rather than bright, and each hue is still
+// clearly distinguishable from its neighbors.
+export const COURSE_COLORS: { bg: string; border: string; text: string }[] = [
+  { bg: "#FBE4E4", border: "#D9A4A4", text: "#7A2B2B" }, // dusty rose
+  { bg: "#FAE8D7", border: "#D8AF85", text: "#784929" }, // peach
+  { bg: "#FAF1D2", border: "#CDB97A", text: "#6D5A1A" }, // sand
+  { bg: "#E5EFDE", border: "#A4C19A", text: "#3D5C33" }, // sage
+  { bg: "#DDEDEA", border: "#95BFB7", text: "#2A5F55" }, // mint
+  { bg: "#D8E9E2", border: "#8FBAA6", text: "#2E5E4B" }, // seafoam
+  { bg: "#DDEBF1", border: "#93B9CC", text: "#2C5B78" }, // sky
+  { bg: "#DEE4EC", border: "#99A8BC", text: "#2F4763" }, // dusty blue
+  { bg: "#E0E1EF", border: "#A5A7C7", text: "#3D4076" }, // periwinkle
+  { bg: "#EAE4F2", border: "#B9A8CE", text: "#4E3B77" }, // lavender
+  { bg: "#F0DDED", border: "#C69CC0", text: "#6A2E65" }, // mauve
+  { bg: "#F4DFEB", border: "#C597AE", text: "#6E334F" }, // pink
+];
+
+// Build a course → color map where each unique course gets the next palette entry
+// (wrapping only if you somehow exceed 12 courses). This guarantees no duplicate
+// colors within a plan, unlike a hash which can collide.
+export const buildCourseColorMap = (
+  codes: (string | undefined | null)[],
+): Record<string, typeof COURSE_COLORS[number]> => {
+  const map: Record<string, typeof COURSE_COLORS[number]> = {};
+  let i = 0;
+  for (const raw of codes) {
+    const code = (raw ?? "").toString().trim().toUpperCase();
+    if (!code) continue;
+    if (map[code]) continue;
+    map[code] = COURSE_COLORS[i % COURSE_COLORS.length];
+    i += 1;
+  }
+  return map;
+};
+
+// Fallback lookup when a course isn't in the plan's color map (e.g., empty plan).
+export const colorForCourse = (
+  courseId: string | undefined | null,
+  map?: Record<string, typeof COURSE_COLORS[number]>,
+) => {
+  const code = (courseId ?? "").toString().trim().toUpperCase();
+  if (code && map && map[code]) return map[code];
+  return COURSE_COLORS[COURSE_COLORS.length - 1];
+};
 
 // plan_data can be either the raw generate-API array (newer rows) or the older
 // { semesters: [{ courses: [...] }] } wrap. Normalize to the flat array here.
@@ -126,6 +173,8 @@ const calendarCoursesFromPlan = (plan: UserPlan | undefined) =>
 interface ScheduleContextType {
   courses: any[];
   setCourses: (courses: any[]) => void;
+  courseColorMap: Record<string, typeof COURSE_COLORS[number]>;
+  setCourseColorMap: (map: Record<string, typeof COURSE_COLORS[number]>) => void;
 }
 
 const ScheduleContext = createContext<ScheduleContextType | undefined>(
@@ -134,9 +183,12 @@ const ScheduleContext = createContext<ScheduleContextType | undefined>(
 
 export function ScheduleProvider({ children }: { children: ReactNode }) {
   const [courses, setCourses] = useState<any[]>([]);
+  const [courseColorMap, setCourseColorMap] = useState<
+    Record<string, typeof COURSE_COLORS[number]>
+  >({});
 
   return (
-    <ScheduleContext.Provider value={{ courses, setCourses }}>
+    <ScheduleContext.Provider value={{ courses, setCourses, courseColorMap, setCourseColorMap }}>
       {children}
     </ScheduleContext.Provider>
   );
@@ -159,7 +211,7 @@ interface ClassObj {
 }
 
 export function SelectPlan() {
-  const { setCourses } = useSchedule();
+  const { setCourses, courseColorMap, setCourseColorMap } = useSchedule();
   const [mode, setMode] = useState<"default" | "edit">("default");
   const [activePlanId, setActivePlanId] = useState<string>("");
   const [plans, setPlans] = useState<UserPlan[]>([]);
@@ -287,15 +339,24 @@ export function SelectPlan() {
     );
   };
 
-  const handleAddCourse = (rawRow: any) => {
+  const handleAddCourse = (rawRow: any): { ok: true } | { ok: false; reason: string } => {
     const enriched = catalogRowToPlanShape(rawRow);
+    const currentTotal = classes.reduce((sum, c) => sum + (Number(c.credits) || 0), 0);
+    const next = currentTotal + enriched.credits;
+    if (next > MAX_TOTAL_CREDITS) {
+      return {
+        ok: false,
+        reason: `Adding ${enriched.title} (${enriched.credits} cr) would exceed the ${MAX_TOTAL_CREDITS}-credit limit (${currentTotal}/${MAX_TOTAL_CREDITS} used).`,
+      };
+    }
     setRawCourses((prev) => {
-      const next = [...prev, enriched];
-      persistPlanData(next);
-      setCourses(calendarCoursesFromPlan({ plan_data: next } as UserPlan));
-      return next;
+      const nextRaw = [...prev, enriched];
+      persistPlanData(nextRaw);
+      setCourses(calendarCoursesFromPlan({ plan_data: nextRaw } as UserPlan));
+      return nextRaw;
     });
     setClasses((prev) => [...prev, classObjFromPlanCourse(enriched)]);
+    return { ok: true };
   };
 
   const handleRemoveCourse = (index: number) => {
@@ -313,6 +374,10 @@ export function SelectPlan() {
     setRawCourses(rawData);
     persistPlanData(rawData);
   };
+
+  useEffect(() => {
+    setCourseColorMap(buildCourseColorMap(classes.map((c) => c.title)));
+  }, [classes, setCourseColorMap]);
 
   useEffect(() => {
     let cancelled = false;
@@ -422,6 +487,7 @@ export function SelectPlan() {
           <AddClassRow
             takenCodes={takenCodes}
             existingCodes={new Set(classes.map((c) => c.title.trim().toUpperCase()).filter(Boolean))}
+            remainingCredits={MAX_TOTAL_CREDITS - classes.reduce((s, c) => s + (Number(c.credits) || 0), 0)}
             onAdd={handleAddCourse}
             onClose={() => setMode("default")}
           />
@@ -665,12 +731,14 @@ const SemesterParameters = ({
 const AddClassRow = ({
   takenCodes,
   existingCodes,
+  remainingCredits,
   onAdd,
   onClose,
 }: {
   takenCodes: Set<string>;
   existingCodes: Set<string>;
-  onAdd: (rawRow: any) => void;
+  remainingCredits: number;
+  onAdd: (rawRow: any) => { ok: true } | { ok: false; reason: string };
   onClose: () => void;
 }) => {
   const [query, setQuery] = useState("");
@@ -678,6 +746,7 @@ const AddClassRow = ({
   const [isSearching, setIsSearching] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
   const [isOpen, setIsOpen] = useState(true);
+  const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -727,7 +796,19 @@ const AddClassRow = ({
   }, [query, takenCodes, existingCodes]);
 
   const select = (row: any) => {
-    onAdd(row);
+    const credits = Number(row.credits ?? 0);
+    if (credits > remainingCredits) {
+      setAddError(
+        `${row.course_code} is ${credits} cr — only ${remainingCredits} left before hitting the ${MAX_TOTAL_CREDITS}-credit limit.`,
+      );
+      return;
+    }
+    const result = onAdd(row);
+    if (!result.ok) {
+      setAddError(result.reason);
+      return;
+    }
+    setAddError(null);
     setQuery("");
     setResults([]);
     onClose();
@@ -778,20 +859,29 @@ const AddClassRow = ({
               ) : results.length === 0 ? (
                 <div className="px-3 py-2 text-xs text-gray-400">No matches.</div>
               ) : (
-                results.map((r, i) => (
-                  <button
-                    type="button"
-                    key={`${r.course_code}-${i}`}
-                    onMouseDown={(e) => { e.preventDefault(); select(r); }}
-                    onMouseEnter={() => setHighlighted(i)}
-                    className={`w-full text-left px-3 py-1.5 border-b border-gray-100 last:border-b-0 ${
-                      i === highlighted ? "bg-gray-100" : "bg-white"
-                    }`}
-                  >
-                    <div className="font-bold text-gray-800 text-sm">{r.course_code}</div>
-                    <div className="text-xs text-gray-500 truncate">{r.course_name}</div>
-                  </button>
-                ))
+                results.map((r, i) => {
+                  const rowCredits = Number(r.credits ?? 0);
+                  const wouldOvershoot = rowCredits > remainingCredits;
+                  return (
+                    <button
+                      type="button"
+                      key={`${r.course_code}-${i}`}
+                      onMouseDown={(e) => { e.preventDefault(); if (!wouldOvershoot) select(r); }}
+                      onMouseEnter={() => setHighlighted(i)}
+                      disabled={wouldOvershoot}
+                      title={wouldOvershoot ? `Exceeds ${MAX_TOTAL_CREDITS}-credit cap` : undefined}
+                      className={`w-full text-left px-3 py-1.5 border-b border-gray-100 last:border-b-0 flex items-center justify-between gap-2 ${
+                        wouldOvershoot ? "bg-gray-50 opacity-50 cursor-not-allowed" : i === highlighted ? "bg-gray-100" : "bg-white"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="font-bold text-gray-800 text-sm">{r.course_code}</div>
+                        <div className="text-xs text-gray-500 truncate">{r.course_name}</div>
+                      </div>
+                      <div className="flex-none text-[11px] text-gray-500">{rowCredits} cr</div>
+                    </button>
+                  );
+                })
               )}
             </div>
           )}
@@ -802,6 +892,12 @@ const AddClassRow = ({
         >
           Done
         </button>
+      </div>
+      <div className="flex items-center justify-between gap-2 pl-10">
+        <span className="text-[11px] text-gray-500">
+          {MAX_TOTAL_CREDITS - remainingCredits}/{MAX_TOTAL_CREDITS} credits used · {remainingCredits} remaining
+        </span>
+        {addError && <span className="text-[11px] text-red-500 truncate">{addError}</span>}
       </div>
     </div>
   );
@@ -821,6 +917,8 @@ const ClassItem = ({
   onRemove,
 }: ClassObj & { showRemove?: boolean; onRemove?: () => void }) => {
   const [expanded, setExpanded] = useState(false);
+  const { courseColorMap } = useSchedule();
+  const color = colorForCourse(title, courseColorMap);
 
   const trimmed = (days || "").trim();
   let dayLine = trimmed;
@@ -858,7 +956,10 @@ const ClassItem = ({
   const visibleTimes = expanded ? timeLines : [];
 
   return (
-    <div className="bg-class-item border-1 border-class-item-border rounded-md px-4 py-3 pb-4 shadow-sm flex flex-col self-start h-fit">
+    <div
+      className="border-1 rounded-md px-4 py-3 pb-4 shadow-sm flex flex-col self-start h-fit"
+      style={{ backgroundColor: color.bg, borderColor: color.border }}
+    >
       <div className="flex items-center justify-between mb-1">
         <strong className="font-bold text-gray-700">{title}</strong>
         {showRemove && (

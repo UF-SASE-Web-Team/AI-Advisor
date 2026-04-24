@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSchedule } from "./SelectPlan";
+import { useSchedule, colorForCourse } from "./SelectPlan";
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
@@ -66,7 +66,7 @@ function buildGrid(courses) {
 }
 
 export default function Calendar() {
-  const { courses } = useSchedule();
+  const { courses, courseColorMap } = useSchedule();
 
   const grid = buildGrid(courses);
 
@@ -106,11 +106,17 @@ export default function Calendar() {
                       isLastCol ? "" : "border-r border-neutral-400"
                     }`}
                   >
-                    {course && (
-                      <span className="inline-block max-w-[calc(100%-6px)] truncate rounded-md border border-[#C2DBFC] bg-[#E2EFFF] px-2.5 py-0.5 text-center text-xs font-medium leading-tight text-[#4A4848]">
-                        {course.course_id}
-                      </span>
-                    )}
+                    {course && (() => {
+                      const c = colorForCourse(course.course_id, courseColorMap);
+                      return (
+                        <span
+                          className="inline-block max-w-[calc(100%-6px)] truncate rounded-md border px-2.5 py-0.5 text-center text-xs font-medium leading-tight"
+                          style={{ backgroundColor: c.bg, borderColor: c.border, color: c.text }}
+                        >
+                          {course.course_id}
+                        </span>
+                      );
+                    })()}
                   </div>
                 );
               })}

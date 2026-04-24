@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 import { marked } from "marked";
 
-export function ChatbotDisplay({ history }: any) {
+export function ChatbotDisplay({ history, isThinking, freshUserKey }: any) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [history]);
+  }, [history, isThinking]);
 
   return (
     <div
@@ -24,7 +24,9 @@ export function ChatbotDisplay({ history }: any) {
         msg.sender === "user" ? (
           <div
             key={msg.key}
-            className="p-3 shadow-sm rounded-xl text-sm max-w-3/4 bg-blue-200 self-end"
+            className={`p-3 shadow-sm rounded-xl text-sm max-w-3/4 bg-blue-200 self-end ${
+              msg.key === freshUserKey ? "chat-bubble-rise" : ""
+            }`}
           >
             {msg.text}
           </div>
@@ -36,6 +38,24 @@ export function ChatbotDisplay({ history }: any) {
           />
         )
       ))}
+      {isThinking && <ThinkingBubble />}
+    </div>
+  );
+}
+
+function ThinkingBubble() {
+  return (
+    <div
+      className="p-3 shadow-sm rounded-xl text-sm bg-white text-gray-800 self-start"
+      aria-label="Advisor is thinking"
+      role="status"
+    >
+      <span className="flex items-center gap-1">
+        <span className="sr-only">Thinking…</span>
+        <span className="h-2 w-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.3s]" />
+        <span className="h-2 w-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.15s]" />
+        <span className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" />
+      </span>
     </div>
   );
 }

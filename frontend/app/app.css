@@ -38,3 +38,19 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes chat-bubble-rise {
+  0% {
+    transform: translateY(24px) scale(0.96);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.chat-bubble-rise {
+  animation: chat-bubble-rise 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: 100% 100%;
+}

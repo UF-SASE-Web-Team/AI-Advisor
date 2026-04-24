@@ -50,6 +50,7 @@ export function ChatContainer() {
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStartingNewChat, setIsStartingNewChat] = useState(false);
+  const [freshUserKey, setFreshUserKey] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -227,6 +228,7 @@ export function ChatContainer() {
       key: `pending-user-${Date.now()}`,
     };
     setMsgHistory((prev) => [...prev, newMsg]);
+    setFreshUserKey(newMsg.key);
     setInput("");
     setIsSubmitting(true);
 
@@ -347,7 +349,11 @@ export function ChatContainer() {
             ))}
         </div>
       )}
-      <ChatbotDisplay history={msgHistory} />
+      <ChatbotDisplay
+        history={msgHistory}
+        isThinking={isSubmitting}
+        freshUserKey={freshUserKey}
+      />
       <ChatbotInput
         value={input}
         onChange={setInput}
