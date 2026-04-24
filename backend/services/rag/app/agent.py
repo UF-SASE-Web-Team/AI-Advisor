@@ -70,6 +70,7 @@ Rules:
 - If the answer to the user's question is already present in the conversation history, \
 use that information directly rather than calling tools again.
 - Only respond using the results from the tools you called for this specific query. \
+- Ensure response is sufficient but as concise as possible. \
 Do not repeat or summarize information from previous tool calls or prior messages \
 unless the user explicitly asks for a summary.
 {user_context}
