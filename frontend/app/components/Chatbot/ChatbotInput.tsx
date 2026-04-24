@@ -1,4 +1,18 @@
-export function ChatbotInput({ value, onChange, onSubmit }: any) {
+import type { FormEvent } from "react";
+
+interface ChatbotInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  disabled?: boolean;
+}
+
+export function ChatbotInput({
+  value,
+  onChange,
+  onSubmit,
+  disabled = false,
+}: ChatbotInputProps) {
   return (
     <div className="flex-none">
       <form
@@ -19,15 +33,19 @@ export function ChatbotInput({ value, onChange, onSubmit }: any) {
           w-full
           rounded-full
           "
+          disabled={disabled}
         ></input>
         <button
+          type="submit"
+          disabled={disabled}
           className="rounded-full
           px-2
           bg-blue-500
           hover:bg-blue-400
-          text-white"
+          text-white
+          disabled:bg-gray-300"
         >
-          Send
+          {disabled ? "..." : "Send"}
         </button>
       </form>
     </div>

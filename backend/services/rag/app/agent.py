@@ -249,8 +249,10 @@ def ask(question: str, session_id: str | None = None, user_id: str | None = None
     if _agent is None:
         raise RuntimeError("Agent not initialized — call init_agent() first")
 
+    sid = ""
+
     try:
-        sid = _get_or_create_session(session_id)
+        sid = _get_or_create_session(session_id, user_id=user_id)
 
         # Save user message
         _save_message(sid, "user", question)
@@ -270,4 +272,10 @@ def ask(question: str, session_id: str | None = None, user_id: str | None = None
 
     except Exception as e:
         logger.error(f"Agent error: {e}", exc_info=True)
-        return f"I encountered an error processing your request: {e}", "ERROR", ""
+        answer = f"I encountered an error processing your request: {e}"
+        if sid:
+            try:
+                _save_message(sid, "assistant", answer)
+            except Exception:
+                logger.error("Failed to save assistant error response", exc_info=True)
+        return answer, "ERROR", sid
