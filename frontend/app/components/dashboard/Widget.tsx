@@ -1,21 +1,22 @@
-export function Widget({ children, title, className }: any) {
+export function Widget({ children, title, className, titleClassName }: any) {
   return (
     <div className={`flex flex-col ${className || "flex-1"}`}>
-      <Header title={title} />
+      <Header title={title} titleClassName={titleClassName} />
       <WidgetBody>{children}</WidgetBody>
     </div>
   );
 }
 
-const Header = ({ title }: any) => {
+const Header = ({ title, titleClassName }: any) => {
   return (
     <div
-      className="
+      className={`
     p-3 font-bold
     bg-widget-titlebar
     border-1 border-widget-titlebar-border
     rounded-t-md
-    flex-none"
+    flex-none
+    ${titleClassName || ""}`}
     >
       {title}
     </div>

@@ -1,6 +1,5 @@
 import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
-import Calendar from "~/components/dashboard/Calendar";
-import { SelectPlan } from "~/components/dashboard/SelectPlan";
+import { EditSemesterPlan } from "~/components/dashboard/EditSemesterPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
 import RightNav from "~/components/navigation/RightNav";
 import { useNavigate } from "react-router";
@@ -43,11 +42,9 @@ export default function Dashboard() {
       </div>
 
       <div
-        className="
-        flex flex-col"
-      >
-        <SelectPlan />
-        <Calendar />
+        style={{ height: "calc(100vh - 2rem)" }}
+        className="flex flex-col min-h-0">
+        <EditSemesterPlan />
       </div>
     </div>
   );
