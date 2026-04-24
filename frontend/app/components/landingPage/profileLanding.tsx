@@ -9,6 +9,9 @@ const GAP = 24;
 const CAROUSEL_WIDTH = 1184;
 const CARD_WIDTH = (CAROUSEL_WIDTH - 7 * GAP) / 8;
 const CARD_UNIT = CARD_WIDTH + GAP;
+const ARROW_BUTTON_SIZE = 40;
+const CARD_PADDING = 8;
+const ARROW_TOP_OFFSET = CARD_PADDING + (CARD_WIDTH - ARROW_BUTTON_SIZE) / 2;
 const ROTATION_INTERVAL_MS = 4000;
 const MANUAL_SELECTION_PAUSE_MS = 7000;
 
@@ -99,19 +102,20 @@ export function ProfileLanding() {
   return (
     <div className="w-full bg-[#F6F8FF] overflow-x-clip">
       <section className="relative max-w-7xl mx-auto px-8 md:px-16 py-24">
-        <div className="mt-8 lg:mt-12 flex items-center gap-4 -mx-10 md:-mx-16">
+        <div className="mt-8 lg:mt-12 flex items-start gap-4 -mx-10 md:-mx-16">
           <button
             type="button"
             onClick={scrollLeft}
             aria-label="Scroll left"
-            className="flex-shrink-0 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:opacity-90 transition"
+            className="shrink-0 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:opacity-90 transition"
+            style={{ marginTop: ARROW_TOP_OFFSET }}
           >
             <ArrowIcon left />
           </button>
           <div
             ref={scrollRef}
             onWheel={onCarouselWheel}
-            className="flex flex-1 min-w-0 overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-hide p-1 pb-4"
+            className="flex items-start flex-1 min-w-0 overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-hide p-1 pb-4"
             style={{ gap: GAP, maxWidth: CAROUSEL_WIDTH }}
           >
             {TEAM_MEMBERS.map((member, i) => (
@@ -119,7 +123,7 @@ export function ProfileLanding() {
                 key={i}
                 type="button"
                 onClick={() => selectMember(i)}
-                className={`flex-shrink-0 text-left transition rounded p-2 overflow-hidden ${
+                className={`self-start shrink-0 text-left transition rounded p-2 overflow-hidden ${
                   selectedIndex === i
                     ? "ring-2 ring-black ring-offset-1"
                     : ""
@@ -127,7 +131,7 @@ export function ProfileLanding() {
                 style={{ width: CARD_WIDTH }}
               >
                 <div
-                  className="w-full rounded aspect-square overflow-hidden bg-zinc-300"
+                  className="w-full rounded-2xl aspect-square overflow-hidden bg-zinc-300"
                 >
                   <img
                     src={member.imageUrl}
@@ -135,7 +139,7 @@ export function ProfileLanding() {
                     className="block w-full h-full object-cover"
                   />
                 </div>                
-                <p className="mt-3 text-black text-[10px] font-normal font-tenor leading-4">
+                <p className="mt-3 text-black text-[14px] font-normal font-tenor leading-4">
                   {member.name}
                   <br />
                   {member.role}
@@ -147,14 +151,15 @@ export function ProfileLanding() {
             type="button"
             onClick={scrollRight}
             aria-label="Scroll right"
-            className="flex-shrink-0 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:opacity-90 transition"
+            className="shrink-0 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:opacity-90 transition"
+            style={{ marginTop: ARROW_TOP_OFFSET }}
           >
             <ArrowIcon left={false} />
           </button>
         </div>
 
         <div className="mt-16 flex flex-col md:flex-row gap-8 items-start">
-          <div className="w-56 h-56 flex-shrink-0 rounded overflow-hidden bg-zinc-300">
+          <div className="w-56 h-56 shrink-0 rounded-2xl overflow-hidden bg-zinc-300">
             <img
               src={selected.imageUrl}
               alt={selected.name}
@@ -168,13 +173,13 @@ export function ProfileLanding() {
             <p className="text-black text-base font-semibold font-mono mb-4">
               {selected.role}
             </p>
-            <p className="text-black text-[10px] font-normal font-tenor leading-4 max-w-md">
+            <p className="text-black text-[18px] font-normal font-tenor leading-4 max-w-md">
               {selected.description}
             </p>
           </div>
         </div>
-        <div className="mt-20 w-full h-96 rounded flex items-center justify-center">
-          <img src="/group_pic.JPG"></img>
+        <div className="mt-20 w-full h-96 flex items-center justify-center">
+          <img src="/group_pic.JPG" className="rounded-2xl"></img>
         </div>
       </section>
     </div>
