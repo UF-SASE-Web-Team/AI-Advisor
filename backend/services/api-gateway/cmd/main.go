@@ -101,6 +101,10 @@ type TestResponse struct {
 	Received interface{} `json:"received,omitempty"`
 }
 
+type ScheduleGenerateRequest struct {
+	MaxCredits int `json:"max_credits"`
+}
+
 type TranscriptRow struct {
 	ID              string   `json:"id"`
 	Term            string   `json:"term,omitempty"`
@@ -367,6 +371,101 @@ func parseTranscriptToJSON(pdfBytes []byte) ([]byte, int, error) {
 	}
 
 	return parsedJSON, courseCount, nil
+}
+
+func resolveScheduleGeneratorCommand() (string, string, error) {
+	pythonCandidates := []string{}
+	if envPython := strings.TrimSpace(os.Getenv("SCHEDULE_GENERATOR_PYTHON")); envPython != "" {
+		pythonCandidates = append(pythonCandidates, envPython)
+	}
+	pythonCandidates = append(pythonCandidates,
+		"/usr/local/bin/python3",
+		"/usr/bin/python3",
+		"scripts/venv/Scripts/python.exe",
+		"backend/scripts/venv/Scripts/python.exe",
+		"../scripts/venv/Scripts/python.exe",
+		"../../scripts/venv/Scripts/python.exe",
+		"../../../scripts/venv/Scripts/python.exe",
+		"python3",
+		"python",
+	)
+
+	scriptCandidates := []string{}
+	if envScript := strings.TrimSpace(os.Getenv("SCHEDULE_GENERATOR_SCRIPT")); envScript != "" {
+		scriptCandidates = append(scriptCandidates, envScript)
+	}
+	scriptCandidates = append(scriptCandidates,
+		"scripts/scheduleGenerator.py",
+		"backend/scripts/scheduleGenerator.py",
+		"../scripts/scheduleGenerator.py",
+		"../../scripts/scheduleGenerator.py",
+		"../../../scripts/scheduleGenerator.py",
+	)
+
+	var scheduleScript string
+	for _, candidate := range scriptCandidates {
+		clean := filepath.Clean(candidate)
+		if fileExists(clean) {
+			scheduleScript = clean
+			break
+		}
+	}
+	if scheduleScript == "" {
+		return "", "", fmt.Errorf("schedule generator script not found")
+	}
+
+	for _, candidate := range pythonCandidates {
+		clean := filepath.Clean(candidate)
+		if strings.Contains(clean, "/") || strings.Contains(clean, "\\") {
+			if fileExists(clean) {
+				return clean, scheduleScript, nil
+			}
+			continue
+		}
+
+		if resolved, err := exec.LookPath(clean); err == nil {
+			return resolved, scheduleScript, nil
+		}
+	}
+
+	return "", "", fmt.Errorf("python runtime for schedule generator not found")
+}
+
+func generateScheduleForUser(userID string, maxCredits int) ([]byte, error) {
+	pythonCmd, scheduleScript, err := resolveScheduleGeneratorCommand()
+	if err != nil {
+		return nil, err
+	}
+
+	tmpDir, err := os.MkdirTemp("", "schedule-generate-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	outputPath := filepath.Join(tmpDir, "schedule.json")
+	args := []string{scheduleScript, userID, "--output", outputPath}
+	if maxCredits > 0 {
+		args = append(args, "--max-credits", strconv.Itoa(maxCredits))
+	}
+
+	cmd := exec.Command(pythonCmd, args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("schedule generation failed: %v: %s", err, string(out))
+	}
+
+	scheduleJSON, err := os.ReadFile(outputPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read generated schedule")
+	}
+
+	trimmed := bytes.TrimSpace(scheduleJSON)
+	if !json.Valid(trimmed) {
+		return nil, fmt.Errorf("generated schedule is not valid json")
+	}
+
+	return trimmed, nil
 }
 
 func parseNullableFloat(value string) *float64 {
@@ -998,6 +1097,142 @@ func main() {
 			"course_count":  courseCount,
 			"inserted_rows": len(rowsToInsert),
 		})
+	})))
+
+	// Schedule generation endpoint
+	// Schedule generation endpoint
+	http.HandleFunc("/api/v2/schedule/generate/", enableCORS(GetUserWithAuth(supabase, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		userID, ok := userIDFromContext(r.Context())
+		if !ok || userID == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+			return
+		}
+
+		var reqBody ScheduleGenerateRequest
+		if r.Body != nil {
+			defer r.Body.Close()
+			if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{"error": "invalid request body"})
+				return
+			}
+		}
+
+		if reqBody.MaxCredits <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "max_credits is required and must be greater than 0"})
+			return
+		}
+
+		scheduleJSON, err := generateScheduleForUser(userID, reqBody.MaxCredits)
+		if err != nil {
+			log.Printf("Schedule generation error for user %s: %v", userID, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to generate schedule"})
+			return
+		}
+
+		// Parse the schedule and transform to calendar format
+		var scheduleData []map[string]interface{}
+		if err := json.Unmarshal(scheduleJSON, &scheduleData); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to parse schedule"})
+			return
+		}
+
+		// Calculate total credits and transform to calendar format
+		totalCredits := 0
+		calendarCourses := []map[string]interface{}{}
+
+		for _, course := range scheduleData {
+			if credits, ok := course["credits"].(float64); ok {
+				totalCredits += int(credits)
+			}
+
+			// Transform to calendar format if sections exist
+			if sections, ok := course["sections"].([]interface{}); ok && len(sections) > 0 {
+				if section, ok := sections[0].(map[string]interface{}); ok {
+					if meetTimes, ok := section["meetTimes"].([]interface{}); ok && len(meetTimes) > 0 {
+						if mt, ok := meetTimes[0].(map[string]interface{}); ok {
+							if days, ok := mt["meetDays"].([]interface{}); ok && len(days) > 0 {
+								dayString := ""
+								for _, d := range days {
+									if day, ok := d.(string); ok {
+										dayString += day
+									}
+								}
+
+								period := 1
+								if p, ok := mt["meetPeriodBegin"].(float64); ok {
+									period = int(p)
+								}
+
+								calendarCourses = append(calendarCourses, map[string]interface{}{
+									"course_id": course["title"],
+									"day":       dayString,
+									"period":    period,
+								})
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Save to user_plans with both raw data and calendar format
+		supabaseURL := os.Getenv("SUPABASE_URL")
+		serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+		planPayload := map[string]interface{}{
+			"user_id":       userID,
+			"name":          fmt.Sprintf("Generated Plan - %s", time.Now().Format("Jan 2, 2006")),
+			"description":   "Auto-generated schedule",
+			"is_active":     false,
+			"plan_data":     scheduleData,
+			"total_credits": totalCredits,
+		}
+
+		payloadBytes, _ := json.Marshal(planPayload)
+
+		insertURL := supabaseURL + "/rest/v1/user_plans"
+		req, err := http.NewRequest(http.MethodPost, insertURL, bytes.NewReader(payloadBytes))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create plan insert request"})
+			return
+		}
+
+		req.Header.Set("Authorization", "Bearer "+serviceRoleKey)
+		req.Header.Set("apikey", serviceRoleKey)
+		req.Header.Set("Content-Type", "application/json")
+
+		httpClient := &http.Client{}
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			log.Printf("Supabase plan insert error: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to save plan"})
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			body, _ := io.ReadAll(resp.Body)
+			log.Printf("Supabase returned error %d: %s", resp.StatusCode, string(body))
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "plan save failed"})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(scheduleJSON)
 	})))
 
 	log.Println("api-gateway :8080")

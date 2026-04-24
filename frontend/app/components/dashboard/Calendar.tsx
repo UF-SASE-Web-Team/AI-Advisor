@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { fetchSchedule } from "../../apis/scheduleConfig"; // adjust path if needed
+import { useSchedule } from "./SelectPlan";
 
-const days = ["Mon", "Tues", "Wed", "Thur", "Fri"];
+const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 /** Row keys: standard periods plus exam / online rows */
 const periodRows: Array<number | string> = [
@@ -17,11 +17,11 @@ function periodLabel(period: number | string): string {
 }
 
 const dayMap = {
-  M: "Mon",
-  T: "Tues",
-  W: "Wed",
-  R: "Thur",
-  F: "Fri",
+  M: "Monday",
+  T: "Tuesday",
+  W: "Wednesday",
+  R: "Thursday",
+  F: "Friday",
 };
 
 function expandDays(course) {
@@ -29,6 +29,17 @@ function expandDays(course) {
     ...course,
     day: dayMap[d],
   }));
+}
+
+function periodRange(course) {
+  const start = Number(course.period);
+  const rawEnd = course.period_end ?? course.period;
+  const end = Number(rawEnd);
+  if (Number.isNaN(start)) return [];
+  const normalizedEnd = Number.isNaN(end) ? start : end;
+  const from = Math.min(start, normalizedEnd);
+  const to = Math.max(start, normalizedEnd);
+  return Array.from({ length: to - from + 1 }, (_, i) => from + i);
 }
 
 function buildGrid(courses) {
@@ -43,7 +54,11 @@ function buildGrid(courses) {
 
   courses.forEach(course => {
     expandDays(course).forEach(c => {
-      grid[c.day][c.period] = c;
+      periodRange(c).forEach((p) => {
+        if (grid[c.day] && p in grid[c.day]) {
+          grid[c.day][p] = c;
+        }
+      });
     });
   });
 
@@ -51,54 +66,24 @@ function buildGrid(courses) {
 }
 
 export default function Calendar() {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      const res = await fetchSchedule("/mock", {
-        method: "POST",
-        body: JSON.stringify({
-          x: 1,
-          y: 2,
-          z: 3,
-          min_creds: 6,
-          max_creds: 12,
-          blacklisted_periods: [],
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.status === "success") {
-        setCourses(data.scheduled_courses);
-      } else {
-        console.error(data.error_message);
-      }
-
-      setLoading(false);
-    }
-
-    load();
-  }, []);
+  const { courses } = useSchedule();
 
   const grid = buildGrid(courses);
 
-  if (loading) {
+  if (!courses || courses.length === 0) {
     return (
-      <div className="min-h-0">
+      <div className="m-4 min-h-0">
         <div className="rounded-md border border-widget-border bg-[#F9FFD5] p-6 text-[#807676]">
-          Loading schedule...
+          No schedule generated. Click "Generate New Schedule" to see courses here.
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-0 h-full flex flex-col my-3 mx-1 gap-3">
-      <div className="h-[2.125rem] invisible flex-none" aria-hidden="true" />
-      <div className="rounded-md border border-widget-border bg-[#F9FFD5] p-2 flex-1 min-h-0 flex flex-col">
-        <div className="grid grid-cols-[36px_repeat(5,minmax(0,1fr))] grid-rows-[auto_repeat(15,minmax(2.25rem,1fr))] gap-0 border border-neutral-400 flex-1 min-h-0">
+    <div className="m-4 min-h-0">
+      <div className="rounded-md border border-widget-border bg-[#F9FFD5] p-6">
+        <div className="grid grid-cols-[52px_repeat(5,1fr)] gap-0 border border-neutral-400">
           <div className="border-r border-b border-neutral-400 bg-neutral-50" />
 
           {days.map((day, dayIdx) => (
@@ -112,61 +97,33 @@ export default function Calendar() {
             </div>
           ))}
 
-          {periodRows.map(period => {
-            if (period === 1) {
-              return (
-                <React.Fragment key={String(period)}>
-                  <div className="flex items-center justify-center border-r border-b border-neutral-400 bg-neutral-50 px-0.5 py-0.5 text-center text-[10px] font-medium leading-tight">
-                    {periodLabel(period)}
-                  </div>
+          {periodRows.map(period => (
+            <React.Fragment key={String(period)}>
+              <div className="flex items-center justify-center border-r border-b border-neutral-400 bg-neutral-50 px-0.5 py-0.5 text-center text-[10px] font-medium leading-tight">
+                {periodLabel(period)}
+              </div>
+
+              {days.map((day, dayIdx) => {
+                const course = grid[day][period];
+                const isLastCol = dayIdx === days.length - 1;
+
+                return (
                   <div
-                    className="col-span-5 row-span-2 flex items-center justify-center border-b border-neutral-400 bg-[#E2EFFF] text-sm font-semibold tracking-wide text-[#4A4848]"
+                    key={`${day}-${String(period)}`}
+                    className={`flex h-8 min-h-8 items-center justify-center border-b border-neutral-400 bg-[#FEFFF8] text-xs ${
+                      isLastCol ? "" : "border-r border-neutral-400"
+                    }`}
                   >
-                    NO CLASSES
+                    {course && (
+                      <span className="inline-block max-w-[calc(100%-6px)] min-w-[6.25rem] truncate rounded-md border border-[#C2DBFC] bg-[#E2EFFF] px-2.5 py-0.5 text-center text-xs font-medium leading-tight text-[#4A4848]">
+                        {course.course_id}
+                      </span>
+                    )}
                   </div>
-                </React.Fragment>
-              );
-            }
-
-            if (period === 2) {
-              return (
-                <div
-                  key={String(period)}
-                  className="flex items-center justify-center border-r border-b border-neutral-400 bg-neutral-50 px-0.5 py-0.5 text-center text-[10px] font-medium leading-tight"
-                >
-                  {periodLabel(period)}
-                </div>
-              );
-            }
-
-            return (
-              <React.Fragment key={String(period)}>
-                <div className="flex items-center justify-center border-r border-b border-neutral-400 bg-neutral-50 px-0.5 py-0.5 text-center text-[10px] font-medium leading-tight">
-                  {periodLabel(period)}
-                </div>
-
-                {days.map((day, dayIdx) => {
-                  const course = grid[day][period];
-                  const isLastCol = dayIdx === days.length - 1;
-
-                  return (
-                    <div
-                      key={`${day}-${String(period)}`}
-                      className={`flex items-center justify-center border-b border-neutral-400 bg-[#FEFFF8] text-xs ${
-                        isLastCol ? "" : "border-r border-neutral-400"
-                      }`}
-                    >
-                      {course && (
-                        <span className="inline-block max-w-full truncate rounded-lg border border-[#C2DBFC] bg-[#E2EFFF] px-3 py-1 text-center text-xs font-medium leading-tight text-[#4A4848]">
-                          {course.course_id}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            );
-          })}
+                );
+              })}
+            </React.Fragment>
+          ))}
         </div>
       </div>
     </div>

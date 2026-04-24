@@ -1,25 +1,67 @@
-import { useState } from "react";
+import React, { useState, useContext, createContext } from "react";
+import type { ReactNode } from "react";
+import { supabase } from "../../../supabase";
+import { API_URL } from "~/config";
+
+interface ScheduleContextType {
+  courses: any[];
+  setCourses: (courses: any[]) => void;
+}
+
+const ScheduleContext = createContext<ScheduleContextType | undefined>(
+  undefined
+);
+
+export function ScheduleProvider({ children }: { children: ReactNode }) {
+  const [courses, setCourses] = useState<any[]>([]);
+
+  return (
+    <ScheduleContext.Provider value={{ courses, setCourses }}>
+      {children}
+    </ScheduleContext.Provider>
+  );
+}
+
+export function useSchedule() {
+  const context = useContext(ScheduleContext);
+  if (!context) {
+    throw new Error("useSchedule must be used within ScheduleProvider");
+  }
+  return context;
+}
 
 interface ClassObj {
   title: string;
   credits: number;
   days: string;
+  course_name?: string;
+  unlocks_courses?: number;
 }
 
 export function SelectPlan() {
   const [mode, setMode] = useState<"default" | "edit">("default");
-  const [semester, setSemester] = useState("My Super Long Semester Plan Name Fall 2026");
-
-  const placeholderClasses: ClassObj[] = [
-    { title: "MAC2311", credits: 4, days: "M,W,F - 12:50-1:40 PM\nR - 5:10-6:00 PM" },
-    { title: "CIS4301", credits: 3, days: "M,W,F - 2:50-3:40 PM\nR - 7:10-8:00 PM" },
-    { title: "COP4600", credits: 3, days: "T - 2:50-3:40 PM\nF - 6:10-8:00 PM" },
-    { title: "CEN3031", credits: 3, days: "T - 12:50-1:40 PM\nR - 3:10-4:00 PM" },
-    { title: "MAC2311", credits: 4, days: "M,W,F - 12:50-1:40 PM\nR - 5:10-6:00 PM" },
-    { title: "CIS4301", credits: 3, days: "M,W,F - 2:50-3:40 PM\nR - 7:10-8:00 PM" },
-    { title: "COP4600", credits: 3, days: "T - 2:50-3:40 PM\nF - 6:10-8:00 PM" },
-    { title: "CEN3031", credits: 3, days: "T - 12:50-1:40 PM\nR - 3:10-4:00 PM" },
-  ];
+  const [semester, setSemester] = useState(
+    "My Super Long Semester Plan Name Fall 2026"
+  );
+  const [classes, setClasses] = useState<ClassObj[]>([
+    {
+      title: "",
+      credits: 0,
+      days: ""
+    },{
+      title: "",
+      credits: 0,
+      days: ""
+    },{
+      title: "",
+      credits: 0,
+      days: ""
+    },{
+      title: "",
+      credits: 0,
+      days: ""
+    }
+  ]);
 
   return (
     <div className="my-3 mx-1 gap-3 h-full min-h-0 flex flex-col relative">
@@ -28,7 +70,7 @@ export function SelectPlan() {
       </div>
 
       <div className="border border-widget-border rounded-xl bg-white/60 p-3">
-        <SemesterParameters />
+        <SemesterParameters onGenerate={setClasses} />
       </div>
 
       <div className="flex-1 min-h-0 border border-widget-border rounded-xl bg-white/60 p-3 flex flex-col gap-3">
@@ -36,7 +78,8 @@ export function SelectPlan() {
           <div className="flex justify-between items-center gap-2">
             <h3 className="font-bold text-gray-700 flex items-center gap-2 min-w-0 flex-1">
               <span className="truncate min-w-0">
-                Generated Schedule: <span className="font-normal">{semester}</span>
+                Generated Schedule:{" "}
+                <span className="font-normal">{semester}</span>
               </span>
               <button
                 aria-label="Rename semester plan"
@@ -71,7 +114,7 @@ export function SelectPlan() {
 
         <div className="flex-1 relative min-h-0">
           <ClassList>
-            {placeholderClasses.map((c, i) => (
+            {classes.map((c, i) => (
               <ClassItem key={i} {...c} showRemove={mode === "edit"} />
             ))}
           </ClassList>
@@ -81,7 +124,13 @@ export function SelectPlan() {
   );
 }
 
-const SemesterSelect = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+const SemesterSelect = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) => (
   <div className="relative w-full">
     <select
       value={value}
@@ -108,11 +157,19 @@ const SemesterSelect = ({ value, onChange }: { value: string; onChange: (v: stri
   </div>
 );
 
-const SemesterParameters = () => {
+const SemesterParameters = ({
+  onGenerate,
+}: {
+  onGenerate: (classes: ClassObj[]) => void;
+}) => {
+  const { setCourses } = useSchedule();
   const MIN = 0;
   const MAX = 21;
   const [minVal, setMinVal] = useState(14);
   const [maxVal, setMaxVal] = useState(18);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const minPct = (minVal / MAX) * 100;
   const maxPct = (maxVal / MAX) * 100;
@@ -121,9 +178,85 @@ const SemesterParameters = () => {
     const v = Math.min(Number(e.target.value), maxVal);
     setMinVal(v);
   };
+
   const onMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = Math.max(Number(e.target.value), minVal);
     setMaxVal(v);
+  };
+
+  const handleGenerate = async () => {
+    try {
+      setIsGenerating(true);
+      setError(null);
+      setSuccess(false);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
+      if (!accessToken) throw new Error("You must be logged in.");
+
+      const response = await fetch(`${API_URL}/api/v2/schedule/generate/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ max_credits: maxVal }),
+      });
+
+      const rawBody = await response.text();
+      const data = rawBody ? JSON.parse(rawBody) : {};
+
+      if (!response.ok) {
+        throw new Error(
+          (typeof data.error === "string" && data.error) ||
+          (typeof data.error_message === "string" && data.error_message) ||
+          `generate failed (${response.status})`
+        );
+      }
+
+      // Transform raw schedule data to ClassObj format for SelectPlan
+      const classObjects: ClassObj[] = data.map((course: any) => ({
+        title: course.title,
+        credits: course.credits,
+        days: course.days,
+        course_name: course.course_name,
+        unlocks_courses: course.unlocks_courses,
+      }));
+
+      onGenerate(classObjects);
+
+      // Transform to calendar format and update context
+      const calendarCourses = data.map((course: any) => {
+        const sections = course.sections || [];
+        if (sections.length === 0) return null;
+
+        const firstSection = sections[0];
+        const meetTimes = firstSection.meetTimes || [];
+        if (meetTimes.length === 0) return null;
+
+        const mt = meetTimes[0];
+        const days = mt.meetDays || [];
+        const period = parseInt(mt.meetPeriodBegin || 1);
+        const periodEnd = parseInt(mt.meetPeriodEnd || mt.meetPeriodBegin || 1);
+
+        if (days.length === 0) return null;
+
+        return {
+          course_id: course.title,
+          day: days.join(""),
+          period: period,
+          period_end: periodEnd,
+        };
+      }).filter(Boolean);
+
+      setCourses(calendarCourses);
+      setSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const thumbCls =
@@ -138,7 +271,9 @@ const SemesterParameters = () => {
 
   return (
     <>
-      <h3 className="font-bold text-gray-700 mb-2">Semester Parameters</h3>
+      <h3 className="font-bold text-gray-700 mb-2 text-sm underline">
+        Semester Parameters
+      </h3>
       <label className="block text-xs text-gray-600 mb-1">
         Credit Hours: {minVal}-{maxVal}
       </label>
@@ -167,9 +302,20 @@ const SemesterParameters = () => {
           aria-label="Maximum credit hours"
         />
       </div>
-      <button className="w-full bg-white border border-widget-border rounded-full py-1 px-3 text-gray-700 text-sm hover:bg-gray-50 cursor-pointer">
-        Generate New Schedule
+      <button
+        onClick={handleGenerate}
+        disabled={isGenerating}
+        className={`w-full bg-white border border-widget-border rounded-full py-1 px-3 text-gray-700 text-sm hover:bg-gray-50 cursor-pointer ${isGenerating ? "opacity-60 pointer-events-none" : ""
+          }`}
+      >
+        {isGenerating ? "Generating..." : "Generate New Schedule"}
       </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      {success && (
+        <p className="text-xs text-green-600 mt-1">
+          ✓ Schedule generated successfully.
+        </p>
+      )}
     </>
   );
 };
@@ -203,19 +349,64 @@ const ClassItem = ({
   days,
   showRemove = false,
 }: ClassObj & { showRemove?: boolean }) => (
-  <div className="bg-class-item border-1 border-class-item-border rounded-md px-3 py-2 shadow-sm flex flex-col self-start">
-    <div className="flex items-center justify-between mb-1">
-      <strong className="font-bold text-gray-700">{title}</strong>
-      {showRemove && (
-        <button
-          aria-label={`Remove ${title}`}
-          className="text-gray-500 hover:text-gray-700 cursor-pointer text-sm leading-none"
-        >
-          ×
-        </button>
-      )}
-    </div>
-    <p className="text-xs text-gray-600 mb-1">Credits: {credits}</p>
-    <p className="text-xs text-gray-600 whitespace-pre-wrap">{days}</p>
-  </div>
+  (() => {
+    const trimmed = (days || "").trim();
+    let dayLine = trimmed;
+    let timeLines: string[] = [];
+
+    if (trimmed.includes(" - ")) {
+      const [left, right] = trimmed.split(" - ");
+      dayLine = left.trim();
+      timeLines = right
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+    }
+
+    if (!timeLines.length && trimmed.includes("\n")) {
+      const [first, ...rest] = trimmed
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+      dayLine = first || dayLine;
+      timeLines = rest;
+    }
+
+    const formatTimeLine = (line: string) => {
+      const match = line.match(/^([A-Za-z]+)\s*(\d.*)$/);
+      if (!match) return line;
+      return `${match[1]} ${match[2]}`.trim();
+    };
+
+    const formattedDayLine = dayLine
+      ? `Meeting Day(s): ${dayLine.split(",").map((d) => d.trim()).filter(Boolean).join(", ")}`
+      : "Meeting Day(s): TBA";
+
+    return (
+      <div className="bg-class-item border-1 border-class-item-border rounded-md px-3 py-2 shadow-sm flex flex-col self-start">
+        <div className="flex items-center justify-between mb-1">
+          <strong className="font-bold text-gray-700">{title}</strong>
+          {showRemove && (
+            <button
+              aria-label={`Remove ${title}`}
+              className="text-gray-500 hover:text-gray-700 cursor-pointer text-sm leading-none"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-gray-600 mb-1">Credits: {credits}</p>
+        <div className="text-xs text-gray-600">
+          <p className="whitespace-pre-wrap">{formattedDayLine}</p>
+          {timeLines.length > 0 && (
+            <div className="mt-0.5 whitespace-pre-wrap">
+              {timeLines.map((line, idx) => (
+                <div key={`${title}-time-${idx}`}>{formatTimeLine(line)}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  })()
 );
