@@ -13,7 +13,7 @@ export type ScheduledCourse = {
     credits: number;
     course_type: string;
     day: string;
-    period: number;
+    period: number | string;
 };
 
 export type SolveResponse = {

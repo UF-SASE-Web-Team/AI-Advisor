@@ -217,7 +217,7 @@ export function ScheduleCalendar() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#E1EABB] flex flex-col items-start px-8 py-6 font-sans">
+        <div className="min-h-screen w-full bg-widget-bg flex flex-col items-start px-8 py-6 font-sans">
 
             {/* Header */}
             <h1 className="text-[rgba(106,138,131,1)] text-4xl font-bold font-figmaHand mb-6">
@@ -245,7 +245,7 @@ export function ScheduleCalendar() {
                                     value={(formData as any)[field.name]}
                                     onChange={handleInputChange}
                                     min={0}
-                                    className="p-2 w-24 rounded-xl border-2 border-[#2E3A3A] bg-[#E1EABB] text-[#2E3A3A] font-bold focus:outline-none focus:ring-2 focus:ring-white"
+                                    className="p-2 w-24 rounded-xl border-2 border-[#2E3A3A] bg-widget-bg text-[#2E3A3A] font-bold focus:outline-none focus:ring-2 focus:ring-white"
                                 />
                             </div>
                         ))}
