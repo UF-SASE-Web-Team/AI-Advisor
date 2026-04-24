@@ -1,6 +1,6 @@
 export function Widget({ children, title, className }: any) {
   return (
-    <div className={`flex-1 flex flex-col min-h-0 h-full ${className ?? ""}`}>
+    <div className={`flex flex-col ${className || "flex-1"}`}>
       <Header title={title} />
       <WidgetBody>{children}</WidgetBody>
     </div>

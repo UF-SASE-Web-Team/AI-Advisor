@@ -11,7 +11,11 @@ interface ChatMsg {
 }
 
 export function ChatContainer() {
-  const [msgHistory, setMsgHistory] = useState<ChatMsg[]>([]);
+  const [msgHistory, setMsgHistory] = useState<ChatMsg[]>([{
+    text: "Ask me a question!",
+    sender: "bot",
+    key: Date.now(),
+  }]);
   const [input, setInput] = useState("");
   const [isMinimized, setIsMinimized] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);

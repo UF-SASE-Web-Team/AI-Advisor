@@ -10,17 +10,23 @@ service RAGService {
   rpc Health(HealthRequest) returns (HealthResponse);
 
   rpc GetCourseInfo(CourseInfoRequest) returns (CourseInfoResponse);
+
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
+  rpc GetSessions(GetSessionsRequest) returns (GetSessionsResponse);
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
 }
 
 message QueryRequest {
   string question = 1;
   int32 max_results = 2;
+  string session_id = 3;
 }
 
 message QueryResponse {
   string answer = 1;
   repeated SourceDocument sources = 2;
   string error_message = 3;
+  string session_id = 4;
 }
 
 message SourceDocument {
@@ -59,4 +65,45 @@ message HealthRequest {}
 
 message HealthResponse {
   string status = 1;
+}
+
+message CreateSessionRequest {
+  string title = 1;
+  string user_id = 2;
+}
+
+message CreateSessionResponse {
+  string session_id = 1;
+  string error_message = 2;
+}
+
+message GetSessionsRequest {
+  string user_id = 1;
+}
+
+message GetSessionsResponse {
+  repeated ChatSession sessions = 1;
+  string error_message = 2;
+}
+
+message ChatSession {
+  string session_id = 1;
+  string title = 2;
+  string created_at = 3;
+  string updated_at = 4;
+}
+
+message GetMessagesRequest {
+  string session_id = 1;
+}
+
+message GetMessagesResponse {
+  repeated ChatMessage messages = 1;
+  string error_message = 2;
+}
+
+message ChatMessage {
+  string role = 1;
+  string content = 2;
+  string created_at = 3;
 }
