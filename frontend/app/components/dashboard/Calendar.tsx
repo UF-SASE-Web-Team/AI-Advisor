@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { fetchSchedule } from "../../apis/scheduleConfig"; // adjust path if needed
+import { fetchSchedule } from "../../apis/scheduleConfig";
+import { useSchedule } from "./SelectPlan";
 
 const days = ["Mon", "Tues", "Wed", "Thur", "Fri"];
 
@@ -34,15 +35,15 @@ function expandDays(course) {
 function buildGrid(courses) {
   const grid = {};
 
-  days.forEach(day => {
+  days.forEach((day) => {
     grid[day] = {};
-    periodRows.forEach(p => {
+    periodRows.forEach((p) => {
       grid[day][p] = null;
     });
   });
 
-  courses.forEach(course => {
-    expandDays(course).forEach(c => {
+  courses.forEach((course) => {
+    expandDays(course).forEach((c) => {
       grid[c.day][c.period] = c;
     });
   });
@@ -51,49 +52,20 @@ function buildGrid(courses) {
 }
 
 export default function Calendar() {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      const res = await fetchSchedule("/mock", {
-        method: "POST",
-        body: JSON.stringify({
-          x: 1,
-          y: 2,
-          z: 3,
-          min_creds: 6,
-          max_creds: 12,
-          blacklisted_periods: [],
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.status === "success") {
-        setCourses(data.scheduled_courses);
-      } else {
-        console.error(data.error_message);
-      }
-
-      setLoading(false);
-    }
-
-    load();
-  }, []);
-
+  const { courses } = useSchedule();
+  
   const grid = buildGrid(courses);
 
-  if (loading) {
+  if (courses.length === 0) {
     return (
       <div className="min-h-0">
         <div className="rounded-md border border-widget-border bg-[#F9FFD5] p-6 text-[#807676]">
-          Loading schedule...
+          No schedule generated yet
         </div>
       </div>
     );
   }
-
+  
   return (
     <div className="min-h-0 h-full flex flex-col my-3 mx-1 gap-3">
       <div className="h-[2.125rem] invisible flex-none" aria-hidden="true" />
@@ -112,16 +84,14 @@ export default function Calendar() {
             </div>
           ))}
 
-          {periodRows.map(period => {
+          {periodRows.map((period) => {
             if (period === 1) {
               return (
                 <React.Fragment key={String(period)}>
                   <div className="flex items-center justify-center border-r border-b border-neutral-400 bg-neutral-50 px-0.5 py-0.5 text-center text-[10px] font-medium leading-tight">
                     {periodLabel(period)}
                   </div>
-                  <div
-                    className="col-span-5 row-span-2 flex items-center justify-center border-b border-neutral-400 bg-[#E2EFFF] text-sm font-semibold tracking-wide text-[#4A4848]"
-                  >
+                  <div className="col-span-5 row-span-2 flex items-center justify-center border-b border-neutral-400 bg-[#E2EFFF] text-sm font-semibold tracking-wide text-[#4A4848]">
                     NO CLASSES
                   </div>
                 </React.Fragment>

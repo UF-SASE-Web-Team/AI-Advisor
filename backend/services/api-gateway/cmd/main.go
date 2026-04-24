@@ -1100,6 +1100,7 @@ func main() {
 	})))
 
 	// Schedule generation endpoint
+	// Schedule generation endpoint
 	http.HandleFunc("/api/v2/schedule/generate/", enableCORS(GetUserWithAuth(supabase, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method != http.MethodPost {
@@ -1135,6 +1136,98 @@ func main() {
 			log.Printf("Schedule generation error for user %s: %v", userID, err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": "failed to generate schedule"})
+			return
+		}
+
+		// Parse the schedule and transform to calendar format
+		var scheduleData []map[string]interface{}
+		if err := json.Unmarshal(scheduleJSON, &scheduleData); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to parse schedule"})
+			return
+		}
+
+		// Calculate total credits and transform to calendar format
+		totalCredits := 0
+		calendarCourses := []map[string]interface{}{}
+
+		for _, course := range scheduleData {
+			if credits, ok := course["credits"].(float64); ok {
+				totalCredits += int(credits)
+			}
+
+			// Transform to calendar format if sections exist
+			if sections, ok := course["sections"].([]interface{}); ok && len(sections) > 0 {
+				if section, ok := sections[0].(map[string]interface{}); ok {
+					if meetTimes, ok := section["meetTimes"].([]interface{}); ok && len(meetTimes) > 0 {
+						if mt, ok := meetTimes[0].(map[string]interface{}); ok {
+							if days, ok := mt["meetDays"].([]interface{}); ok && len(days) > 0 {
+								dayString := ""
+								for _, d := range days {
+									if day, ok := d.(string); ok {
+										dayString += day
+									}
+								}
+
+								period := 1
+								if p, ok := mt["meetPeriodBegin"].(float64); ok {
+									period = int(p)
+								}
+
+								calendarCourses = append(calendarCourses, map[string]interface{}{
+									"course_id": course["title"],
+									"day":       dayString,
+									"period":    period,
+								})
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Save to user_plans with both raw data and calendar format
+		supabaseURL := os.Getenv("SUPABASE_URL")
+		serviceRoleKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+		planPayload := map[string]interface{}{
+			"user_id":       userID,
+			"name":          fmt.Sprintf("Generated Plan - %s", time.Now().Format("Jan 2, 2006")),
+			"description":   "Auto-generated schedule",
+			"is_active":     false,
+			"plan_data":     scheduleData,
+			"total_credits": totalCredits,
+		}
+
+		payloadBytes, _ := json.Marshal(planPayload)
+
+		insertURL := supabaseURL + "/rest/v1/user_plans"
+		req, err := http.NewRequest(http.MethodPost, insertURL, bytes.NewReader(payloadBytes))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to create plan insert request"})
+			return
+		}
+
+		req.Header.Set("Authorization", "Bearer "+serviceRoleKey)
+		req.Header.Set("apikey", serviceRoleKey)
+		req.Header.Set("Content-Type", "application/json")
+
+		httpClient := &http.Client{}
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			log.Printf("Supabase plan insert error: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to save plan"})
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			body, _ := io.ReadAll(resp.Body)
+			log.Printf("Supabase returned error %d: %s", resp.StatusCode, string(body))
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "plan save failed"})
 			return
 		}
 

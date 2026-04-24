@@ -6,11 +6,11 @@ filters out completed courses, then builds a semester-by-semester schedule
 that respects prerequisite ordering.
 
 Prerequisites:
-    pip install httpx python-dotenv
+pip install httpx python-dotenv
 
 Environment variables (set in .env or shell):
-    SUPABASE_URL   - e.g. https://xyzcompany.supabase.co
-    SUPABASE_KEY   - your anon/service-role key
+SUPABASE_URL   - e.g. https://xyzcompany.supabase.co
+SUPABASE_KEY   - your anon/service-role key
 """
 
 import json
@@ -35,7 +35,6 @@ SUPABASE_KEY: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 COURSES_TABLE    = "courses"
 TRANSCRIPT_TABLE = "transcript"
 MAX_CREDITS_PER_SEMESTER = 15
-
 
 # ─────────────────────────────────────────────
 # 1. Data Loading
@@ -83,12 +82,11 @@ def load_courses_from_supabase() -> list[dict]:
     print(f"[Supabase] Loaded {len(all_courses)} courses.")
     return all_courses
 
-
 def load_transcript_from_supabase(user_uuid: str) -> tuple[set[str], set[str]]:
     """
     Returns:
-        completed – all passing courses the student has taken
-        recent    – courses taken in the most recent term
+    completed – all passing courses the student has taken
+    recent    – courses taken in the most recent term
     """
     if not SUPABASE_URL or not SUPABASE_KEY:
         raise EnvironmentError(
@@ -133,7 +131,7 @@ def load_transcript_from_supabase(user_uuid: str) -> tuple[set[str], set[str]]:
 
     completed: set[str] = set()
     skipped = []
-    terms: dict[str, set[str]] = defaultdict(set)   # term -> set of passing course codes
+    terms: dict[str, set[str]] = defaultdict(set)
 
     for entry in all_rows:
         raw_code = entry.get("course", "")
@@ -157,9 +155,6 @@ def load_transcript_from_supabase(user_uuid: str) -> tuple[set[str], set[str]]:
             + ", ".join(f"{c}({g})" for c, g in skipped)
         )
 
-    # Identify the most recent term.
-    # Assumes term strings sort chronologically, e.g. "Fall 2022", "Spr 2023".
-    # Adjust the sort key below if your term format differs.
     TERM_ORDER = {"Spr": 1, "Sum": 2, "Fall": 3}
 
     def term_sort_key(t: str) -> tuple:
@@ -179,19 +174,14 @@ def load_transcript_from_supabase(user_uuid: str) -> tuple[set[str], set[str]]:
 
     return completed, recent
 
-
 # ─────────────────────────────────────────────
 # 2. Course Code Normalization
 # ─────────────────────────────────────────────
 
 def normalize_code(code: str) -> str:
-    # Uppercase, remove spaces: "COP 3502C" -> "COP3502C"
     code = code.strip().upper().replace(" ", "")
-    # Strip trailing lab/clinic suffixes (C, L) after a 4-digit number
-    # "COP3502C" -> "COP3502", "BSC2010L" -> "BSC2010"
     code = _re.sub(r"([A-Z]{2,4}[0-9]{4})[CL]$", r"\1", code)
     return code
-
 
 # ─────────────────────────────────────────────
 # 3. Prerequisite Parsing
@@ -207,71 +197,6 @@ def parse_prerequisites(course: dict) -> list[str]:
         except json.JSONDecodeError:
             return []
     return [normalize_code(str(p)) for p in raw if p]
-
-
-# ─────────────────────────────────────────────
-# 4. Schedule Formatting
-# ─────────────────────────────────────────────
-
-def fmt_time(t: str) -> str:
-    """
-    Strips seconds and AM/PM from a time string.
-    '3:00 PM' -> '3:00'   |   '12:50 PM' -> '12:50'
-    """
-    try:
-        h, rest = t.split(":")
-        m = rest[:2]
-        return f"{h}:{m}"
-    except Exception:
-        return t
-
-
-def format_section_schedule(sections: list) -> str:
-    """
-    Formats the sections JSONB array into a human-readable schedule string.
-
-    Output format:
-        'M,W,F - M3:00-3:50\\nW3:00-3:50\\nF3:00-3:50'
-
-    Multiple meetTimes blocks (e.g. lecture + lab) are joined by '\\n'.
-    Returns 'TBA' if no valid meeting times are found.
-    """
-    if not sections:
-        return "TBA"
-
-    # Normalise: sections may arrive as a JSON string or already a list
-    if isinstance(sections, str):
-        try:
-            sections = json.loads(sections)
-        except json.JSONDecodeError:
-            return "TBA"
-
-    lines = []
-
-    for section in sections:
-        for mt in section.get("meetTimes", []):
-            days: list[str] = mt.get("meetDays", [])
-            start: str = fmt_time(mt.get("meetTimeBegin", ""))
-            end: str   = fmt_time(mt.get("meetTimeEnd", ""))
-
-            if not days:
-                continue
-
-            days_str   = ",".join(days)        # e.g. "M,W,F"
-            time_range = f"{start}-{end}"      # e.g. "3:00-3:50"
-
-            # One entry per day: "M3:00-3:50", "W3:00-3:50", "F3:00-3:50"
-            day_lines  = "\n".join(f"{d}{time_range}" for d in days)
-
-            # Full block: "M,W,F - M3:00-3:50\nW3:00-3:50\nF3:00-3:50"
-            lines.append(f"{days_str} - {day_lines}")
-
-    return "\n".join(lines) if lines else "TBA"
-
-
-# ─────────────────────────────────────────────
-# 5. Graph + Topological Sort  (was 4)
-# ─────────────────────────────────────────────
 
 def build_prerequisite_graph(
     courses: list[dict],
@@ -290,7 +215,7 @@ def build_prerequisite_graph(
     in_degree: dict[str, int] = {}
 
     for code, course in course_map.items():
-        raw_prereqs = parse_prerequisites(course)
+        raw_prereqs  = parse_prerequisites(course)
         unmet_prereqs = [p for p in raw_prereqs if p not in completed]
         in_degree[code] = len(unmet_prereqs)
         for prereq in unmet_prereqs:
@@ -298,7 +223,6 @@ def build_prerequisite_graph(
                 prereq_map[prereq].append(code)
 
     return course_map, dict(prereq_map), in_degree
-
 
 def topological_levels(
     course_map: dict,
@@ -337,9 +261,94 @@ def topological_levels(
 
     return levels
 
+# ─────────────────────────────────────────────
+# 4. Schedule Formatting
+# ─────────────────────────────────────────────
+
+def fmt_time(t: str) -> str:
+    """
+    Strips seconds and AM/PM from a time string.
+    '3:00 PM' -> '3:00'   |   '12:50 PM' -> '12:50'
+    """
+    try:
+        h, rest = t.split(":")
+        m = rest[:2]
+        return f"{h}:{m}"
+    except Exception:
+        return t
+
+def format_section_schedule(sections: list) -> str:
+    """
+    Formats the sections JSONB array into a human-readable schedule string.
+
+    Takes only the first section's first meetTime to produce a single clean line.
+    Output format: 'M,W,F - M3:00-3:50\nW3:00-3:50\nF3:00-3:50'
+    Returns 'TBA' if no valid meeting times are found.
+    """
+    if not sections:
+        return "TBA"
+
+    # Normalise: sections may arrive as a JSON string or already a list
+    if isinstance(sections, str):
+        try:
+            sections = json.loads(sections)
+        except json.JSONDecodeError:
+            return "TBA"
+
+    # Only use the first section's first meetTime
+    first_section = sections[0] if sections else {}
+    meet_times = first_section.get("meetTimes", [])
+    if not meet_times:
+        return "TBA"
+
+    mt = meet_times[0]
+    days: list[str] = mt.get("meetDays", [])
+    start: str = fmt_time(mt.get("meetTimeBegin", ""))
+    end: str   = fmt_time(mt.get("meetTimeEnd", ""))
+
+    if not days:
+        return "TBA"
+
+    days_str   = ",".join(days)        # e.g. "M,W,F"
+    time_range = f"{start}-{end}"      # e.g. "3:00-3:50"
+
+    # One entry per day: "M3:00-3:50", "W3:00-3:50", "F3:00-3:50"
+    day_lines  = "\n".join(f"{d}{time_range}" for d in days)
+
+    return f"{days_str} - {day_lines}"
+
+def format_for_calendar(semester: list[dict]) -> list[dict]:
+    """Convert schedule generator output to calendar format."""
+    calendar_courses = []
+    for course in semester:
+        sections = course.get("sections") or []
+        if not sections:
+            continue
+
+        first_section = sections[0]
+        meet_times = first_section.get("meetTimes", [])
+        if not meet_times:
+            continue
+
+        mt = meet_times[0]
+        days = mt.get("meetDays", [])
+        period = int(mt.get("meetPeriodBegin", 1))
+
+        if not days:
+            continue
+
+        day_string = "".join(days)
+
+        calendar_courses.append({
+            "course_id": course["course_code"],
+            "day": day_string,
+            "period": period,
+        })
+
+    return calendar_courses
 
 # ─────────────────────────────────────────────
-# 5. Semester Generation
+# 5. Graph + Topological Sort
 # ─────────────────────────────────────────────
 
 def count_dependents(prereq_map: dict, course_map: dict) -> dict[str, int]:
@@ -358,7 +367,6 @@ def count_dependents(prereq_map: dict, course_map: dict) -> dict[str, int]:
 
     return scores
 
-
 def build_single_semester(
     levels: list[list[str]],
     course_map: dict,
@@ -369,22 +377,20 @@ def build_single_semester(
     available = levels[0] if levels else []
     dependent_counts = count_dependents(prereq_map, course_map)
 
-    # Build a reverse map: course -> its prerequisites
     prereq_of: dict[str, list[str]] = {
         code: parse_prerequisites(course_map[code])
         for code in course_map
     }
 
     def recent_prereq_count(code: str) -> int:
-        """How many of this course's prerequisites were taken last semester."""
         return sum(1 for p in prereq_of.get(code, []) if p in recent)
 
     ranked = sorted(
         available,
         key=lambda c: (
-            -recent_prereq_count(c),          # 1st priority: prereqs taken last semester
-            -dependent_counts.get(c, 0),      # 2nd priority: unlocks the most future courses
-            c                                  # 3rd priority: alphabetical for determinism
+            -recent_prereq_count(c),
+            -dependent_counts.get(c, 0),
+            c
         )
     )
 
@@ -399,7 +405,6 @@ def build_single_semester(
             total_credits += credits
 
     return semester
-
 
 # ─────────────────────────────────────────────
 # 6. Output
@@ -424,7 +429,6 @@ def print_schedule(semester: list[dict], dependent_counts: dict[str, int]) -> No
 
     print("═" * 60 + "\n")
 
-
 def export_schedule_json(semester: list[dict], dependent_counts: dict[str, int], output_path: str) -> None:
     output = [
         {
@@ -441,7 +445,6 @@ def export_schedule_json(semester: list[dict], dependent_counts: dict[str, int],
         json.dump(output, f, indent=2)
     print(f"[Output] Schedule written to {output_path}")
 
-
 # ─────────────────────────────────────────────
 # 7. Main
 # ─────────────────────────────────────────────
@@ -452,7 +455,7 @@ def generate_schedule(
     max_credits_per_semester: int = MAX_CREDITS_PER_SEMESTER,
 ) -> list[dict]:
     courses             = load_courses_from_supabase()
-    completed, recent   = load_transcript_from_supabase(user_uuid)   # <-- unpack tuple
+    completed, recent   = load_transcript_from_supabase(user_uuid)
 
     course_map, prereq_map, in_degree = build_prerequisite_graph(courses, completed)
     print(f"[Planner] {len(course_map)} courses remaining after filtering completed ones.")
@@ -475,9 +478,8 @@ def generate_schedule(
 
     return semester
 
-
 # ─────────────────────────────────────────────
-# CLI entry point
+# 8. CLI entry point
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
