@@ -1,10 +1,5 @@
-import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
-import { Calendar } from "~/components/dashboard/Calendar";
-import { SelectPlan } from "~/components/dashboard/SelectPlan";
-import { ChatContainer } from "~/components/Chatbot/ChatContainer";
 import { UploadTranscript } from "~/components/profile_page/UploadTranscript";
 import { Widget } from "~/components/dashboard/Widget";
-import { useState } from "react";
 import { TranscriptEditor } from "~/components/profile_page/TranscriptEditor";
 import RightNav from "~/components/navigation/RightNav";
 
