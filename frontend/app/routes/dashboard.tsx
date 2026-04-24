@@ -1,5 +1,5 @@
 import { DegreeAudit } from "~/components/DegreeAudit";
-import { Calendar } from "~/components/Calendar";
+import Calendar from "~/components/Calendar";
 import { SelectPlan } from "~/components/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
 
