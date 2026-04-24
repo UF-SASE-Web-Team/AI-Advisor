@@ -57,4 +57,4 @@ for keys, value in ret.items():
         print(v)
 '''
 
-# parseTransript(transcript, output)
+parseTransript("uf-transcript-spring-2026.pdf", "test.json")
