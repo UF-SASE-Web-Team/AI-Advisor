@@ -44,46 +44,7 @@ export function SelectPlan() {
     "My Super Long Semester Plan Name Fall 2026"
   );
   const [classes, setClasses] = useState<ClassObj[]>([
-    {
-      title: "MAC2311",
-      credits: 4,
-      days: "M,W,F - 12:50-1:40 PM\nR - 5:10-6:00 PM",
-    },
-    {
-      title: "CIS4301",
-      credits: 3,
-      days: "M,W,F - 2:50-3:40 PM\nR - 7:10-8:00 PM",
-    },
-    {
-      title: "COP4600",
-      credits: 3,
-      days: "T - 2:50-3:40 PM\nF - 6:10-8:00 PM",
-    },
-    {
-      title: "CEN3031",
-      credits: 3,
-      days: "T - 12:50-1:40 PM\nR - 3:10-4:00 PM",
-    },
-    {
-      title: "MAC2311",
-      credits: 4,
-      days: "M,W,F - 12:50-1:40 PM\nR - 5:10-6:00 PM",
-    },
-    {
-      title: "CIS4301",
-      credits: 3,
-      days: "M,W,F - 2:50-3:40 PM\nR - 7:10-8:00 PM",
-    },
-    {
-      title: "COP4600",
-      credits: 3,
-      days: "T - 2:50-3:40 PM\nF - 6:10-8:00 PM",
-    },
-    {
-      title: "CEN3031",
-      credits: 3,
-      days: "T - 12:50-1:40 PM\nR - 3:10-4:00 PM",
-    },
+    {},{},{},{}
   ]);
 
   return (
@@ -370,19 +331,64 @@ const ClassItem = ({
   days,
   showRemove = false,
 }: ClassObj & { showRemove?: boolean }) => (
-  <div className="bg-class-item border-1 border-class-item-border rounded-md px-3 py-2 shadow-sm flex flex-col self-start">
-    <div className="flex items-center justify-between mb-1">
-      <strong className="font-bold text-gray-700">{title}</strong>
-      {showRemove && (
-        <button
-          aria-label={`Remove ${title}`}
-          className="text-gray-500 hover:text-gray-700 cursor-pointer text-sm leading-none"
-        >
-          ×
-        </button>
-      )}
-    </div>
-    <p className="text-xs text-gray-600 mb-1">Credits: {credits}</p>
-    <p className="text-xs text-gray-600 whitespace-pre-wrap">{days}</p>
-  </div>
+  (() => {
+    const trimmed = (days || "").trim();
+    let dayLine = trimmed;
+    let timeLines: string[] = [];
+
+    if (trimmed.includes(" - ")) {
+      const [left, right] = trimmed.split(" - ");
+      dayLine = left.trim();
+      timeLines = right
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+    }
+
+    if (!timeLines.length && trimmed.includes("\n")) {
+      const [first, ...rest] = trimmed
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+      dayLine = first || dayLine;
+      timeLines = rest;
+    }
+
+    const formatTimeLine = (line: string) => {
+      const match = line.match(/^([A-Za-z]+)\s*(\d.*)$/);
+      if (!match) return line;
+      return `${match[1]} ${match[2]}`.trim();
+    };
+
+    const formattedDayLine = dayLine
+      ? `Meeting Day(s): ${dayLine.split(",").map((d) => d.trim()).filter(Boolean).join(", ")}`
+      : "Meeting Day(s): TBA";
+
+    return (
+      <div className="bg-class-item border-1 border-class-item-border rounded-md px-3 py-2 shadow-sm flex flex-col self-start">
+        <div className="flex items-center justify-between mb-1">
+          <strong className="font-bold text-gray-700">{title}</strong>
+          {showRemove && (
+            <button
+              aria-label={`Remove ${title}`}
+              className="text-gray-500 hover:text-gray-700 cursor-pointer text-sm leading-none"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-gray-600 mb-1">Credits: {credits}</p>
+        <div className="text-xs text-gray-600">
+          <p className="whitespace-pre-wrap">{formattedDayLine}</p>
+          {timeLines.length > 0 && (
+            <div className="mt-0.5 whitespace-pre-wrap">
+              {timeLines.map((line, idx) => (
+                <div key={`${title}-time-${idx}`}>{formatTimeLine(line)}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  })()
 );

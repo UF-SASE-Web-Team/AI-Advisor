@@ -290,6 +290,36 @@ def normalize_sections(sections: object) -> list:
             return []
     return []
 
+def extract_course_slots(course: dict) -> list[tuple[str, int]]:
+    sections = normalize_sections(course.get("sections"))
+    if not sections:
+        return []
+
+    first_section = sections[0] if sections else {}
+    meet_times = first_section.get("meetTimes", [])
+    if not meet_times:
+        return []
+
+    slots: list[tuple[str, int]] = []
+    for mt in meet_times:
+        days = mt.get("meetDays", [])
+        if isinstance(days, str):
+            days = [d for d in days if d.strip()]
+        if not isinstance(days, list) or not days:
+            continue
+
+        period_raw = mt.get("meetPeriodBegin", 1)
+        try:
+            period = int(period_raw)
+        except (TypeError, ValueError):
+            period = 1
+
+        for day in days:
+            if isinstance(day, str) and day.strip():
+                slots.append((day.strip().upper(), period))
+
+    return slots
+
 def format_section_schedule(sections: list) -> str:
     """
     Formats the sections JSONB array into a human-readable schedule string.
@@ -407,13 +437,18 @@ def build_single_semester(
 
     semester: list[dict] = []
     total_credits = 0
+    occupied_slots: set[tuple[str, int]] = set()
 
     for code in ranked:
         course = course_map[code]
         credits = int(course.get("credits") or 3)
+        slots = extract_course_slots(course)
+        if slots and any(slot in occupied_slots for slot in slots):
+            continue
         if total_credits + credits <= max_credits:
             semester.append(course)
             total_credits += credits
+            occupied_slots.update(slots)
 
     return semester
 
