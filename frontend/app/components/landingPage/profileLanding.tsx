@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import teamMembers from "../../data/teamMembers.json";
 
 type TeamMember = { name: string; role: string; description: string, imageUrl: string };
@@ -9,6 +9,8 @@ const GAP = 24;
 const CAROUSEL_WIDTH = 1184;
 const CARD_WIDTH = (CAROUSEL_WIDTH - 7 * GAP) / 8;
 const CARD_UNIT = CARD_WIDTH + GAP;
+const ROTATION_INTERVAL_MS = 4000;
+const MANUAL_SELECTION_PAUSE_MS = 7000;
 
 const ArrowIcon = ({ left }: { left: boolean }) => (
   <svg
@@ -28,8 +30,30 @@ const ArrowIcon = ({ left }: { left: boolean }) => (
 
 export function ProfileLanding() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const selected = TEAM_MEMBERS[selectedIndex ?? 0];
+  const lastManualSelectionRef = useRef(0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const selected = TEAM_MEMBERS[selectedIndex];
+
+  useEffect(() => {
+    const rotation = window.setInterval(() => {
+      if (Date.now() - lastManualSelectionRef.current < MANUAL_SELECTION_PAUSE_MS) {
+        return;
+      }
+
+      setSelectedIndex((currentIndex) => (currentIndex + 1) % TEAM_MEMBERS.length);
+    }, ROTATION_INTERVAL_MS);
+
+    return () => window.clearInterval(rotation);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const next = Math.min(selectedIndex * CARD_UNIT, maxScroll);
+    el.scrollTo({ left: next, behavior: "smooth" });
+  }, [selectedIndex]);
 
   function onCarouselWheel(e: React.WheelEvent<HTMLDivElement>) {
     const el = scrollRef.current;
@@ -67,6 +91,11 @@ export function ProfileLanding() {
     });
   }
 
+  function selectMember(index: number) {
+    lastManualSelectionRef.current = Date.now();
+    setSelectedIndex(index);
+  }
+
   return (
     <div className="w-full bg-[#F6F8FF] overflow-x-clip">
       <section className="relative max-w-7xl mx-auto px-8 md:px-16 py-24">
@@ -89,9 +118,9 @@ export function ProfileLanding() {
               <button
                 key={i}
                 type="button"
-                onClick={() => setSelectedIndex(i)}
+                onClick={() => selectMember(i)}
                 className={`flex-shrink-0 text-left transition rounded p-2 overflow-hidden ${
-                  selectedIndex !== null && selectedIndex === i
+                  selectedIndex === i
                     ? "ring-2 ring-black ring-offset-1"
                     : ""
                 }`}
