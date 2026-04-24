@@ -44,7 +44,23 @@ export function SelectPlan() {
     "My Super Long Semester Plan Name Fall 2026"
   );
   const [classes, setClasses] = useState<ClassObj[]>([
-    {},{},{},{}
+    {
+      title: "",
+      credits: 0,
+      days: ""
+    },{
+      title: "",
+      credits: 0,
+      days: ""
+    },{
+      title: "",
+      credits: 0,
+      days: ""
+    },{
+      title: "",
+      credits: 0,
+      days: ""
+    }
   ]);
 
   return (
