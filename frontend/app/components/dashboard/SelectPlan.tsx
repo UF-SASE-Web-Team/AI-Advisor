@@ -22,12 +22,10 @@ export function SelectPlan() {
 
   return (
     <Widget title="Semester Plan Selection" className="flex-none h-73">
-      <div className="m-3 gap-4 flex-1 min-h-0
+      <div className="m-3 gap-4 flex-1
       flex flex-row
       relative">
-        {/* Left col */}
-        <div className="flex-1 relative min-h-0">
-          {/* Scrollable area*/}
+        <div className="flex-1 relative">
           <ClassList>
             <ClassItem {...placeholderClasses[0]} />
             <ClassItem {...placeholderClasses[1]} />
@@ -40,10 +38,7 @@ export function SelectPlan() {
           </ClassList>
         </div>
 
-        {/* Right col */}
-        <div className="flex-none w-[160px] md:w-[200px] flex flex-col gap-3">
-          <SemPlanControls />
-        </div>
+        <SemPlanControls />
       </div>
     </Widget >
   );
@@ -88,7 +83,7 @@ const SemPlanControls = () => {
         </select>
 
       </div>
-      <button className="w-full bg-white border border-widget-border rounded-full py-1.5 px-4 text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">
+      <button className="w-full bg-white border border-widget-border rounded-full py-1.5 px-4 text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm cursor-pointer">
         Edit
       </button>
     </div>
