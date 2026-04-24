@@ -97,8 +97,12 @@ export function mainLanding() {
           </div>
 
           {/* RIGHT IMAGE PLACEHOLDER */}
-          <div className="w-full h-64 sm:h-72 rounded flex items-center justify-center text-black text-sm sm:text-base font-mono font-semibold">
-            <img src="/happy_people.JPG"></img>
+          <div className="w-full h-56 sm:h-64 md:h-72 lg:h-80 overflow-hidden rounded-2xl flex items-center justify-center text-black text-sm sm:text-base font-mono font-semibold">
+            <img
+              src="/happy_people.JPG"
+              alt="Students smiling"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </section>
