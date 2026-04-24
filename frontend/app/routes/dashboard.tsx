@@ -1,5 +1,5 @@
 import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
-import { Calendar } from "~/components/dashboard/Calendar";
+import Calendar from "~/components/dashboard/Calendar";
 import { SelectPlan } from "~/components/dashboard/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
 import { useNavigate } from "react-router";
