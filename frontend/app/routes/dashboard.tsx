@@ -37,9 +37,8 @@ export default function Dashboard() {
     <div className="grid grid-cols-[min-content_1fr] h-screen p-4 pr-12 gap-4">
       <RightNav />
       <div
-        style={{ width: "30vw" }}
-        className="flex flex-col
-        h-full">
+        style={{ width: "30vw", height: "calc(100vh - 2rem)" }}
+        className="flex flex-col min-h-0">
         <ChatContainer />
       </div>
 
