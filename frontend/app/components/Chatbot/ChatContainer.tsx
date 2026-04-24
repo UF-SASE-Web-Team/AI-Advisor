@@ -278,7 +278,7 @@ export function ChatContainer() {
   };
 
   return (
-    <Widget title="AI Advisor" className="flex-1 min-h-0">
+    <Widget title="AI Advisor" className="flex-1 min-h-0" titleClassName="text-xl">
       <div className="flex items-center justify-between gap-2 border-b border-widget-border px-3 py-2">
         <div className="flex items-center gap-2">
           <button

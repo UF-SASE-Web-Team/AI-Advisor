@@ -7,10 +7,18 @@ const navLinks = [
   { href: "/profile", label: "Profile" },
 ];
 
-export default function RightNav() {
+export default function RightNav({
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) {
   return (
     <nav
       aria-label="Right navigation"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className="group fixed right-0 top-0 h-screen w-12 hover:w-28 bg-[#FFE48B] flex flex-col items-center z-50 border-l border-[#FFAF01] transition-all duration-300 ease-in-out overflow-hidden"
     >
       {/* collapsed arrow */}

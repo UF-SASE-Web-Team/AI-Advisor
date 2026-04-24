@@ -8,6 +8,7 @@ import { supabase } from "../../supabase";
 
 export default function Dashboard() {
   const [renderDash, setRender] = useState(false);
+  const [navHovered, setNavHovered] = useState(false);
   // Redirect user if not logged in
   const navigate = useNavigate();
   useEffect(() => {
@@ -33,11 +34,18 @@ export default function Dashboard() {
   // Dashboard page
   if (!renderDash) return null;
   return (
-    <div className="grid grid-cols-[min-content_1fr] h-screen p-4 pr-12 gap-4">
-      <RightNav />
+    <div
+      className={`font-mono grid grid-cols-[min-content_1fr] h-screen p-4 gap-4 transition-all duration-300 ${
+        navHovered ? "pr-32" : "pr-16"
+      }`}
+    >
+      <RightNav
+        onMouseEnter={() => setNavHovered(true)}
+        onMouseLeave={() => setNavHovered(false)}
+      />
       <div
-        style={{ width: "30vw", height: "calc(100vh - 2rem)" }}
-        className="flex flex-col min-h-0">
+        style={{ width: navHovered ? "17vw" : "22vw", height: "calc(100vh - 2rem)" }}
+        className="flex flex-col min-h-0 transition-all duration-300">
         <ChatContainer />
       </div>
 

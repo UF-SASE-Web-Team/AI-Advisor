@@ -138,7 +138,7 @@ const SemesterParameters = () => {
 
   return (
     <>
-      <h3 className="font-bold text-gray-700 mb-2 text-sm underline">Semester Parameters</h3>
+      <h3 className="font-bold text-gray-700 mb-2">Semester Parameters</h3>
       <label className="block text-xs text-gray-600 mb-1">
         Credit Hours: {minVal}-{maxVal}
       </label>
