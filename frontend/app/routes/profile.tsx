@@ -6,10 +6,12 @@ import { UploadTranscript } from "~/components/profile_page/UploadTranscript";
 import { Widget } from "~/components/dashboard/Widget";
 import { useState } from "react";
 import { TranscriptEditor } from "~/components/profile_page/TranscriptEditor";
+import RightNav from "~/components/navigation/RightNav";
 
 export default function UserProfile() {
     return (
-        <div className="flex flex-row h-screen p-4 gap-4">
+        <div className="flex flex-row h-screen p-4 gap-4 pr-12">
+            <RightNav />
 
             <Widget title="Upload Transcript">
                 <div className="flex flex-col gap-2 p-2">

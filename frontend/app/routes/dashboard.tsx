@@ -2,8 +2,14 @@ import { DegreeAudit } from "~/components/dashboard/DegreeAudit";
 import Calendar from "~/components/dashboard/Calendar";
 import { SelectPlan } from "~/components/dashboard/SelectPlan";
 import { ChatContainer } from "~/components/Chatbot/ChatContainer";
+<<<<<<< sk-sidenav-sprint
+import RightNav from "~/components/navigation/RightNav";
+import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+=======
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+>>>>>>> sprint-5
 import { supabase } from "../../supabase";
 
 export default function Dashboard() {
@@ -33,7 +39,8 @@ export default function Dashboard() {
   // Dashboard page
   if (!renderDash) return null;
   return (
-    <div className="grid grid-cols-[min-content_1fr] h-screen p-4 gap-4">
+    <div className="grid grid-cols-[min-content_1fr] h-screen p-4 pr-12 gap-4">
+      <RightNav />
       <div
         style={{ width: "30vw" }}
         className="flex flex-col
