@@ -1,38 +1,45 @@
 import { UploadTranscript } from "~/components/profile_page/UploadTranscript";
+import { ProfileSettings } from "~/components/profile_page/ProfileSettings";
 import { Widget } from "~/components/dashboard/Widget";
 import { TranscriptEditor } from "~/components/profile_page/TranscriptEditor";
 import RightNav from "~/components/navigation/RightNav";
+import { useState } from "react";
 
 export default function UserProfile() {
+    const [navHovered, setNavHovered] = useState(false);
+
     return (
-        <div className="flex flex-row h-screen p-4 gap-4 pr-12">
-            <RightNav />
+        <div
+            className={`font-mono flex flex-row h-screen p-4 gap-4 transition-all duration-300 ${
+                navHovered ? "pr-32" : "pr-16"
+            }`}
+        >
+            <RightNav
+                onMouseEnter={() => setNavHovered(true)}
+                onMouseLeave={() => setNavHovered(false)}
+            />
 
-            <Widget title="Upload Transcript">
-                <div className="flex flex-col gap-2 p-2">
+            <div
+                style={{ width: navHovered ? "25vw" : "30vw", height: "calc(100vh - 2rem)" }}
+                className="flex flex-col gap-4 min-h-0 transition-all duration-300"
+            >
+                <Widget title="Profile Settings" titleClassName="text-xl" className="flex-none">
+                    <ProfileSettings />
+                </Widget>
 
-                    <div className="flex gap-2">
-                        <UploadTranscript />
-                        <button className="
-                px-2 py-1 rounded-full 
-                bg-[#c8e6a0] border border-[#a8cc70] text-green-900
-                text-xs font-medium
-                cursor-pointer">
-                            Delete Old Transcript
-                        </button>
-                    </div>
+                <Widget title="Upload Transcript" titleClassName="text-xl" className="flex-1 min-h-0">
+                    <UploadTranscript />
+                </Widget>
+            </div>
 
-                    <div className="bg-white rounded border border-gray-300 h-[280px] flex items-center justify-center text-gray-400 text-xs font-mono">
-                        (Pdf viewer)
-                    </div>
-                </div>
-            </Widget>
-
-            <Widget title="Transcript Manual Input">
-                <TranscriptEditor />
-            </Widget>
-
-
-        </div >
+            <div
+                style={{ height: "calc(100vh - 2rem)" }}
+                className="flex flex-col min-h-0 flex-1 min-w-0"
+            >
+                <Widget title="Edit Parameters" titleClassName="text-xl text-center" className="flex-1 min-h-0">
+                    <TranscriptEditor />
+                </Widget>
+            </div>
+        </div>
     );
 }
