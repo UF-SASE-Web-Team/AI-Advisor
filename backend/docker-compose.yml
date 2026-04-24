@@ -20,17 +20,11 @@ services:
       - "50052:50052"
     environment:
       - GRPC_PORT=50052
-      - OLLAMA_HOST=http://ollama:11434
-      - EMBEDDING_MODEL=nomic-embed-text
-      - CHAT_MODEL=llama3.2
       - COURSE_DATA_PATH=/app/data/courses.json
-      - CHROMA_PATH=/app/data/chroma
     volumes:
       - ./data/courses.json:/app/data/courses.json:ro
-      - rag-chroma-data:/app/data/chroma
-    depends_on:
-      ollama:
-        condition: service_healthy
+    env_file:
+      - .env
 
   planner:
     build: ./services/planner
@@ -46,22 +40,5 @@ services:
     ports:
       - "8083:8083"
 
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-      - ./scripts/ollama-entrypoint.sh:/entrypoint.sh:ro
-    entrypoint: ["/bin/bash", "/entrypoint.sh"]
-    healthcheck:
-      test: ["CMD-SHELL", "ollama list | grep -q 'llama3.2' && ollama list | grep -q 'nomic-embed-text'"]
-      interval: 30s
-      timeout: 60s
-      retries: 10
-      start_period: 120s
-
 volumes:
-  ollama-data:
   rag-chroma-data:
