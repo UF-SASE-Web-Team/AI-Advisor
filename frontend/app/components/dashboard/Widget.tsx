@@ -11,7 +11,7 @@ const Header = ({ title, titleClassName }: any) => {
   return (
     <div
       className={`
-    p-3 font-bold
+    px-2 py-3 font-bold
     bg-widget-titlebar
     border-1 border-widget-titlebar-border
     rounded-t-md

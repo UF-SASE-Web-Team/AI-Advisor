@@ -1,7 +1,94 @@
-import React, { useState, useContext, createContext } from "react";
+import React, { useState, useEffect, useContext, createContext } from "react";
 import type { ReactNode } from "react";
 import { supabase } from "../../../supabase";
 import { API_URL } from "~/config";
+
+interface UserPlan {
+  id: string;
+  name: string;
+  is_active: boolean;
+  plan_data: any;
+}
+
+const MAX_PLAN_NAME_LEN = 60;
+
+// plan_data can be either the raw generate-API array (newer rows) or the older
+// { semesters: [{ courses: [...] }] } wrap. Normalize to the flat array here.
+const rawPlanCourses = (plan: UserPlan | undefined): any[] => {
+  if (!plan) return [];
+  const pd: any = plan.plan_data;
+  if (Array.isArray(pd)) return pd;
+  if (Array.isArray(pd?.semesters?.[0]?.courses)) return pd.semesters[0].courses;
+  return [];
+};
+
+const classObjFromPlanCourse = (course: any): ClassObj => ({
+  title: course.title ?? course.course_code ?? course.courseCode ?? "",
+  credits: Number(course.credits ?? 0),
+  days: course.days ?? "",
+  course_name: course.course_name ?? course.name,
+  unlocks_courses: course.unlocks_courses,
+});
+
+const classesFromPlan = (plan: UserPlan | undefined): ClassObj[] =>
+  rawPlanCourses(plan).map(classObjFromPlanCourse);
+
+// Build the "M,W,F - M8:30-9:20\n..." shape ClassItem already parses, from the
+// catalog row's sections[0].meetTimes.
+const daysStringFromSections = (sections: any[]): string => {
+  if (!Array.isArray(sections) || sections.length === 0) return "";
+  const meetTimes = sections[0]?.meetTimes ?? [];
+  if (!Array.isArray(meetTimes) || meetTimes.length === 0) return "";
+  const DAY_ORDER: Record<string, number> = { M: 0, T: 1, W: 2, R: 3, F: 4 };
+  const daySet = new Set<string>();
+  const lines: string[] = [];
+  for (const mt of meetTimes) {
+    const ds: string[] = Array.isArray(mt.meetDays) ? mt.meetDays : [];
+    ds.forEach((d) => daySet.add(d));
+    if (mt.meetTimeBegin && mt.meetTimeEnd) {
+      for (const d of ds) {
+        lines.push(`${d}${mt.meetTimeBegin}-${mt.meetTimeEnd}`);
+      }
+    }
+  }
+  if (daySet.size === 0) return "";
+  const daysList = [...daySet].sort(
+    (a, b) => (DAY_ORDER[a] ?? 99) - (DAY_ORDER[b] ?? 99),
+  );
+  return lines.length > 0 ? `${daysList.join(",")} - ${lines.join("\n")}` : daysList.join(",");
+};
+
+// Turn a row from the `courses` catalog into the same shape the generator
+// produces, so it round-trips cleanly through plan_data.
+const catalogRowToPlanShape = (row: any) => ({
+  title: row.course_code,
+  course_name: row.course_name,
+  credits: Number(row.credits ?? 0),
+  days: daysStringFromSections(row.sections ?? []),
+  sections: row.sections ?? [],
+});
+
+const calendarCoursesFromPlan = (plan: UserPlan | undefined) =>
+  rawPlanCourses(plan).flatMap((course: any) => {
+    const sections = Array.isArray(course.sections) ? course.sections : [];
+    const firstSection = sections[0];
+    const meetTimes = Array.isArray(firstSection?.meetTimes) ? firstSection.meetTimes : [];
+    const courseId = course.title ?? course.course_code ?? course.courseCode ?? "";
+    return meetTimes
+      .map((mt: any) => {
+        const days = Array.isArray(mt.meetDays) ? mt.meetDays : [];
+        if (days.length === 0) return null;
+        const period = parseInt(mt.meetPeriodBegin ?? "1");
+        const periodEnd = parseInt(mt.meetPeriodEnd ?? mt.meetPeriodBegin ?? "1");
+        return {
+          course_id: courseId,
+          day: days.join(""),
+          period,
+          period_end: periodEnd,
+        };
+      })
+      .filter(Boolean);
+  });
 
 interface ScheduleContextType {
   courses: any[];
@@ -39,10 +126,89 @@ interface ClassObj {
 }
 
 export function SelectPlan() {
+  const { setCourses } = useSchedule();
   const [mode, setMode] = useState<"default" | "edit">("default");
-  const [semester, setSemester] = useState(
-    "My Super Long Semester Plan Name Fall 2026"
-  );
+  const [activePlanId, setActivePlanId] = useState<string>("");
+  const [plans, setPlans] = useState<UserPlan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [takenCodes, setTakenCodes] = useState<Set<string>>(new Set());
+  // Only the setter is read directly; state is accessed via the setter's prev arg.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_rawCourses, setRawCourses] = useState<any[]>([]);
+
+  const currentPlanName = plans.find((p) => p.id === activePlanId)?.name ?? "";
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        if (!cancelled) setPlansLoading(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("user_plans")
+        .select("id, name, is_active, plan_data")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      console.log("[SelectPlan] fetch user_plans", {
+        userId: user.id,
+        rowsReturned: data?.length ?? 0,
+        firstRow: data?.[0],
+        error,
+      });
+      if (cancelled) return;
+      if (error) {
+        console.error("Failed to load user_plans", error);
+        setPlansLoading(false);
+        return;
+      }
+      const rows = (data ?? []) as UserPlan[];
+      setPlans(rows);
+      if (rows.length > 0) {
+        const active = rows.find((p) => p.is_active) ?? rows[0];
+        setActivePlanId(active.id);
+      }
+      setPlansLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const startRename = () => {
+    if (!activePlanId) return;
+    setRenameDraft(currentPlanName);
+    setRenameError(null);
+    setIsRenaming(true);
+  };
+
+  const cancelRename = () => {
+    setIsRenaming(false);
+    setRenameError(null);
+  };
+
+  const commitRename = async () => {
+    const trimmed = renameDraft.trim();
+    if (!activePlanId) return;
+    if (trimmed === "" || trimmed === currentPlanName) {
+      cancelRename();
+      return;
+    }
+    const { error } = await supabase
+      .from("user_plans")
+      .update({ name: trimmed })
+      .eq("id", activePlanId);
+    if (error) {
+      console.error("Failed to rename plan", error);
+      setRenameError(error.message || "Could not rename plan.");
+      return;
+    }
+    setPlans((prev) => prev.map((p) => (p.id === activePlanId ? { ...p, name: trimmed } : p)));
+    setIsRenaming(false);
+  };
+
   const [classes, setClasses] = useState<ClassObj[]>([
     {
       title: "",
@@ -63,43 +229,146 @@ export function SelectPlan() {
     }
   ]);
 
+  useEffect(() => {
+    if (!activePlanId) return;
+    const active = plans.find((p) => p.id === activePlanId);
+    if (!active) return;
+    const loaded = classesFromPlan(active);
+    if (loaded.length > 0) setClasses(loaded);
+    setRawCourses(rawPlanCourses(active));
+    setCourses(calendarCoursesFromPlan(active));
+  }, [activePlanId, plans, setCourses]);
+
+  const persistPlanData = async (rawData: any[]) => {
+    if (!activePlanId) return;
+    const { error } = await supabase
+      .from("user_plans")
+      .update({ plan_data: rawData })
+      .eq("id", activePlanId);
+    if (error) {
+      console.error("Failed to save plan_data", error);
+      return;
+    }
+    setPlans((prev) =>
+      prev.map((p) => (p.id === activePlanId ? { ...p, plan_data: rawData } : p)),
+    );
+  };
+
+  const handleAddCourse = (rawRow: any) => {
+    const enriched = catalogRowToPlanShape(rawRow);
+    setRawCourses((prev) => {
+      const next = [...prev, enriched];
+      persistPlanData(next);
+      setCourses(calendarCoursesFromPlan({ plan_data: next } as UserPlan));
+      return next;
+    });
+    setClasses((prev) => [...prev, classObjFromPlanCourse(enriched)]);
+  };
+
+  const handleRemoveCourse = (index: number) => {
+    setRawCourses((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      persistPlanData(next);
+      setCourses(calendarCoursesFromPlan({ plan_data: next } as UserPlan));
+      return next;
+    });
+    setClasses((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleGenerated = (generatedClasses: ClassObj[], rawData: any[]) => {
+    setClasses(generatedClasses);
+    setRawCourses(rawData);
+    persistPlanData(rawData);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("transcript")
+        .select("course")
+        .eq("id", user.id);
+      if (cancelled || error) return;
+      const codes = new Set<string>(
+        (data ?? [])
+          .map((r: any) => (r.course ?? "").toString().trim().toUpperCase())
+          .filter(Boolean),
+      );
+      setTakenCodes(codes);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
-    <div className="my-3 mx-1 gap-3 h-full min-h-0 flex flex-col relative">
-      <div className="w-1/2">
-        <SemesterSelect value={semester} onChange={setSemester} />
+    <div className="my-3 mx-1 gap-3 h-full min-h-0 min-w-0 flex flex-col relative">
+      <div className="w-1/2 min-w-0">
+        <SemesterSelect
+          value={activePlanId}
+          onChange={setActivePlanId}
+          plans={plans}
+          loading={plansLoading}
+        />
       </div>
 
       <div className="border border-widget-border rounded-xl bg-white/60 p-3">
-        <SemesterParameters onGenerate={setClasses} />
+        <SemesterParameters onGenerate={handleGenerated} />
       </div>
 
-      <div className="flex-1 min-h-0 border border-widget-border rounded-xl bg-white/60 p-3 flex flex-col gap-3">
+      <div className="flex-1 min-h-0 min-w-0 border border-widget-border rounded-xl bg-white/60 p-3 flex flex-col gap-3">
         {mode === "default" ? (
-          <div className="flex justify-between items-center gap-2">
+          <div className="flex justify-between items-center gap-2 min-w-0 overflow-hidden">
             <h3 className="font-bold text-gray-700 flex items-center gap-2 min-w-0 flex-1">
-              <span className="truncate min-w-0">
-                Generated Schedule:{" "}
-                <span className="font-normal">{semester}</span>
-              </span>
-              <button
-                aria-label="Rename semester plan"
-                title="Rename semester plan"
-                className="flex-none text-gray-500 hover:text-gray-700 cursor-pointer"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-4 h-4"
+              {isRenaming ? (
+                <input
+                  autoFocus
+                  maxLength={MAX_PLAN_NAME_LEN}
+                  value={renameDraft}
+                  onChange={(e) => setRenameDraft(e.target.value.slice(0, MAX_PLAN_NAME_LEN))}
+                  onBlur={commitRename}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      commitRename();
+                    } else if (e.key === "Escape") {
+                      e.preventDefault();
+                      cancelRename();
+                    }
+                  }}
+                  className="font-normal bg-white border border-widget-border rounded px-2 py-0.5 text-sm min-w-0 flex-1 focus:outline-none"
+                />
+              ) : (
+                <span className="truncate min-w-0 flex-1" title={currentPlanName}>
+                  {currentPlanName}
+                </span>
+              )}
+              {!isRenaming && (
+                <button
+                  onClick={startRename}
+                  disabled={!activePlanId}
+                  aria-label="Rename semester plan"
+                  title="Rename semester plan"
+                  className="flex-none text-gray-500 hover:text-gray-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                </button>
+              )}
+              {renameError && (
+                <span className="text-xs text-red-500 font-normal truncate min-w-0 flex-none max-w-[8rem]">{renameError}</span>
+              )}
             </h3>
             <button
               onClick={() => setMode("edit")}
@@ -109,13 +378,23 @@ export function SelectPlan() {
             </button>
           </div>
         ) : (
-          <AddClassRow onSave={() => setMode("default")} />
+          <AddClassRow
+            takenCodes={takenCodes}
+            existingCodes={new Set(classes.map((c) => c.title.trim().toUpperCase()).filter(Boolean))}
+            onAdd={handleAddCourse}
+            onClose={() => setMode("default")}
+          />
         )}
 
         <div className="flex-1 relative min-h-0">
           <ClassList>
             {classes.map((c, i) => (
-              <ClassItem key={i} {...c} showRemove={mode === "edit"} />
+              <ClassItem
+                key={i}
+                {...c}
+                showRemove={mode === "edit"}
+                onRemove={() => handleRemoveCourse(i)}
+              />
             ))}
           </ClassList>
         </div>
@@ -127,45 +406,60 @@ export function SelectPlan() {
 const SemesterSelect = ({
   value,
   onChange,
+  plans,
+  loading,
 }: {
   value: string;
   onChange: (v: string) => void;
-}) => (
-  <div className="relative w-full">
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full appearance-none bg-white border border-widget-border rounded-full py-1.5 pl-4 pr-10 text-gray-700 font-bold focus:outline-none cursor-pointer text-sm"
-    >
-      <option>My Super Long Semester Plan Name Fall 2026</option>
-      <option>Semester 1</option>
-      <option>Semester 2</option>
-      <option>Semester 3</option>
-    </select>
-    <svg
-      aria-hidden="true"
-      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-widget-border"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M6 8l4 4 4-4" />
-    </svg>
-  </div>
-);
+  plans: UserPlan[];
+  loading: boolean;
+}) => {
+  const isEmpty = !loading && plans.length === 0;
+  return (
+    <div className="relative w-full">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={loading || isEmpty}
+        className="w-full min-w-0 truncate appearance-none bg-white border border-widget-border rounded-full py-1.5 pl-4 pr-10 text-gray-700 font-bold focus:outline-none cursor-pointer text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {loading ? (
+          <option value="">Loading plans…</option>
+        ) : isEmpty ? (
+          <option value="">No saved plans</option>
+        ) : (
+          plans.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))
+        )}
+      </select>
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-widget-border"
+        viewBox="0 0 20 20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M6 8l4 4 4-4" />
+      </svg>
+    </div>
+  );
+};
 
 const SemesterParameters = ({
   onGenerate,
 }: {
-  onGenerate: (classes: ClassObj[]) => void;
+  onGenerate: (classes: ClassObj[], rawData: any[]) => void;
 }) => {
   const { setCourses } = useSchedule();
   const MIN = 0;
   const MAX = 21;
-  const [minVal, setMinVal] = useState(14);
+  const [minVal, setMinVal] = useState(12);
   const [maxVal, setMaxVal] = useState(18);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,13 +489,20 @@ const SemesterParameters = ({
 
       if (!accessToken) throw new Error("You must be logged in.");
 
+      const targetCredits = Math.round((minVal + maxVal) / 2);
       const response = await fetch(`${API_URL}/api/v2/schedule/generate/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ max_credits: maxVal }),
+        body: JSON.stringify({
+          min_credits: minVal,
+          // Cap at the midpoint so the backend aims for the average of the slider range
+          // instead of always filling up to the max.
+          max_credits: targetCredits,
+          target_credits: targetCredits,
+        }),
       });
 
       const rawBody = await response.text();
@@ -224,7 +525,7 @@ const SemesterParameters = ({
         unlocks_courses: course.unlocks_courses,
       }));
 
-      onGenerate(classObjects);
+      onGenerate(classObjects, Array.isArray(data) ? data : []);
 
       // Transform to calendar format and update context
       const calendarCourses = data.map((course: any) => {
@@ -271,8 +572,8 @@ const SemesterParameters = ({
 
   return (
     <>
-      <h3 className="font-bold text-gray-700 mb-2 text-sm underline">
-        Semester Parameters
+      <h3 className="font-bold text-gray-700 mb-2">
+        Plan Generation
       </h3>
       <label className="block text-xs text-gray-600 mb-1">
         Credit Hours: {minVal}-{maxVal}
@@ -320,25 +621,137 @@ const SemesterParameters = ({
   );
 };
 
-const AddClassRow = ({ onSave }: { onSave: () => void }) => (
-  <div className="flex items-center gap-2">
-    <span className="font-bold text-gray-700 text-sm">Add:</span>
-    <input
-      type="text"
-      placeholder="Enter class code (MAC2311)"
-      className="flex-1 bg-white border border-widget-border rounded-full py-1 px-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
-    />
-    <button
-      onClick={onSave}
-      className="bg-white border border-widget-border rounded-full py-1 px-4 text-gray-700 text-sm hover:bg-gray-50 cursor-pointer"
-    >
-      Save
-    </button>
-  </div>
-);
+const AddClassRow = ({
+  takenCodes,
+  existingCodes,
+  onAdd,
+  onClose,
+}: {
+  takenCodes: Set<string>;
+  existingCodes: Set<string>;
+  onAdd: (rawRow: any) => void;
+  onClose: () => void;
+}) => {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  const [isOpen, setIsOpen] = useState(true);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    const handle = setTimeout(async () => {
+      const safe = trimmed.replace(/[,%]/g, "");
+      const { data, error } = await supabase
+        .from("courses")
+        .select("course_code, course_name, credits, sections")
+        .or(`course_code.ilike.%${safe}%,course_name.ilike.%${safe}%`)
+        .limit(20);
+      setIsSearching(false);
+      if (error) {
+        console.error("Course search failed", error);
+        setResults([]);
+        return;
+      }
+      const filtered = (data ?? []).filter((r: any) => {
+        const code = (r.course_code ?? "").toString().trim().toUpperCase();
+        return code !== "" && !takenCodes.has(code) && !existingCodes.has(code);
+      });
+      setResults(filtered);
+      setHighlighted(0);
+    }, 200);
+    return () => clearTimeout(handle);
+  }, [query, takenCodes, existingCodes]);
+
+  const select = (row: any) => {
+    onAdd(row);
+    setQuery("");
+    setResults([]);
+    onClose();
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlighted((i) => Math.min(i + 1, Math.max(results.length - 1, 0)));
+      setIsOpen(true);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlighted((i) => Math.max(i - 1, 0));
+      setIsOpen(true);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const pick = results[highlighted];
+      if (pick) select(pick);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+    }
+  };
+
+  const trimmed = query.trim();
+  const showDropdown = isOpen && trimmed.length >= 2;
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-gray-700 text-sm">Add:</span>
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setIsOpen(true); }}
+            onFocus={() => setIsOpen(true)}
+            onBlur={() => setTimeout(() => setIsOpen(false), 120)}
+            onKeyDown={onKeyDown}
+            autoFocus
+            placeholder="Search by code or name (e.g. MAC2311)"
+            className="w-full bg-white border border-widget-border rounded-full py-1 px-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+          />
+          {showDropdown && (
+            <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-widget-border rounded-md shadow-lg max-h-64 overflow-y-auto custom-scrollbar">
+              {isSearching && results.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-gray-400">Searching…</div>
+              ) : results.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-gray-400">No matches.</div>
+              ) : (
+                results.map((r, i) => (
+                  <button
+                    type="button"
+                    key={`${r.course_code}-${i}`}
+                    onMouseDown={(e) => { e.preventDefault(); select(r); }}
+                    onMouseEnter={() => setHighlighted(i)}
+                    className={`w-full text-left px-3 py-1.5 border-b border-gray-100 last:border-b-0 ${
+                      i === highlighted ? "bg-gray-100" : "bg-white"
+                    }`}
+                  >
+                    <div className="font-bold text-gray-800 text-sm">{r.course_code}</div>
+                    <div className="text-xs text-gray-500 truncate">{r.course_name}</div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="bg-white border border-widget-border rounded-full py-1 px-4 text-gray-700 text-sm hover:bg-gray-50 cursor-pointer"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const ClassList = ({ children }: any) => (
-  <div className="grid grid-cols-2 gap-x-3 gap-y-2 content-start absolute inset-0 overflow-y-auto pr-2 custom-scrollbar">
+  <div className="grid grid-cols-2 gap-x-3 gap-y-2 content-start absolute inset-0 overflow-y-auto pr-0.5 custom-scrollbar">
     {children}
   </div>
 );
@@ -348,65 +761,79 @@ const ClassItem = ({
   credits,
   days,
   showRemove = false,
-}: ClassObj & { showRemove?: boolean }) => (
-  (() => {
-    const trimmed = (days || "").trim();
-    let dayLine = trimmed;
-    let timeLines: string[] = [];
+  onRemove,
+}: ClassObj & { showRemove?: boolean; onRemove?: () => void }) => {
+  const [expanded, setExpanded] = useState(false);
 
-    if (trimmed.includes(" - ")) {
-      const [left, right] = trimmed.split(" - ");
-      dayLine = left.trim();
-      timeLines = right
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean);
-    }
+  const trimmed = (days || "").trim();
+  let dayLine = trimmed;
+  let timeLines: string[] = [];
 
-    if (!timeLines.length && trimmed.includes("\n")) {
-      const [first, ...rest] = trimmed
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean);
-      dayLine = first || dayLine;
-      timeLines = rest;
-    }
+  if (trimmed.includes(" - ")) {
+    const [left, right] = trimmed.split(" - ");
+    dayLine = left.trim();
+    timeLines = right
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
 
-    const formatTimeLine = (line: string) => {
-      const match = line.match(/^([A-Za-z]+)\s*(\d.*)$/);
-      if (!match) return line;
-      return `${match[1]} ${match[2]}`.trim();
-    };
+  if (!timeLines.length && trimmed.includes("\n")) {
+    const [first, ...rest] = trimmed
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    dayLine = first || dayLine;
+    timeLines = rest;
+  }
 
-    const formattedDayLine = dayLine
-      ? `Meeting Day(s): ${dayLine.split(",").map((d) => d.trim()).filter(Boolean).join(", ")}`
-      : "Meeting Day(s): TBA";
+  const formatTimeLine = (line: string) => {
+    const match = line.match(/^([A-Za-z]+)\s*(\d.*)$/);
+    if (!match) return line;
+    return `${match[1]} ${match[2]}`.trim();
+  };
 
-    return (
-      <div className="bg-class-item border-1 border-class-item-border rounded-md px-3 py-2 shadow-sm flex flex-col self-start">
-        <div className="flex items-center justify-between mb-1">
-          <strong className="font-bold text-gray-700">{title}</strong>
-          {showRemove && (
-            <button
-              aria-label={`Remove ${title}`}
-              className="text-gray-500 hover:text-gray-700 cursor-pointer text-sm leading-none"
-            >
-              ×
-            </button>
-          )}
-        </div>
-        <p className="text-xs text-gray-600 mb-1">Credits: {credits}</p>
-        <div className="text-xs text-gray-600">
-          <p className="whitespace-pre-wrap">{formattedDayLine}</p>
-          {timeLines.length > 0 && (
-            <div className="mt-0.5 whitespace-pre-wrap">
-              {timeLines.map((line, idx) => (
-                <div key={`${title}-time-${idx}`}>{formatTimeLine(line)}</div>
-              ))}
-            </div>
-          )}
-        </div>
+  const formattedDayLine = dayLine
+    ? `Meeting Day(s): ${dayLine.split(",").map((d) => d.trim()).filter(Boolean).join(", ")}`
+    : "Meeting Day(s): TBA";
+
+  const hasTimeLines = timeLines.length > 0;
+  const visibleTimes = expanded ? timeLines : [];
+
+  return (
+    <div className="bg-class-item border-1 border-class-item-border rounded-md px-4 py-3 pb-4 shadow-sm flex flex-col self-start h-fit">
+      <div className="flex items-center justify-between mb-1">
+        <strong className="font-bold text-gray-700">{title}</strong>
+        {showRemove && (
+          <button
+            onClick={onRemove}
+            aria-label={`Remove ${title}`}
+            className="flex-none inline-flex items-center justify-center w-6 h-6 rounded-full border border-red-300 bg-white text-red-500 text-lg font-bold leading-none hover:bg-red-500 hover:text-white hover:border-red-500 cursor-pointer transition-colors"
+          >
+            ×
+          </button>
+        )}
       </div>
-    );
-  })()
-);
+      <p className="text-xs text-gray-600 mb-1">Credits: {credits}</p>
+      <div className="text-xs text-gray-600">
+        <p className="whitespace-pre-wrap">{formattedDayLine}</p>
+        {visibleTimes.length > 0 && (
+          <div className="mt-0.5 whitespace-pre-wrap">
+            {visibleTimes.map((line, idx) => (
+              <div key={`${title}-time-${idx}`}>{formatTimeLine(line)}</div>
+            ))}
+          </div>
+        )}
+        {hasTimeLines && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1 text-[11px] text-green-700 hover:text-green-900 font-semibold cursor-pointer"
+          >
+            {expanded ? "See less ▲" : `See more (${timeLines.length}) ▼`}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};

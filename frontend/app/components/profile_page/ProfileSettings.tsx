@@ -4,7 +4,6 @@ import { supabase } from "../../../supabase";
 export function ProfileSettings() {
   const [name, setName] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [major, setMajor] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,14 +21,6 @@ export function ProfileSettings() {
           (user.email ? user.email.split("@")[0] : "User");
         setName(displayName);
         setAvatarUrl(meta.avatar_url || meta.picture || null);
-
-        // Best-effort profile lookup; silently ignored if table doesn't exist.
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("major")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (profile?.major) setMajor(profile.major);
       }
 
       setLoading(false);

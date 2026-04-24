@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSchedule } from "./SelectPlan";
 
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
 /** Row keys: standard periods plus exam / online rows */
 const periodRows: Array<number | string> = [
@@ -17,11 +17,11 @@ function periodLabel(period: number | string): string {
 }
 
 const dayMap = {
-  M: "Monday",
-  T: "Tuesday",
-  W: "Wednesday",
-  R: "Thursday",
-  F: "Friday",
+  M: "Mon",
+  T: "Tue",
+  W: "Wed",
+  R: "Thu",
+  F: "Fri",
 };
 
 function expandDays(course) {
@@ -70,20 +70,12 @@ export default function Calendar() {
 
   const grid = buildGrid(courses);
 
-  if (!courses || courses.length === 0) {
-    return (
-      <div className="m-4 min-h-0">
-        <div className="rounded-md border border-widget-border bg-[#F9FFD5] p-6 text-[#807676]">
-          No schedule generated. Click "Generate New Schedule" to see courses here.
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="m-4 min-h-0">
-      <div className="rounded-md border border-widget-border bg-[#F9FFD5] p-6">
-        <div className="grid grid-cols-[52px_repeat(5,1fr)] gap-0 border border-neutral-400">
+    <div className="my-3 mx-1 gap-3 h-full min-h-0 flex flex-col">
+      {/* Invisible spacer matches the dropdown in SelectPlan so the grid aligns with "Plan Generation". */}
+      <div className="h-[2.125rem] invisible flex-none" aria-hidden="true" />
+      <div className="rounded-md border border-widget-border bg-[#F9FFD5] p-2">
+        <div className="grid grid-cols-[52px_repeat(5,minmax(0,1fr))] gap-0 border border-neutral-400">
           <div className="border-r border-b border-neutral-400 bg-neutral-50" />
 
           {days.map((day, dayIdx) => (
@@ -115,7 +107,7 @@ export default function Calendar() {
                     }`}
                   >
                     {course && (
-                      <span className="inline-block max-w-[calc(100%-6px)] min-w-[6.25rem] truncate rounded-md border border-[#C2DBFC] bg-[#E2EFFF] px-2.5 py-0.5 text-center text-xs font-medium leading-tight text-[#4A4848]">
+                      <span className="inline-block max-w-[calc(100%-6px)] truncate rounded-md border border-[#C2DBFC] bg-[#E2EFFF] px-2.5 py-0.5 text-center text-xs font-medium leading-tight text-[#4A4848]">
                         {course.course_id}
                       </span>
                     )}
