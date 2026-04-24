@@ -1,7 +1,7 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { ChatbotDisplay } from "./ChatbotDisplay";
 import { ChatbotInput } from "./ChatbotInput";
-import { sendMsgToBackend } from "~/apis/chatbot";
+import { createAdvisorSession, queryAdvisor } from "~/apis/chatbot";
 import { Widget } from "../dashboard/Widget";
 
 interface ChatMsg {
@@ -17,14 +17,23 @@ export function ChatContainer() {
     key: Date.now(),
   }]);
   const [input, setInput] = useState("");
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { session_id } = await createAdvisorSession({});
+        setSessionId(session_id);
+      } catch (err) {
+        console.error("Failed to create advisor session", err);
+      }
+    })();
+  }, []);
 
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
     if (input.trim() == "") return;
 
-    // TODO: figure out exact message type, properties
     const newMsg: ChatMsg = {
       text: input,
       sender: "user",
@@ -35,28 +44,33 @@ export function ChatContainer() {
   };
 
   useEffect(() => {
-    const lastMsg: ChatMsg = msgHistory[msgHistory.length - 1];
-    if (msgHistory.length == 0 || lastMsg.sender == "bot") return;
+    const lastMsg: ChatMsg | undefined = msgHistory[msgHistory.length - 1];
+    if (!lastMsg || lastMsg.sender == "bot") return;
 
     (async () => {
-      let botMsg: ChatMsg = {
+      const botMsg: ChatMsg = {
         text: "Connection Error :(",
         sender: "bot",
         key: Date.now(),
       };
       try {
-        const response = await sendMsgToBackend(lastMsg.text);
-        if (!response.ok) throw new Error("response broke");
-
-        const content = await response.json();
-        botMsg.text = content.text;
-      } catch (err) { }
-      setMsgHistory([...msgHistory, botMsg]);
+        const response = await queryAdvisor({
+          question: lastMsg.text,
+          session_id: sessionId ?? undefined,
+        });
+        botMsg.text = response.error_message || response.answer;
+        if (!sessionId && response.session_id) {
+          setSessionId(response.session_id);
+        }
+      } catch (err) {
+        console.error("Advisor query failed", err);
+      }
+      setMsgHistory((prev) => [...prev, botMsg]);
     })();
-  });
+  }, [msgHistory]);
 
   return (
-    <Widget title="AI Advisor">
+    <Widget title="AI Advisor" className="flex-1 min-h-0">
       <ChatbotDisplay history={msgHistory} />
       <ChatbotInput value={input} onChange={setInput} onSubmit={onSubmit} />
     </Widget>

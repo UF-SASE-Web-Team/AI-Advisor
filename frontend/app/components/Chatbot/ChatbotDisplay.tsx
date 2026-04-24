@@ -1,6 +1,16 @@
+import { useEffect, useRef } from "react";
+
 export function ChatbotDisplay({ history }: any) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [history]);
+
   return (
     <div
+      ref={scrollRef}
       className="
     p-4
     flex-1
