@@ -4,7 +4,7 @@ import { supabase } from "../../../../supabase";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/profile", label: "Profile" },
-  { href: "/upload", label: "Upload" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
 export default function RightNav() {
@@ -122,6 +122,24 @@ function getIcon(name: string) {
             strokeLinejoin="round"
             strokeWidth={2}
             d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0-12l4 4m-4-4l-4 4"
+          />
+        </svg>
+      );
+
+    case "Dashboard":
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-9 h-9 text-[#4A4848]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 10L12 3l9 7v10a1 1 0 01-1 1h-6v-6H10v6H4a1 1 0 01-1-1V10z"
           />
         </svg>
       );
