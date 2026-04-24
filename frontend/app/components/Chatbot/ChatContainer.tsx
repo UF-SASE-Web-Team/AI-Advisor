@@ -49,6 +49,7 @@ export function ChatContainer() {
   const [historyError, setHistoryError] = useState("");
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStartingNewChat, setIsStartingNewChat] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -196,6 +197,30 @@ export function ChatContainer() {
     }
   };
 
+  const startNewChat = async () => {
+    if (isStartingNewChat) return;
+
+    setIsStartingNewChat(true);
+    setHistoryError("");
+    try {
+      const currentUserId = await getUserId();
+      const { session_id } = await createAdvisorSession({
+        title: "New chat",
+        user_id: currentUserId ?? undefined,
+      });
+
+      setSessionId(session_id);
+      setMsgHistory([welcomeMessage]);
+      setInput("");
+      setHistoryOpen(false);
+    } catch (err) {
+      console.error("Failed to start new chat", err);
+      setHistoryError("Could not start a new chat.");
+    } finally {
+      setIsStartingNewChat(false);
+    }
+  };
+
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const question = input.trim();
@@ -255,13 +280,23 @@ export function ChatContainer() {
   return (
     <Widget title="AI Advisor" className="flex-1 min-h-0">
       <div className="flex items-center justify-between gap-2 border-b border-widget-border px-3 py-2">
-        <button
-          type="button"
-          onClick={openHistory}
-          className="rounded-full border border-widget-border bg-white px-3 py-1 text-sm font-medium text-gray-800 shadow-sm hover:bg-blue-50"
-        >
-          History
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openHistory}
+            className="rounded-full border border-widget-border bg-white px-3 py-1 text-sm font-medium text-gray-800 shadow-sm hover:bg-blue-50"
+          >
+            History
+          </button>
+          <button
+            type="button"
+            onClick={startNewChat}
+            disabled={isStartingNewChat}
+            className="rounded-full border border-widget-border bg-white px-3 py-1 text-sm font-medium text-gray-800 shadow-sm hover:bg-blue-50 disabled:opacity-60"
+          >
+            {isStartingNewChat ? "Starting..." : "New Chat"}
+          </button>
+        </div>
         <span className="text-xs text-gray-600">
           {userMessageCount > 0 ? `${userMessageCount} sent` : "No active chat"}
         </span>
