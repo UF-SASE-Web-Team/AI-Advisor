@@ -13,7 +13,8 @@ export type ScheduledCourse = {
     credits: number;
     course_type: string;
     day: string;
-    period: number;
+    /** Standard period 1–11, or row keys such as E1, E2, E3, ONLINE */
+    period: number | string;
 };
 
 export type SolveResponse = {
