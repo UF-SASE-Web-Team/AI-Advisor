@@ -277,6 +277,19 @@ def fmt_time(t: str) -> str:
     except Exception:
         return t
 
+def normalize_sections(sections: object) -> list:
+    if not sections:
+        return []
+    if isinstance(sections, list):
+        return sections
+    if isinstance(sections, str):
+        try:
+            parsed = json.loads(sections)
+            return parsed if isinstance(parsed, list) else []
+        except json.JSONDecodeError:
+            return []
+    return []
+
 def format_section_schedule(sections: list) -> str:
     """
     Formats the sections JSONB array into a human-readable schedule string.
@@ -289,11 +302,9 @@ def format_section_schedule(sections: list) -> str:
         return "TBA"
 
     # Normalise: sections may arrive as a JSON string or already a list
-    if isinstance(sections, str):
-        try:
-            sections = json.loads(sections)
-        except json.JSONDecodeError:
-            return "TBA"
+    sections = normalize_sections(sections)
+    if not sections:
+        return "TBA"
 
     # Only use the first section's first meetTime
     first_section = sections[0] if sections else {}
@@ -438,6 +449,7 @@ def export_schedule_json(semester: list[dict], dependent_counts: dict[str, int],
             "course_name": c.get("course_name", ""),
             "prerequisites": parse_prerequisites(c),
             "unlocks_courses": dependent_counts.get(c["course_code"], 0),
+            "sections": normalize_sections(c.get("sections")),
         }
         for c in semester
     ]
