@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router";
 import { supabase } from "../../../supabase";
 import { API_URL } from "~/config";
 
@@ -211,7 +212,7 @@ interface ClassObj {
 }
 
 export function SelectPlan() {
-  const { setCourses, courseColorMap, setCourseColorMap } = useSchedule();
+  const { setCourses, setCourseColorMap } = useSchedule();
   const [mode, setMode] = useState<"default" | "edit">("default");
   const [activePlanId, setActivePlanId] = useState<string>("");
   const [plans, setPlans] = useState<UserPlan[]>([]);
@@ -220,6 +221,8 @@ export function SelectPlan() {
   const [renameDraft, setRenameDraft] = useState("");
   const [renameError, setRenameError] = useState<string | null>(null);
   const [takenCodes, setTakenCodes] = useState<Set<string>>(new Set());
+  // null = unknown (still checking), true = has rows, false = checked, none.
+  const [hasTranscript, setHasTranscript] = useState<boolean | null>(null);
   // Only the setter is read directly; state is accessed via the setter's prev arg.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_rawCourses, setRawCourses] = useState<any[]>([]);
@@ -390,6 +393,7 @@ export function SelectPlan() {
       const cached = loadCachedTranscriptCodes(user.id);
       if (cached && !cancelled) {
         setTakenCodes(new Set(cached));
+        if (cached.length > 0) setHasTranscript(true);
       }
 
       // Refresh in the background and update the cache.
@@ -402,6 +406,7 @@ export function SelectPlan() {
         .map((r: any) => (r.course ?? "").toString().trim().toUpperCase())
         .filter(Boolean);
       setTakenCodes(new Set(codes));
+      setHasTranscript(codes.length > 0);
       saveCachedTranscriptCodes(user.id, codes);
     })();
     return () => { cancelled = true; };
@@ -419,7 +424,7 @@ export function SelectPlan() {
       </div>
 
       <div className="border border-widget-border rounded-xl bg-white/60 p-3">
-        <SemesterParameters onGenerate={handleGenerated} />
+        <SemesterParameters onGenerate={handleGenerated} hasTranscript={hasTranscript} />
       </div>
 
       <div className="flex-1 min-h-0 min-w-0 border border-widget-border rounded-xl bg-white/60 p-3 flex flex-col gap-3">
@@ -560,9 +565,12 @@ const SemesterSelect = ({
 
 const SemesterParameters = ({
   onGenerate,
+  hasTranscript,
 }: {
   onGenerate: (classes: ClassObj[], rawData: any[]) => void;
+  hasTranscript: boolean | null;
 }) => {
+  const navigate = useNavigate();
   const { setCourses } = useSchedule();
   const MIN = 0;
   const MAX = 21;
@@ -676,6 +684,22 @@ const SemesterParameters = ({
     "[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 " +
     "[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:border-0 " +
     "[&::-moz-range-thumb]:cursor-pointer";
+
+  if (hasTranscript === false) {
+    return (
+      <>
+        <h3 className="font-bold text-gray-700 mb-2">Plan Generation</h3>
+        <button
+          type="button"
+          onClick={() => navigate("/profile")}
+          className="w-full text-left text-sm text-gray-700 bg-white border border-widget-border rounded-md px-3 py-2 hover:bg-gray-50 cursor-pointer"
+        >
+          Upload your transcript to start generating!{" "}
+          <span className="text-green-700 font-semibold underline">Go to profile →</span>
+        </button>
+      </>
+    );
+  }
 
   return (
     <>
