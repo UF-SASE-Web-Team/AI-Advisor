@@ -31,7 +31,7 @@
   },
   {
     "name": "Grace Zhao",
-    "role": "UIUX Lead",
+    "role": "Chief Executive Officer",
     "description": "Leads the developement of the AI Advisor design process.",
     "imageUrl": "headshots/Grace_Zhao.jpg"
   },
@@ -43,19 +43,19 @@
   },
   {
     "name": "Helen Zou",
-    "role": "Frontend Co-Lead",
+    "role": "Chief Executive Officer",
     "description": "Co-lead the delegation of frontend development.",
     "imageUrl": "headshots/Helen_Zou.jpg"
   },
   {
     "name": "Jacob Nguyen",
-    "role": "Backend Developer",
+    "role": "Staff AI Engineer",
     "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Jacob_Nguyen.jpeg"
   },
   {
     "name": "Jonathan Tang",
-    "role": "Backend Co-Lead",
+    "role": "Chief Executive Officer",
     "description": "Co-lead the design and delegation of the AI Advisor backend.",
     "imageUrl": "headshots/Jonathan_Tang.JPG"
   },
@@ -73,7 +73,7 @@
   },
   {
     "name": "Kenzo Fukuda",
-    "role": "Frontend Co-Lead",
+    "role": "Chief Executive Officer",
     "description": "Co-lead the delegation of frontend development.",
     "imageUrl": "headshots/Kenzo_Fukuda.jpg"
   },
@@ -91,7 +91,7 @@
   },
   {
     "name": "Nathan Kim",
-    "role": "Backend Co-Lead",
+    "role": "Chief Executive Officer",
     "description": "Co-lead the design and delegation of the AI Advisor backend.",
     "imageUrl": "headshots/Nathan_Kim.JPG"
   },
@@ -115,7 +115,7 @@
   },
   {
     "name": "Saaketh Kesireddy",
-    "role": "Backend Developer",
+    "role": "Principle AI Engineer",
     "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Saaketh_Kesireddy.jpeg"
   },
@@ -133,19 +133,19 @@
   },
   {
     "name": "Thuy Le",
-    "role": "SASE Co-Webmaster",
+    "role": "SWE Intern",
     "description": "Oversee the SWT Project Team alongside the SASE Website Team.",
     "imageUrl": "headshots/Thuy_Le.JPG"
   },
   {
     "name": "Tyler Bullock",
-    "role": "Backend Developer",
+    "role": "Senior Distinguished Engineer",
     "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Tyler_Bullock.jpg"
   },
   {
     "name": "Tyler Dang",
-    "role": "Backend Developer",
+    "role": "VP of AI Engineering",
     "description": "Contributes to writing AI workflow scripts, scraping course and professor data, and building data processing pipelines to power the RAG model.",
     "imageUrl": "headshots/Tyler_Dang.jpeg"
   }
