@@ -20,10 +20,11 @@ class RAGServicer(rag_pb2_grpc.RAGServiceServicer):
     def Query(self, request, context):
         question = request.question
         session_id = request.session_id or None
-        logger.info(f"Received query: {question} (session={session_id})")
+        user_id = request.user_id or None
+        logger.info(f"Received query: {question} (session={session_id}, user={user_id})")
 
         try:
-            answer, status, sid = ask(question, session_id=session_id)
+            answer, status, sid = ask(question, session_id=session_id, user_id=user_id)
 
             return rag_pb2.QueryResponse(
                 answer=answer,

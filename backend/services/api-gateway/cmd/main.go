@@ -49,6 +49,7 @@ type RAGQueryRequest struct {
 	Question   string `json:"question"`
 	MaxResults int    `json:"max_results,omitempty"`
 	SessionID  string `json:"session_id,omitempty"`
+	UserID     string `json:"user_id,omitempty"`
 }
 
 type RAGQueryResponse struct {
@@ -332,6 +333,7 @@ func main() {
 			Question:   reqBody.Question,
 			MaxResults: maxResults,
 			SessionId:  reqBody.SessionID,
+			UserId:     reqBody.UserID,
 		})
 		if err != nil {
 			log.Printf("Failed to call RAG service: %v", err)
