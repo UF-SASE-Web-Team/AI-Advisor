@@ -5,7 +5,7 @@ import os
 import re
 
 from app.generated import rag_pb2, rag_pb2_grpc
-from app.agent import init_agent, ask, get_course_info as _lookup_course, _get_or_create_session
+from app.agent import init_agent, ask, get_course_info as _lookup_course, _get_or_create_session, get_sessions, get_messages
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,15 +40,53 @@ class RAGServicer(rag_pb2_grpc.RAGServiceServicer):
 
     def CreateSession(self, request, context):
         title = request.title or "New session"
-        logger.info(f"Creating session: {title}")
+        user_id = request.user_id or None
+        logger.info(f"Creating session: {title} (user={user_id})")
         try:
-            sid = _get_or_create_session(None)
+            sid = _get_or_create_session(None, title=title, user_id=user_id)
             return rag_pb2.CreateSessionResponse(session_id=sid)
         except Exception as e:
             logger.error(f"Error creating session: {e}", exc_info=True)
             return rag_pb2.CreateSessionResponse(
                 error_message=str(e),
             )
+
+    def GetSessions(self, request, context):
+        user_id = request.user_id
+        logger.info(f"Getting sessions for user: {user_id}")
+        try:
+            rows = get_sessions(user_id)
+            sessions = [
+                rag_pb2.ChatSession(
+                    session_id=r["id"],
+                    title=r.get("title", ""),
+                    created_at=r.get("created_at", ""),
+                    updated_at=r.get("updated_at", "") or "",
+                )
+                for r in rows
+            ]
+            return rag_pb2.GetSessionsResponse(sessions=sessions)
+        except Exception as e:
+            logger.error(f"Error getting sessions: {e}", exc_info=True)
+            return rag_pb2.GetSessionsResponse(error_message=str(e))
+
+    def GetMessages(self, request, context):
+        session_id = request.session_id
+        logger.info(f"Getting messages for session: {session_id}")
+        try:
+            rows = get_messages(session_id)
+            messages = [
+                rag_pb2.ChatMessage(
+                    role=r.get("role", ""),
+                    content=r.get("content", ""),
+                    created_at=r.get("created_at", ""),
+                )
+                for r in rows
+            ]
+            return rag_pb2.GetMessagesResponse(messages=messages)
+        except Exception as e:
+            logger.error(f"Error getting messages: {e}", exc_info=True)
+            return rag_pb2.GetMessagesResponse(error_message=str(e))
 
     def GetCourseInfo(self, request, context):
         course_code = request.course_code

@@ -296,7 +296,7 @@ func main() {
 	}))
 
 	// RAG query endpoint
-	http.HandleFunc("/api/advisor/query/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/v2/advisor/query/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -362,16 +362,25 @@ func main() {
 	}))
 
 	// Create chat session endpoint
-	http.HandleFunc("/api/advisor/session/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/v2/advisor/session/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
+		var reqBody struct {
+			Title  string `json:"title"`
+			UserID string `json:"user_id"`
+		}
+		json.NewDecoder(r.Body).Decode(&reqBody)
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		resp, err := ragClient.CreateSession(ctx, &ragpb.CreateSessionRequest{})
+		resp, err := ragClient.CreateSession(ctx, &ragpb.CreateSessionRequest{
+			Title:  reqBody.Title,
+			UserId: reqBody.UserID,
+		})
 		if err != nil {
 			log.Printf("Failed to create session: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -383,8 +392,96 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"session_id": resp.SessionId})
 	}))
 
+	// Get sessions for a user
+	http.HandleFunc("/api/v2/advisor/sessions/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		userID := r.URL.Query().Get("user_id")
+		if userID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "user_id query parameter is required"})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		resp, err := ragClient.GetSessions(ctx, &ragpb.GetSessionsRequest{UserId: userID})
+		if err != nil {
+			log.Printf("Failed to get sessions: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to get sessions"})
+			return
+		}
+
+		type SessionJSON struct {
+			SessionID string `json:"session_id"`
+			Title     string `json:"title"`
+			CreatedAt string `json:"created_at"`
+			UpdatedAt string `json:"updated_at"`
+		}
+		sessions := make([]SessionJSON, len(resp.Sessions))
+		for i, s := range resp.Sessions {
+			sessions[i] = SessionJSON{
+				SessionID: s.SessionId,
+				Title:     s.Title,
+				CreatedAt: s.CreatedAt,
+				UpdatedAt: s.UpdatedAt,
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"sessions": sessions})
+	}))
+
+	// Get messages for a session
+	http.HandleFunc("/api/v2/advisor/messages/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		sessionID := r.URL.Query().Get("session_id")
+		if sessionID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "session_id query parameter is required"})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		resp, err := ragClient.GetMessages(ctx, &ragpb.GetMessagesRequest{SessionId: sessionID})
+		if err != nil {
+			log.Printf("Failed to get messages: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "failed to get messages"})
+			return
+		}
+
+		type MessageJSON struct {
+			Role      string `json:"role"`
+			Content   string `json:"content"`
+			CreatedAt string `json:"created_at"`
+		}
+		messages := make([]MessageJSON, len(resp.Messages))
+		for i, m := range resp.Messages {
+			messages[i] = MessageJSON{
+				Role:      m.Role,
+				Content:   m.Content,
+				CreatedAt: m.CreatedAt,
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"messages": messages})
+	}))
+
 	// Course info endpoint
-	http.HandleFunc("/api/advisor/course/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/v2/advisor/course/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return

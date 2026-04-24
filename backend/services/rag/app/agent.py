@@ -84,17 +84,44 @@ def _parse_history(raw_rows: list[dict]) -> list:
     return messages
 
 
-def _get_or_create_session(session_id: str | None) -> str:
-    """Return an existing session_id, or create a temporary one."""
+def _get_or_create_session(session_id: str | None, title: str = "gRPC session", user_id: str | None = None) -> str:
+    """Return an existing session_id, or create a new one."""
     sb = _get_supabase()
     if session_id:
         return session_id
 
-    # Create a throw-away session for stateless gRPC calls
-    resp = sb.table("chat_sessions").insert({
-        "title": "gRPC session",
-    }).execute()
+    row: dict = {"title": title}
+    if user_id:
+        row["user_id"] = user_id
+
+    resp = sb.table("chat_sessions").insert(row).execute()
     return resp.data[0]["id"]
+
+
+def get_sessions(user_id: str) -> list[dict]:
+    """Get all chat sessions for a user, most recent first."""
+    sb = _get_supabase()
+    resp = (
+        sb.table("chat_sessions")
+        .select("id, title, created_at")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return resp.data
+
+
+def get_messages(session_id: str) -> list[dict]:
+    """Get all messages for a session, newest first."""
+    sb = _get_supabase()
+    resp = (
+        sb.table("chat_messages")
+        .select("role, content, created_at")
+        .eq("session_id", session_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return resp.data
 
 
 def _save_message(session_id: str, role: str, content: str):

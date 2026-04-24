@@ -95,10 +95,12 @@ class HealthResponse(_message.Message):
     def __init__(self, status: _Optional[str] = ...) -> None: ...
 
 class CreateSessionRequest(_message.Message):
-    __slots__ = ("title",)
+    __slots__ = ("title", "user_id")
     TITLE_FIELD_NUMBER: _ClassVar[int]
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
     title: str
-    def __init__(self, title: _Optional[str] = ...) -> None: ...
+    user_id: str
+    def __init__(self, title: _Optional[str] = ..., user_id: _Optional[str] = ...) -> None: ...
 
 class CreateSessionResponse(_message.Message):
     __slots__ = ("session_id", "error_message")
@@ -107,6 +109,56 @@ class CreateSessionResponse(_message.Message):
     session_id: str
     error_message: str
     def __init__(self, session_id: _Optional[str] = ..., error_message: _Optional[str] = ...) -> None: ...
+
+class GetSessionsRequest(_message.Message):
+    __slots__ = ("user_id",)
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
+    user_id: str
+    def __init__(self, user_id: _Optional[str] = ...) -> None: ...
+
+class GetSessionsResponse(_message.Message):
+    __slots__ = ("sessions", "error_message")
+    SESSIONS_FIELD_NUMBER: _ClassVar[int]
+    ERROR_MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    sessions: _containers.RepeatedCompositeFieldContainer[ChatSession]
+    error_message: str
+    def __init__(self, sessions: _Optional[_Iterable[_Union[ChatSession, _Mapping]]] = ..., error_message: _Optional[str] = ...) -> None: ...
+
+class ChatSession(_message.Message):
+    __slots__ = ("session_id", "title", "created_at", "updated_at")
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    TITLE_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
+    session_id: str
+    title: str
+    created_at: str
+    updated_at: str
+    def __init__(self, session_id: _Optional[str] = ..., title: _Optional[str] = ..., created_at: _Optional[str] = ..., updated_at: _Optional[str] = ...) -> None: ...
+
+class GetMessagesRequest(_message.Message):
+    __slots__ = ("session_id",)
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    session_id: str
+    def __init__(self, session_id: _Optional[str] = ...) -> None: ...
+
+class GetMessagesResponse(_message.Message):
+    __slots__ = ("messages", "error_message")
+    MESSAGES_FIELD_NUMBER: _ClassVar[int]
+    ERROR_MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    messages: _containers.RepeatedCompositeFieldContainer[ChatMessage]
+    error_message: str
+    def __init__(self, messages: _Optional[_Iterable[_Union[ChatMessage, _Mapping]]] = ..., error_message: _Optional[str] = ...) -> None: ...
+
+class ChatMessage(_message.Message):
+    __slots__ = ("role", "content", "created_at")
+    ROLE_FIELD_NUMBER: _ClassVar[int]
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    role: str
+    content: str
+    created_at: str
+    def __init__(self, role: _Optional[str] = ..., content: _Optional[str] = ..., created_at: _Optional[str] = ...) -> None: ...
 
 class RecommendRequest(_message.Message):
     __slots__ = ("completed_courses", "interests", "max_credits", "term", "level")
