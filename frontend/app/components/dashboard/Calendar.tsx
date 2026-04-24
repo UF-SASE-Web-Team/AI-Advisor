@@ -2,7 +2,7 @@ export function Calendar() {
   return (
     <div
       className="
-      h-1/2
+      flex-1
     grid place-items-center"
     >
       Calendar

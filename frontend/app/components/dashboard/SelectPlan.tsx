@@ -21,11 +21,10 @@ export function SelectPlan() {
   ];
 
   return (
-    <Widget title="Semester Plan Selection">
-      <div className="m-3 gap-4 min-h-0
-      flex flex-row flex-1
-      relative
-      h-1/2">
+    <Widget title="Semester Plan Selection" className="flex-none h-73">
+      <div className="m-3 gap-4 flex-1 min-h-0
+      flex flex-row
+      relative">
         {/* Left col */}
         <div className="flex-1 relative min-h-0">
           {/* Scrollable area*/}
@@ -42,9 +41,8 @@ export function SelectPlan() {
         </div>
 
         {/* Right col */}
-        <div className="flex-none w-[160px] md:w-[200px]">
+        <div className="flex-none w-[160px] md:w-[200px] flex flex-col gap-3">
           <SemPlanControls />
-          <Invis2RowHeightBlock />
         </div>
       </div>
     </Widget >
@@ -88,11 +86,7 @@ const SemPlanControls = () => {
           <option>Semester 2</option>
           <option>Semester 3</option>
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#a2bd4b]">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="4" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+
       </div>
       <button className="w-full bg-white border border-widget-border rounded-full py-1.5 px-4 text-gray-700 font-bold hover:bg-gray-50 transition-colors text-sm">
         Edit
@@ -100,14 +94,3 @@ const SemPlanControls = () => {
     </div>
   );
 };
-
-const Invis2RowHeightBlock = ({ classItem }: any) => {
-  return (
-    <div className="invisible pointer-events-none hidden">
-      <div className="grid grid-cols-1 gap-3">
-        <ClassItem {...classItem} />
-        <ClassItem {...classItem} />
-      </div>
-    </div>
-  );
-}
